@@ -1,0 +1,6 @@
+./plonky2-backend/target/
+.idea
+./noir_example/target/
+./noir_example/proofs/
+./noir_example/Prover.toml
+./noir_example/Verifier.toml

@@ -4,3 +4,4 @@
 ./noir_example/proofs/
 ./noir_example/Prover.toml
 ./noir_example/Verifier.toml
+noir/

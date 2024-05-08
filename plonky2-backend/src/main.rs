@@ -1,18 +1,19 @@
 use std::env;
-use std::fs;
+// use std::fs;
+use std::fs::File;
+use std::vec::Vec;
+use std::io::Read;
 use acir::circuit::Program;
-//use serde::Deserialize;
+use serde::Deserialize;
 
-/*fn parse_program(path: &String){
+fn read_file(acir_program_path: &String){
+    println!("{:?}", acir_program_path);
+    let mut file = File::open(acir_program_path).expect("There was a problem reading the file");
+    let mut buffer: Vec<u8> = Vec::new();
+    let _ = file.read_to_end(&mut buffer);
+    println!("{:?}", buffer);
 
-
-    let contents = fs::read_to_string(path)
-        .expect("Should have been able to read the file");
-
-    println!("{}", contents);
-
-    let program: Program = serde::deserialize_xxx()
-}*/
+}
 
 
 fn main() {
@@ -34,11 +35,12 @@ fn main() {
     } else if args.len() > 1 && args[1] == "prove" {
         println!("If you are reading this you probably did some cryptohacks in the past");
 
-        let crs_path = &args[3];
+        // let crs_path = &args[3];
         let bytecode_path = &args[5];
-        let witness_path = &args[7];
+        // let witness_path = &args[7];
 
-        //parse_program(&bytecode_path);
+        read_file(&args[7]);
+        // read_file(&bytecode_path);
 
         //println!("{:?}", crs_path);
         //println!("{:?}", bytecode_path);

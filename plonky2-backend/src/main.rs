@@ -22,7 +22,6 @@ fn deserialize_witnesses_within_file_path(witnesses_path: &String) -> WitnessSta
     let _ = file.read_to_end(&mut buffer);
     let file_contents_slice: &[u8] = &buffer;
     let witness_stack = WitnessStack::try_from(file_contents_slice);
-    println!("{:?}", witness_stack );
     witness_stack.unwrap()
 }
 
@@ -31,8 +30,21 @@ fn main() {
     let args: Vec<String> = env::args().collect();
 
     if args.len() > 1 && args[1] == "info" {
+        _print_info_string();
+    } else if args.len() > 1 && args[1] == "prove" {
+        // let crs_path = &args[3];
+        let acir_program: Program = deserialize_program_within_file_path(&args[5]);
+        let witness_stack: WitnessStack = deserialize_witnesses_within_file_path(&args[7]);
+        println!("{:?}", acir_program);
+        println!("{:?}", witness_stack);
 
-        println!(r#"{{
+    } else {
+        println!("If you're watching this you probably shouldn't want to");
+    }
+}
+
+fn _print_info_string() {
+    println!(r#"{{
             "opcodes_supported": [],
             "black_box_functions_supported": [],
             "status": "ok",
@@ -42,16 +54,4 @@ fn main() {
                 "width": 3
             }}
         }}"#);
-
-    } else if args.len() > 1 && args[1] == "prove" {
-        // println!("If you are reading this you probably did some cryptohacks in the past");
-
-        // let crs_path = &args[3];
-        // let witness_path = &args[7];
-        let acir_program: Program = deserialize_program_within_file_path(&args[5]);
-        let witness_stack: WitnessStack = deserialize_witnesses_within_file_path(&args[7]);
-
-    } else {
-        println!("If you're watching this you probably shouldn't want to");
-    }
 }

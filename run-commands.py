@@ -10,7 +10,7 @@ def build_and_deploy():
 
 def generate_proof():
     os.chdir("./noir_example")
-    os.system("./prove_with_plonky2_backend.sh")
+    os.system("./prove_with_plonky2_backend_and_custom_nargo.sh")
     os.chdir("..")
 
 
@@ -28,6 +28,9 @@ def hex_to_string(hex_values):
 def main(argc, argv):
     if "build" in argv:
         build_and_deploy()
+
+    if "prove" in argv:
+        generate_proof()
 
     if "provetest" in argv:
         generate_proof()

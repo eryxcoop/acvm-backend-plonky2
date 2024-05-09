@@ -4,15 +4,15 @@ use std::fs::File;
 use std::vec::Vec;
 use std::io::Read;
 use acir::circuit::Program;
-use serde::Deserialize;
+// use serde::Deserialize;
 
-fn read_file(acir_program_path: &String){
-    println!("{:?}", acir_program_path);
+fn deserialize_program_within_file_path(acir_program_path: &String) -> Program {
     let mut file = File::open(acir_program_path).expect("There was a problem reading the file");
     let mut buffer: Vec<u8> = Vec::new();
     let _ = file.read_to_end(&mut buffer);
-    println!("{:?}", buffer);
-
+    let file_contents_slice: &[u8] = &buffer;
+    let program = Program::deserialize_program(file_contents_slice);
+    program.unwrap()
 }
 
 
@@ -33,18 +33,11 @@ fn main() {
         }}"#);
 
     } else if args.len() > 1 && args[1] == "prove" {
-        println!("If you are reading this you probably did some cryptohacks in the past");
+        // println!("If you are reading this you probably did some cryptohacks in the past");
 
         // let crs_path = &args[3];
-        let bytecode_path = &args[5];
         // let witness_path = &args[7];
-
-        read_file(&args[7]);
-        // read_file(&bytecode_path);
-
-        //println!("{:?}", crs_path);
-        //println!("{:?}", bytecode_path);
-        //println!("{:?}", witness_path);
+        let acir_program: Program = deserialize_program_within_file_path(&args[5]);
 
     } else {
         println!("If you're watching this you probably shouldn't want to");

@@ -1,4 +1,4 @@
-fn main(x: Field) {
-    assert(x==0);
+fn main(x: Field, y: pub Field, z: pub Field) {
+    assert(x==y+z);
 }
 

@@ -2,6 +2,12 @@ import os
 import sys
 
 
+def build_and_deploy():
+    os.chdir("./plonky2-backend")
+    os.system("./build_and_deploy_backend.sh")
+    os.chdir("..")
+
+
 def generate_proof():
     os.chdir("./noir_example")
     os.system("./prove_with_plonky2_backend.sh")
@@ -20,8 +26,12 @@ def hex_to_string(hex_values):
 
 
 def main(argc, argv):
-    generate_proof()
-    print(hex_to_string(read_proof()))
+    if "build" in argv:
+        build_and_deploy()
+
+    if "provetest" in argv:
+        generate_proof()
+        print(hex_to_string(read_proof()))
 
 
 if __name__ == '__main__':

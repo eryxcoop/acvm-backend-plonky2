@@ -1,11 +1,22 @@
+mod circuit_translation;
+
 use std::env;
-// use std::fs;
 use std::fs::File;
 use std::vec::Vec;
 use std::io::Read;
 use acir::circuit::Program;
 use acir::native_types::WitnessStack;
-// use serde::Deserialize;
+use acir::circuit::Circuit;
+// ----------------------------------
+use plonky2::field::types::PrimeField64;
+
+use plonky2::field::extension::Extendable;
+use plonky2::hash::hash_types::RichField;
+use plonky2::iop::target::{BoolTarget, Target};
+use plonky2::iop::witness::Witness;
+use plonky2::plonk::circuit_builder::CircuitBuilder;
+use plonky2::plonk::circuit_data::CircuitConfig;
+// -----------------------------------------
 
 fn read_file_to_bytes(file_path: &String) -> Vec<u8> {
     let mut file = File::open(file_path).expect("There was a problem reading the file");
@@ -38,13 +49,18 @@ fn main() {
         // let crs_path = &args[3];
         let acir_program: Program = deserialize_program_within_file_path(&args[5]);
         let witness_stack: WitnessStack = deserialize_witnesses_within_file_path(&args[7]);
-        println!("{:?}", acir_program);
+        //println!("{:?}", acir_program);
         println!("{:?}", witness_stack);
+
+        let functions = acir_program.functions;
+        let circuit = &functions[0];
+        println!("{:?}", circuit);
 
     } else {
         println!("If you're watching this you probably shouldn't want to");
     }
 }
+
 
 fn _print_info_string() {
     println!(r#"{{

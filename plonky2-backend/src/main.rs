@@ -1,3 +1,5 @@
+extern crate core;
+
 mod circuit_translation;
 
 use std::env;
@@ -6,16 +8,16 @@ use std::vec::Vec;
 use std::io::Read;
 use acir::circuit::Program;
 use acir::native_types::WitnessStack;
-use acir::circuit::Circuit;
+// use acir::circuit::Circuit;
 // ----------------------------------
-use plonky2::field::types::PrimeField64;
-
-use plonky2::field::extension::Extendable;
-use plonky2::hash::hash_types::RichField;
-use plonky2::iop::target::{BoolTarget, Target};
-use plonky2::iop::witness::Witness;
-use plonky2::plonk::circuit_builder::CircuitBuilder;
-use plonky2::plonk::circuit_data::CircuitConfig;
+// use plonky2::field::types::PrimeField64;
+//
+// use plonky2::field::extension::Extendable;
+// use plonky2::hash::hash_types::RichField;
+// use plonky2::iop::target::{BoolTarget, Target};
+// use plonky2::iop::witness::Witness;
+// use plonky2::plonk::circuit_builder::CircuitBuilder;
+// use plonky2::plonk::circuit_data::CircuitConfig;
 // -----------------------------------------
 
 fn read_file_to_bytes(file_path: &String) -> Vec<u8> {
@@ -26,14 +28,14 @@ fn read_file_to_bytes(file_path: &String) -> Vec<u8> {
 }
 
 fn deserialize_program_within_file_path(acir_program_path: &String) -> Program {
-    let mut buffer = read_file_to_bytes(acir_program_path);
+    let buffer = read_file_to_bytes(acir_program_path);
     let file_contents_slice: &[u8] = &buffer;
     let program = Program::deserialize_program(file_contents_slice);
     program.unwrap()
 }
 
 fn deserialize_witnesses_within_file_path(witnesses_path: &String) -> WitnessStack {
-    let mut buffer = read_file_to_bytes(witnesses_path);
+    let buffer = read_file_to_bytes(witnesses_path);
     let file_contents_slice: &[u8] = &buffer;
     let witness_stack = WitnessStack::try_from(file_contents_slice);
     witness_stack.unwrap()
@@ -55,6 +57,7 @@ fn main() {
         let functions = acir_program.functions;
         let circuit = &functions[0];
         println!("{:?}", circuit);
+
 
     } else {
         println!("If you're watching this you probably shouldn't want to");

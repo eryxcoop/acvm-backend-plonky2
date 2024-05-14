@@ -10,3 +10,4 @@ serde_json = "1.0"
 acir = "0.45.0"
 plonky2 = { version = "0.2", default-features = false, features = ["std", "parallel"]}
 num-bigint = "0.4"
+jemallocator = "0.5.0"

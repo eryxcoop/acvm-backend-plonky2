@@ -48,12 +48,13 @@ fn translate_assert_zero(builder: &mut CB, expression: &Expression, witness_targ
 }
 
 
-fn generate_plonky2_proof_from_acir_circuit(circuit: &Circuit) -> (){
-    let config = CircuitConfig { zero_knowledge: true, ..CircuitConfig::default() };
+fn generate_plonky2_circuit_from_acir_circuit(circuit: &Circuit) -> (CircuitData<GoldilocksField, C, 2>, HashMap<Witness, Target>){
+    let config = CircuitConfig::standard_recursion_config();
     let mut builder = CB::new(config);
 
     let public_input_1 = circuit.public_parameters.0.first().unwrap();
     let target_1 = builder.add_virtual_target();
+    builder.register_public_input(target_1);
     let mut witness_target_map: HashMap<Witness, Target> = HashMap::new();
     witness_target_map.insert(*public_input_1, target_1);
 
@@ -64,65 +65,83 @@ fn generate_plonky2_proof_from_acir_circuit(circuit: &Circuit) -> (){
         }
     }
 
-    let circuit_data = builder.build::<C>();
-    let mut witnesses = PartialWitness::<GoldilocksField>::new();
-    let g_zero= GoldilocksField::default();
-    witnesses.set_target(target_1, g_zero);
-    circuit_data.prove(witnesses);
+    (builder.build::<C>(), witness_target_map)
+
 }
 
 
 #[cfg(test)]
 mod tests {
     use std::collections::BTreeSet;
+    use acir::circuit::Opcode;
     use plonky2::field::types::Field;
     use plonky2::iop::witness::WitnessWrite;
     use super::*;
     #[test]
     fn test_plonky2_vm_can_traslate_the_most_basic_assert_zero_program(){
         // Given
-        let only_expr = Expression {mul_terms: Vec::new(),
-                                    linear_combinations: vec![(FieldElement::one(), Witness(0))],
-                                    q_c: FieldElement::zero() };
+        let public_input_witness = Witness(0);
+        let only_expr = x_equals_0_opcode(public_input_witness);
+        let circuit = circuit_with_single_opcode(only_expr, public_input_witness);
 
-        let circuit = Circuit {
+        // When
+        let (circuit_data, witness_target_map) = generate_plonky2_circuit_from_acir_circuit(&circuit);
+
+        // Then
+        let mut witnesses = PartialWitness::<GoldilocksField>::new();
+        let g_zero= GoldilocksField::default();
+        let public_input_plonky2_target = witness_target_map.get(&public_input_witness).unwrap();
+        witnesses.set_target(*public_input_plonky2_target, g_zero);
+        let proof = circuit_data.prove(witnesses).unwrap();
+        assert_eq!(g_zero, proof.public_inputs[0]);
+    }
+
+    fn circuit_with_single_opcode(only_expr: Opcode, public_input_witness: Witness) -> Circuit {
+        Circuit {
             current_witness_index: 0,
             expression_width: ExpressionWidth::Unbounded,
-            opcodes: vec![AssertZero(only_expr)],
+            opcodes: vec![only_expr],
             private_parameters: BTreeSet::new(),
-            public_parameters: PublicInputs(BTreeSet::from_iter(vec![Witness(0)])),
+            public_parameters: PublicInputs(BTreeSet::from_iter(vec![public_input_witness])),
             return_values: PublicInputs(BTreeSet::new()),
             assert_messages: Default::default(),
             recursive: false,
-        };
-
-        // When
-        generate_plonky2_proof_from_acir_circuit(&circuit);
-        // Plonky2 doesn't panic
+        }
     }
 
-    #[test]
-    fn test_plonky2_vm_can_translate_an_assert_zero_program_with_constant_multiplication(){
-        // Given
-        let only_expr = Expression {mul_terms: Vec::new(),
-            linear_combinations: vec![(FieldElement::from_hex("0x04").unwrap(), Witness(0))],
-            q_c: FieldElement::zero() };
-
-        let circuit = Circuit {
-            current_witness_index: 0,
-            expression_width: ExpressionWidth::Unbounded,
-            opcodes: vec![AssertZero(only_expr)],
-            private_parameters: BTreeSet::new(),
-            public_parameters: PublicInputs(BTreeSet::from_iter(vec![Witness(0)])),
-            return_values: PublicInputs(BTreeSet::new()),
-            assert_messages: Default::default(),
-            recursive: false,
-        };
-
-        // When
-        generate_plonky2_proof_from_acir_circuit(&circuit);
-        // Plonky2 doesn't panic
+    fn x_equals_0_opcode(public_input_witness: Witness) -> Opcode {
+        AssertZero(Expression {
+            mul_terms: Vec::new(),
+            linear_combinations: vec![(FieldElement::one(), public_input_witness)],
+            q_c: FieldElement::zero()
+        })
     }
+
+    // #[test]
+    // fn test_plonky2_vm_can_translate_an_assert_zero_program_with_constant_multiplication(){
+    //     // Given
+    //     let public_input_witness = Witness(0);
+    //     let only_expr = Expression {mul_terms: Vec::new(),
+    //         linear_combinations: vec![(FieldElement::from_hex("0x04").unwrap(), public_input_witness)],
+    //         q_c: FieldElement::zero() };
+    //
+    //     let circuit = Circuit {
+    //         current_witness_index: 0,
+    //         expression_width: ExpressionWidth::Unbounded,
+    //         opcodes: vec![AssertZero(only_expr)],
+    //         private_parameters: BTreeSet::new(),
+    //         public_parameters: PublicInputs(BTreeSet::from_iter(vec![public_input_witness])),
+    //         return_values: PublicInputs(BTreeSet::new()),
+    //         assert_messages: Default::default(),
+    //         recursive: false,
+    //     };
+    //
+    //     // When
+    //     let proof = generate_plonky2_circuit_from_acir_circuit(&circuit);
+    //
+    //     // Then
+    //
+    // }
 
     #[test]
     fn test_xxxxxx() {

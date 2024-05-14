@@ -8,6 +8,12 @@ use std::vec::Vec;
 use std::io::Read;
 use acir::circuit::Program;
 use acir::native_types::WitnessStack;
+
+use jemallocator::Jemalloc;
+
+#[global_allocator]
+static GLOBAL: Jemalloc = Jemalloc;
+
 // use acir::circuit::Circuit;
 // ----------------------------------
 // use plonky2::field::types::PrimeField64;

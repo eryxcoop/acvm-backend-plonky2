@@ -109,6 +109,7 @@ mod tests {
         witnesses.set_target(*public_input_plonky2_target, g_zero);
         let proof = circuit_data.prove(witnesses).unwrap();
         assert_eq!(g_zero, proof.public_inputs[0]);
+        circuit_data.verify(proof).expect("Verification failed");
     }
 
     fn circuit_with_single_opcode(only_expr: Opcode, public_input_witness: Witness) -> Circuit {
@@ -149,6 +150,7 @@ mod tests {
         witnesses.set_target(*public_input_plonky2_target, four);
         let proof = circuit_data.prove(witnesses).unwrap();
         assert_eq!(four, proof.public_inputs[0]);
+        circuit_data.verify(proof).expect("Verification failed");
     }
 
     fn x_equals_4_opcode(public_input_witness: Witness) -> Opcode {
@@ -176,6 +178,7 @@ mod tests {
         witnesses.set_target(*public_input_plonky2_target, four);
         let proof = circuit_data.prove(witnesses).unwrap();
         assert_eq!(four, proof.public_inputs[0]);
+        circuit_data.verify(proof).expect("Verification failed");
     }
 
     fn x_times_3_equals_12_opcode(public_input_witness: Witness) -> Opcode {

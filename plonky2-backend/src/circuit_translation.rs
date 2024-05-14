@@ -24,18 +24,6 @@ type F = <C as GenericConfig<D>>::F;
 type CB = CircuitBuilder::<F, D>;
 
 fn field_element_to_goldilocks_field(fe: &FieldElement) -> GoldilocksField {
-    // let goldilocks_prime: u64 = 18446744069414584321;
-    // let goldilicks_prime_as_big_uint = BigUint::from_bytes_be(&goldilocks_prime.to_be_bytes());
-    // let fe_as_big_uint = BigUint::from_bytes_be(&fe.to_be_bytes() as &[u8]);
-    // if fe_as_big_uint >= goldilicks_prime_as_big_uint {
-    //     let inverted_fe = fe;
-    //     let bui = BigUint::from_bytes_be(&inverted_fe.to_be_bytes());
-    //     let inverted_g = GoldilocksField::from_noncanonical_biguint(bui);
-    //     return -inverted_g;
-    // }
-    // let bui = BigUint::from_bytes_be(&fe.to_be_bytes());
-    // GoldilocksField::from_noncanonical_biguint(bui)
-
     let fe_as_big_uint = BigUint::from_bytes_be(&fe.to_be_bytes() as &[u8]);
     GoldilocksField::from_noncanonical_biguint(fe_as_big_uint)
 }
@@ -66,9 +54,10 @@ fn translate_assert_zero(builder: &mut CB, expression: &Expression, witness_targ
     //     target,
     //     target,
     //     target_constant);
-
     let g_constant = field_element_to_goldilocks_field(&expression.q_c);
-    let result_target = builder.add_const(target, g_constant);
+    let g_factor = field_element_to_goldilocks_field(f_single_multiply_factor);
+    let target_1 = builder.mul_const(g_factor, target);
+    let result_target = builder.add_const(target_1, g_constant);
     builder.assert_zero(result_target);
 }
 
@@ -170,22 +159,31 @@ mod tests {
         })
     }
 
-    // #[test]
-    // fn test_plonky2_vm_can_traslate_the_assert_c_times_x_equals_constant_program() {}
-
     #[test]
-    fn test_xxxxxx() {
-        let config = CircuitConfig { zero_knowledge: true, ..CircuitConfig::default() };
-        let mut builder = CB::new(config);
-        // let target = builder.add_virtual_target();
-        // builder.assert_zero(target);
+    fn test_plonky2_vm_can_traslate_the_assert_c_times_x_equals_constant_program() {
+        // Given
+        let public_input_witness = Witness(0);
+        let only_opcode = x_times_3_equals_12_opcode(public_input_witness);
+        let circuit = circuit_with_single_opcode(only_opcode, public_input_witness);
 
+        // When
+        let (circuit_data, witness_target_map) = generate_plonky2_circuit_from_acir_circuit(&circuit);
+
+        // Then
         let mut witnesses = PartialWitness::<GoldilocksField>::new();
-        // let one = GoldilocksField::from_canonical_u64(0);
-        // witnesses.set_target(target, one);
-        let circuit_data = builder.build::<C>();
-        // println!("{:#?}", circuit_data);
-        let proof = circuit_data.prove(witnesses);
-        // println!("{:?}", proof);
+        let four = GoldilocksField::from_canonical_u64(4);
+        let public_input_plonky2_target = witness_target_map.get(&public_input_witness).unwrap();
+        witnesses.set_target(*public_input_plonky2_target, four);
+        let proof = circuit_data.prove(witnesses).unwrap();
+        assert_eq!(four, proof.public_inputs[0]);
     }
+
+    fn x_times_3_equals_12_opcode(public_input_witness: Witness) -> Opcode {
+        AssertZero(Expression {
+            mul_terms: Vec::new(),
+            linear_combinations: vec![(FieldElement::from_hex("0x03").unwrap(), public_input_witness)],
+            q_c: -FieldElement::from_hex("0x0C").unwrap()
+        })
+    }
+
 }

@@ -38,24 +38,22 @@ fn translate_assert_zero(builder: &mut CB, expression: &Expression, witness_targ
     let (f_first_multiply_factor, first_public_input_witness) = &linear_combinations[0];
     let first_public_input_target = *witness_target_map.get(first_public_input_witness).unwrap();
     let g_first_pi_factor = field_element_to_goldilocks_field(f_first_multiply_factor);
-    let first_pi_target = builder.mul_const(g_first_pi_factor, first_public_input_target);
+    let first_pi_target_multiplied = builder.mul_const(g_first_pi_factor, first_public_input_target);
 
-
-    let mut result_target: Target;
-    let mut second_pi_target: Target;
     if linear_combinations.len() > 1{
         let (f_second_multiply_factor, second_public_input_witness) = &linear_combinations[1];
         let second_public_input_target = *witness_target_map.get(second_public_input_witness).unwrap();
         let g_second_pi_factor = field_element_to_goldilocks_field(f_second_multiply_factor);
-        second_pi_target = builder.mul_const(g_second_pi_factor, second_public_input_target);
+        let second_pi_target_multiplied = builder.mul_const(g_second_pi_factor, second_public_input_target);
 
-        let product_addition_target = builder.add(first_pi_target, second_pi_target);
-        result_target = builder.add_const(product_addition_target, g_constant);
+        let product_addition_target = builder.add(first_pi_target_multiplied, second_pi_target_multiplied);
+        let result_target = builder.add_const(product_addition_target, g_constant);
+        return builder.assert_zero(result_target);
     } else {
-        result_target = builder.add_const(first_pi_target, g_constant);
+        let result_target = builder.add_const(first_pi_target_multiplied, g_constant);
+        return builder.assert_zero(result_target);
     }
 
-    builder.assert_zero(result_target);
 }
 
 
@@ -215,6 +213,7 @@ mod tests {
         let proof = circuit_data.prove(witnesses).unwrap();
         assert_eq!(one, proof.public_inputs[0]);
         assert_eq!(one, proof.public_inputs[1]);
+        circuit_data.verify(proof).expect("Verification failed");
     }
 
     fn x_times_3_plus_y_times_4_equals_constant(first_public_input_witness: Witness, second_public_input_witness: Witness) -> Opcode {
@@ -222,10 +221,73 @@ mod tests {
             mul_terms: vec![],
             linear_combinations: vec![
                 (FieldElement::from_hex("0x03").unwrap(), first_public_input_witness),
-                (FieldElement::from_hex("0x04").unwrap(), second_public_input_witness),
+                (FieldElement::from_hex("0x09").unwrap(), second_public_input_witness),
             ],
-            q_c: -FieldElement::from_hex("0x0C").unwrap()
+            q_c: -FieldElement::from_hex("0x0c").unwrap()
         })
     }
+
+    #[test]
+    fn test_solo_plonky2() {
+        let config = CircuitConfig::standard_recursion_config();
+        let mut builder = CB::new(config);
+
+        let public_input_target = builder.add_virtual_target();
+        builder.register_public_input(public_input_target);
+
+        let public_input_target_2 = builder.add_virtual_target();
+        builder.register_public_input(public_input_target_2);
+
+        let result_target = builder.mul(public_input_target_2, public_input_target);
+        builder.assert_zero(result_target);
+
+        let mut witnesses = PartialWitness::<F>::new();
+        let one = GoldilocksField::from_canonical_u64(1);
+        let zero = GoldilocksField::from_canonical_u64(0);
+
+        let circuit_data: CircuitData<F, C, 2> = builder.build();
+
+        witnesses.set_target(public_input_target, one);
+        witnesses.set_target(public_input_target_2, zero);
+
+        let proof = circuit_data.prove(witnesses).unwrap();
+        circuit_data.verify(proof).expect("as");
+    }
+
+    // #[test]
+    // fn test_plonky2_vm_can_traslate_multiple_linear_combinations() {
+    //     // Given
+    //     let public_inputs = vec![Witness(0), Witness(1), Witness(2), Witness(3)];
+    //     let only_opcode = multiple_linear_combinations_opcode(&public_inputs);
+    //     let circuit = circuit_with_single_opcode(only_opcode, public_inputs);
+    //
+    //     // When
+    //     let (circuit_data, witness_target_map) = generate_plonky2_circuit_from_acir_circuit(&circuit);
+    //
+    //     // Then
+    //     let mut witnesses = PartialWitness::<F>::new();
+    //
+    //     let one = F::from_canonical_u64(1);
+    //     for pi in &public_inputs {
+    //         let public_input_plonky2_target = witness_target_map.get(pi).unwrap();
+    //         witnesses.set_target(*public_input_plonky2_target, one);
+    //     }
+    //
+    //     let proof = circuit_data.prove(witnesses).unwrap();
+    //
+    //     assert_eq!(one, proof.public_inputs[0]);
+    //     assert_eq!(one, proof.public_inputs[1]);
+    //     assert_eq!(one, proof.public_inputs[2]);
+    //     assert_eq!(one, proof.public_inputs[3]);
+    //     circuit_data.verify(proof).expect("Verification failed");
+    // }
+    //
+    // fn multiple_linear_combinations_opcode(public_inputs: &Vec<Witness>) -> Opcode {
+    //     AssertZero(Expression {
+    //         mul_terms: vec![],
+    //         linear_combinations: public_inputs.into_iter().map(|a_witness| (FieldElement::from_hex("0x03").unwrap(), a_witness)).collect(),
+    //         q_c: -FieldElement::from_hex("0x0c").unwrap()
+    //     })
+    // }
 
 }

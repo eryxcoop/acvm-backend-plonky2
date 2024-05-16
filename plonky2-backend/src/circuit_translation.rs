@@ -409,6 +409,54 @@ mod tests {
         })
     }
 
+    #[test]
+    fn test_plonky2_vm_can_traslate_multiple_cuadratic_terms_and_linear_combinations() {
+        // Given
+        let public_inputs = vec![Witness(0), Witness(1), Witness(2), Witness(3)];
+        let only_opcode = multiple_cuadratic_terms_and_linear_combinations_opcode(&public_inputs);
+        let circuit = circuit_with_single_opcode(only_opcode, public_inputs.clone());
+
+        // When
+        let (circuit_data, witness_target_map) = generate_plonky2_circuit_from_acir_circuit(&circuit);
+
+        // Then
+        let mut witnesses = PartialWitness::<F>::new();
+
+        let two = F::from_canonical_u64(2);
+        for pi in &public_inputs {
+            let public_input_plonky2_target = witness_target_map.get(pi).unwrap();
+            witnesses.set_target(*public_input_plonky2_target, two);
+        }
+
+        let proof = circuit_data.prove(witnesses).unwrap();
+
+        assert_eq!(two, proof.public_inputs[0]);
+        assert_eq!(two, proof.public_inputs[1]);
+        assert_eq!(two, proof.public_inputs[2]);
+        assert_eq!(two, proof.public_inputs[3]);
+        circuit_data.verify(proof).expect("Verification failed");
+    }
+
+    fn multiple_cuadratic_terms_and_linear_combinations_opcode(public_inputs: &Vec<Witness>) -> Opcode {
+        AssertZero(Expression {
+            mul_terms: vec![
+                (FieldElement::from_hex("0x02").unwrap(), public_inputs[0], public_inputs[0]),
+                (FieldElement::from_hex("0x03").unwrap(), public_inputs[0], public_inputs[1]),
+                (FieldElement::from_hex("0x04").unwrap(), public_inputs[1], public_inputs[2]),
+                (FieldElement::from_hex("0x05").unwrap(), public_inputs[2], public_inputs[3]),
+                (FieldElement::from_hex("0x06").unwrap(), public_inputs[3], public_inputs[3]),
+                (FieldElement::from_hex("0x07").unwrap(), public_inputs[1], public_inputs[1]),
+            ],
+            linear_combinations: vec![
+                (FieldElement::from_hex("0x01").unwrap(), public_inputs[0]),
+                (FieldElement::from_hex("0x02").unwrap(), public_inputs[1]),
+                (FieldElement::from_hex("0x03").unwrap(), public_inputs[2]),
+                (FieldElement::from_hex("0x04").unwrap(), public_inputs[3]),
+            ],
+            q_c: -FieldElement::from_hex("0x80").unwrap()
+        })
+    }
+
     // #[test]
     // fn test_solo_plonky2() {
     //     let config = CircuitConfig::standard_recursion_config();

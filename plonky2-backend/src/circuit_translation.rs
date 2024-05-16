@@ -30,21 +30,29 @@ fn field_element_to_goldilocks_field(fe: &FieldElement) -> F {
     F::from_noncanonical_biguint(fe_as_big_uint)
 }
 
+fn _compute_linear_combination_target(builder: &mut CB,
+                                      witness_target_map: &HashMap<Witness, Target>,
+                                      multiply_constant_factor: &FieldElement,
+                                      public_input_witness: &Witness) -> Target{
+    let first_public_input_target = *witness_target_map.get(public_input_witness).unwrap();
+    let g_first_pi_factor = field_element_to_goldilocks_field(multiply_constant_factor);
+    builder.mul_const(g_first_pi_factor, first_public_input_target)
+}
+
 fn translate_assert_zero(builder: &mut CB, expression: &Expression, witness_target_map: &mut HashMap<Witness, Target>) {
     println!("{:?}", expression);
     let g_constant = field_element_to_goldilocks_field(&expression.q_c);
     let linear_combinations = &expression.linear_combinations;
 
     let (f_first_multiply_factor, first_public_input_witness) = &linear_combinations[0];
-    let first_public_input_target = *witness_target_map.get(first_public_input_witness).unwrap();
-    let g_first_pi_factor = field_element_to_goldilocks_field(f_first_multiply_factor);
-    let first_pi_target_multiplied = builder.mul_const(g_first_pi_factor, first_public_input_target);
+    let first_pi_target_multiplied = _compute_linear_combination_target(builder,
+        witness_target_map, f_first_multiply_factor, first_public_input_witness);
 
     if linear_combinations.len() > 1{
         let (f_second_multiply_factor, second_public_input_witness) = &linear_combinations[1];
-        let second_public_input_target = *witness_target_map.get(second_public_input_witness).unwrap();
-        let g_second_pi_factor = field_element_to_goldilocks_field(f_second_multiply_factor);
-        let second_pi_target_multiplied = builder.mul_const(g_second_pi_factor, second_public_input_target);
+        let second_pi_target_multiplied = _compute_linear_combination_target(builder,
+            witness_target_map, f_second_multiply_factor, second_public_input_witness);
+
 
         let product_addition_target = builder.add(first_pi_target_multiplied, second_pi_target_multiplied);
         let result_target = builder.add_const(product_addition_target, g_constant);

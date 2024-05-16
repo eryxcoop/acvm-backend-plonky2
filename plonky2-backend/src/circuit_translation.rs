@@ -120,16 +120,15 @@ impl CircuitBuilderFromAcirToPlonky2 {
 }
 
 
-fn generate_plonky2_circuit_from_acir_circuit(circuit: &Circuit) -> (CircuitData<F, C, 2>, HashMap<Witness, Target>){
-    let mut translator = CircuitBuilderFromAcirToPlonky2::new();
-    translator.translate_circuit(circuit);
-    let CircuitBuilderFromAcirToPlonky2 {builder, witness_target_map} = translator;
-    (builder.build::<C>(), witness_target_map)
-}
-
-
 #[cfg(test)]
 mod tests {
+
+    fn generate_plonky2_circuit_from_acir_circuit(circuit: &Circuit) -> (CircuitData<F, C, 2>, HashMap<Witness, Target>){
+        let mut translator = CircuitBuilderFromAcirToPlonky2::new();
+        translator.translate_circuit(circuit);
+        let CircuitBuilderFromAcirToPlonky2 {builder, witness_target_map} = translator;
+        (builder.build::<C>(), witness_target_map)
+    }
 
     use super::*;
     #[test]

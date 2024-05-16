@@ -67,12 +67,12 @@ fn translate_assert_zero(builder: &mut CB, expression: &Expression, witness_targ
     }
 
     let mul_terms = &expression.mul_terms;
-    if mul_terms.len() > 0 {
-        let (f_cuadratic_factor, public_input_witness_1, public_input_witness_2) = &mul_terms[0];
-        let cuadratic_target_2  = _compute_cuadratic_term_target(builder, witness_target_map,
-                              f_cuadratic_factor, public_input_witness_1, public_input_witness_2);
-        let addition_target = builder.add(cuadratic_target_2, current_acc_target);
-        current_acc_target = addition_target;
+    for mul_term in mul_terms {
+        let (f_cuadratic_factor, public_input_witness_1, public_input_witness_2) = mul_term;
+        let cuadratic_target  = _compute_cuadratic_term_target(builder, witness_target_map,
+                             f_cuadratic_factor, public_input_witness_1, public_input_witness_2);
+        let new_target = builder.add(cuadratic_target, current_acc_target);
+        current_acc_target = new_target;
     }
 
     builder.assert_zero(current_acc_target);

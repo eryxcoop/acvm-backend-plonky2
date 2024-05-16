@@ -307,6 +307,40 @@ mod tests {
         })
     }
 
+    #[test]
+    fn test_plonky2_vm_can_traslate_the_c_times_x_times_y_program_equals_constant() {
+        // Given
+        let public_input_1 = Witness(0);
+        let public_input_2 = Witness(1);
+        let only_opcode = two_times_x_times_y_opcode(public_input_1, public_input_2);
+        let circuit = circuit_with_single_opcode(only_opcode, vec![public_input_1, public_input_2]);
+
+        // When
+        let (circuit_data, witness_target_map) = generate_plonky2_circuit_from_acir_circuit(&circuit);
+
+        // Then
+        let mut witnesses = PartialWitness::<F>::new();
+        let four = F::from_canonical_u64(4);
+        let five = F::from_canonical_u64(5);
+        let public_input_plonky2_target_1 = witness_target_map.get(&public_input_1).unwrap();
+        let public_input_plonky2_target_2 = witness_target_map.get(&public_input_2).unwrap();
+        witnesses.set_target(*public_input_plonky2_target_1, four);
+        witnesses.set_target(*public_input_plonky2_target_2, five);
+        let proof = circuit_data.prove(witnesses).unwrap();
+
+        assert_eq!(four, proof.public_inputs[0]);
+        assert_eq!(five, proof.public_inputs[1]);
+        circuit_data.verify(proof).expect("Verification failed");
+    }
+
+    fn two_times_x_times_y_opcode(public_input_1: Witness, public_input_2: Witness) -> Opcode {
+        AssertZero(Expression {
+            mul_terms: vec![(FieldElement::from_hex("0x02").unwrap(), public_input_1, public_input_2)],
+            linear_combinations: vec![],
+            q_c: -FieldElement::from_hex("0x28").unwrap()
+        })
+    }
+
     // #[test]
     // fn test_solo_plonky2() {
     //     let config = CircuitConfig::standard_recursion_config();

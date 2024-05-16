@@ -38,18 +38,14 @@ impl CircuitBuilderFromAcirToPlonky2 {
         Self {builder, witness_target_map}
     }
 
-    fn translate_circuit(self: &mut Self, circuit: &Circuit) {// -> (CircuitData<F, C, 2>, HashMap<Witness, Target>) {
+    fn translate_circuit(self: &mut Self, circuit: &Circuit) {
         self._register_public_parameters_from_acir_circuit(circuit);
-
         for opcode in &circuit.opcodes {
             match opcode {
-                AssertZero(expr) => self.translate_assert_zero(&expr),
+                AssertZero(expr) => self._translate_assert_zero(&expr),
                 _ => { () }
             }
         }
-
-        // let circuit_data = self.builder.build::<C>();
-        // (circuit_data, self.witness_target_map.clone())
     }
 
     fn _register_public_parameters_from_acir_circuit(self: &mut Self, circuit: &Circuit) {
@@ -65,41 +61,48 @@ impl CircuitBuilderFromAcirToPlonky2 {
         self.witness_target_map.insert(public_input_witness, public_input_target);
     }
 
-    fn field_element_to_goldilocks_field(self: &mut Self, fe: &FieldElement) -> F {
+    fn _field_element_to_goldilocks_field(self: &mut Self, fe: &FieldElement) -> F {
         let fe_as_big_uint = BigUint::from_bytes_be(&fe.to_be_bytes() as &[u8]);
         F::from_noncanonical_biguint(fe_as_big_uint)
     }
 
-    fn translate_assert_zero(self: &mut Self, expression: &Expression) {
+    fn _translate_assert_zero(self: &mut Self, expression: &Expression) {
         println!("{:?}", expression);
-        let g_constant = self.field_element_to_goldilocks_field(&expression.q_c);
-        let linear_combinations = &expression.linear_combinations;
-        let mul_terms = &expression.mul_terms;
+        let g_constant = self._field_element_to_goldilocks_field(&expression.q_c);
 
         let constant_target = self.builder.constant(g_constant);
         let mut current_acc_target = constant_target;
+        current_acc_target = self._add_linear_combinations(expression, current_acc_target);
+        current_acc_target = self._add_cuadratic_combinations(expression, current_acc_target);
+        self.builder.assert_zero(current_acc_target);
+    }
 
+    fn _add_cuadratic_combinations(self: &mut Self, expression: &Expression, mut current_acc_target: Target) -> Target {
+        let mul_terms = &expression.mul_terms;
+        for mul_term in mul_terms {
+            let (f_cuadratic_factor, public_input_witness_1, public_input_witness_2) = mul_term;
+            let cuadratic_target = self._compute_cuadratic_term_target(f_cuadratic_factor, public_input_witness_1, public_input_witness_2);
+            let new_target = self.builder.add(cuadratic_target, current_acc_target);
+            current_acc_target = new_target;
+        }
+        current_acc_target
+    }
+
+    fn _add_linear_combinations(self: &mut Self, expression: &Expression, mut current_acc_target: Target) -> Target{
+        let linear_combinations = &expression.linear_combinations;
         for (f_multiply_factor, public_input_witness) in linear_combinations {
             let linear_combination_target = self._compute_linear_combination_target(f_multiply_factor, public_input_witness);
             let new_target = self.builder.add(linear_combination_target, current_acc_target);
             current_acc_target = new_target;
         }
-
-        for mul_term in mul_terms {
-            let (f_cuadratic_factor, public_input_witness_1, public_input_witness_2) = mul_term;
-            let cuadratic_target  = self._compute_cuadratic_term_target(f_cuadratic_factor, public_input_witness_1, public_input_witness_2);
-            let new_target = self.builder.add(cuadratic_target, current_acc_target);
-            current_acc_target = new_target;
-        }
-
-        self.builder.assert_zero(current_acc_target);
+        current_acc_target
     }
 
     fn _compute_linear_combination_target(self: &mut Self,
                                           f_multiply_constant_factor: &FieldElement,
                                           public_input_witness: &Witness) -> Target {
         let first_public_input_target = *self.witness_target_map.get(public_input_witness).unwrap();
-        let g_first_pi_factor = self.field_element_to_goldilocks_field(f_multiply_constant_factor);
+        let g_first_pi_factor = self._field_element_to_goldilocks_field(f_multiply_constant_factor);
         self.builder.mul_const(g_first_pi_factor, first_public_input_target)
     }
 
@@ -107,7 +110,7 @@ impl CircuitBuilderFromAcirToPlonky2 {
                                       f_cuadratic_factor: &FieldElement,
                                       public_input_witness_1: &Witness,
                                       public_input_witness_2: &Witness) -> Target {
-        let g_cuadratic_factor = self.field_element_to_goldilocks_field(f_cuadratic_factor);
+        let g_cuadratic_factor = self._field_element_to_goldilocks_field(f_cuadratic_factor);
         let first_public_input_target = *self.witness_target_map.get(public_input_witness_1).unwrap();
         let second_public_input_target = *self.witness_target_map.get(public_input_witness_2).unwrap();
 

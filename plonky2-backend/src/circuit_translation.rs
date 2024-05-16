@@ -30,12 +30,25 @@ fn field_element_to_goldilocks_field(fe: &FieldElement) -> F {
     F::from_noncanonical_biguint(fe_as_big_uint)
 }
 
+fn _compute_cuadratic_term_target(builder: &mut CB,
+                                  witness_target_map: &HashMap<Witness, Target>,
+                                  f_cuadratic_factor: &FieldElement,
+                                  public_input_witness_1: &Witness,
+                                  public_input_witness_2: &Witness) -> Target {
+    let g_cuadratic_factor = field_element_to_goldilocks_field(f_cuadratic_factor);
+    let first_public_input_target = *witness_target_map.get(public_input_witness_1).unwrap();
+    let second_public_input_target = *witness_target_map.get(public_input_witness_2).unwrap();
+
+    let cuadratic_target = builder.mul(first_public_input_target, second_public_input_target);
+    builder.mul_const(g_cuadratic_factor, cuadratic_target)
+}
+
 fn _compute_linear_combination_target(builder: &mut CB,
                                       witness_target_map: &HashMap<Witness, Target>,
-                                      multiply_constant_factor: &FieldElement,
+                                      f_multiply_constant_factor: &FieldElement,
                                       public_input_witness: &Witness) -> Target{
     let first_public_input_target = *witness_target_map.get(public_input_witness).unwrap();
-    let g_first_pi_factor = field_element_to_goldilocks_field(multiply_constant_factor);
+    let g_first_pi_factor = field_element_to_goldilocks_field(f_multiply_constant_factor);
     builder.mul_const(g_first_pi_factor, first_public_input_target)
 }
 
@@ -56,13 +69,8 @@ fn translate_assert_zero(builder: &mut CB, expression: &Expression, witness_targ
     let mul_terms = &expression.mul_terms;
     if mul_terms.len() > 0 {
         let (f_cuadratic_factor, public_input_witness_1, public_input_witness_2) = &mul_terms[0];
-
-        let g_cuadratic_factor = field_element_to_goldilocks_field(f_cuadratic_factor);
-        let first_public_input_target = *witness_target_map.get(public_input_witness_1).unwrap();
-        let second_public_input_target = *witness_target_map.get(public_input_witness_2).unwrap();
-
-        let cuadratic_target = builder.mul(first_public_input_target, second_public_input_target);
-        let cuadratic_target_2 = builder.mul_const(g_cuadratic_factor, cuadratic_target);
+        let cuadratic_target_2  = _compute_cuadratic_term_target(builder, witness_target_map,
+                              f_cuadratic_factor, public_input_witness_1, public_input_witness_2);
         let addition_target = builder.add(cuadratic_target_2, current_acc_target);
         current_acc_target = addition_target;
     }
@@ -338,6 +346,49 @@ mod tests {
             mul_terms: vec![(FieldElement::from_hex("0x02").unwrap(), public_input_1, public_input_2)],
             linear_combinations: vec![],
             q_c: -FieldElement::from_hex("0x28").unwrap()
+        })
+    }
+
+    #[test]
+    fn test_plonky2_vm_can_traslate_multiple_cuadratic_terms() {
+        // Given
+        let public_inputs = vec![Witness(0), Witness(1), Witness(2), Witness(3)];
+        let only_opcode = multiple_cuadratic_terms_opcode(&public_inputs);
+        let circuit = circuit_with_single_opcode(only_opcode, public_inputs.clone());
+
+        // When
+        let (circuit_data, witness_target_map) = generate_plonky2_circuit_from_acir_circuit(&circuit);
+
+        // Then
+        let mut witnesses = PartialWitness::<F>::new();
+
+        let two = F::from_canonical_u64(2);
+        for pi in &public_inputs {
+            let public_input_plonky2_target = witness_target_map.get(pi).unwrap();
+            witnesses.set_target(*public_input_plonky2_target, two);
+        }
+
+        let proof = circuit_data.prove(witnesses).unwrap();
+
+        assert_eq!(two, proof.public_inputs[0]);
+        assert_eq!(two, proof.public_inputs[1]);
+        assert_eq!(two, proof.public_inputs[2]);
+        assert_eq!(two, proof.public_inputs[3]);
+        circuit_data.verify(proof).expect("Verification failed");
+    }
+
+    fn multiple_cuadratic_terms_opcode(public_inputs: &Vec<Witness>) -> Opcode {
+        AssertZero(Expression {
+            mul_terms: vec![
+                (FieldElement::from_hex("0x02").unwrap(), public_inputs[0], public_inputs[0]),
+                (FieldElement::from_hex("0x03").unwrap(), public_inputs[0], public_inputs[1]),
+                (FieldElement::from_hex("0x04").unwrap(), public_inputs[1], public_inputs[2]),
+                (FieldElement::from_hex("0x05").unwrap(), public_inputs[2], public_inputs[3]),
+                (FieldElement::from_hex("0x06").unwrap(), public_inputs[3], public_inputs[3]),
+                (FieldElement::from_hex("0x07").unwrap(), public_inputs[1], public_inputs[1]),
+            ],
+            linear_combinations: vec![],
+            q_c: -FieldElement::from_hex("0x6c").unwrap()
         })
     }
 

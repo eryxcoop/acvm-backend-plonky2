@@ -44,24 +44,16 @@ fn translate_assert_zero(builder: &mut CB, expression: &Expression, witness_targ
     let g_constant = field_element_to_goldilocks_field(&expression.q_c);
     let linear_combinations = &expression.linear_combinations;
 
-    let (f_first_multiply_factor, first_public_input_witness) = &linear_combinations[0];
-    let first_pi_target_multiplied = _compute_linear_combination_target(builder,
-        witness_target_map, f_first_multiply_factor, first_public_input_witness);
-
-    if linear_combinations.len() > 1{
-        let (f_second_multiply_factor, second_public_input_witness) = &linear_combinations[1];
-        let second_pi_target_multiplied = _compute_linear_combination_target(builder,
-            witness_target_map, f_second_multiply_factor, second_public_input_witness);
-
-
-        let product_addition_target = builder.add(first_pi_target_multiplied, second_pi_target_multiplied);
-        let result_target = builder.add_const(product_addition_target, g_constant);
-        return builder.assert_zero(result_target);
-    } else {
-        let result_target = builder.add_const(first_pi_target_multiplied, g_constant);
-        return builder.assert_zero(result_target);
+    let constant_target = builder.constant(g_constant);
+    let mut current_acc_target = constant_target;
+    for (f_second_multiply_factor, second_public_input_witness) in linear_combinations {
+        let linear_combination_target = _compute_linear_combination_target(builder,
+               witness_target_map, f_second_multiply_factor, second_public_input_witness);
+        let new_target = builder.add(linear_combination_target, current_acc_target);
+        current_acc_target = new_target;
     }
 
+    builder.assert_zero(current_acc_target);
 }
 
 fn generate_plonky2_circuit_from_acir_circuit(circuit: &Circuit) -> (CircuitData<F, C, 2>, HashMap<Witness, Target>){

@@ -46,11 +46,25 @@ fn translate_assert_zero(builder: &mut CB, expression: &Expression, witness_targ
 
     let constant_target = builder.constant(g_constant);
     let mut current_acc_target = constant_target;
-    for (f_second_multiply_factor, second_public_input_witness) in linear_combinations {
+    for (f_multiply_factor, second_public_input_witness) in linear_combinations {
         let linear_combination_target = _compute_linear_combination_target(builder,
-               witness_target_map, f_second_multiply_factor, second_public_input_witness);
+               witness_target_map, f_multiply_factor, second_public_input_witness);
         let new_target = builder.add(linear_combination_target, current_acc_target);
         current_acc_target = new_target;
+    }
+
+    let mul_terms = &expression.mul_terms;
+    if mul_terms.len() > 0 {
+        let (f_cuadratic_factor, public_input_witness_1, public_input_witness_2) = &mul_terms[0];
+
+        let g_cuadratic_factor = field_element_to_goldilocks_field(f_cuadratic_factor);
+        let first_public_input_target = *witness_target_map.get(public_input_witness_1).unwrap();
+        let second_public_input_target = *witness_target_map.get(public_input_witness_2).unwrap();
+
+        let cuadratic_target = builder.mul(first_public_input_target, second_public_input_target);
+        let cuadratic_target_2 = builder.mul_const(g_cuadratic_factor, cuadratic_target);
+        let addition_target = builder.add(cuadratic_target_2, current_acc_target);
+        current_acc_target = addition_target;
     }
 
     builder.assert_zero(current_acc_target);
@@ -264,6 +278,34 @@ mod tests {
         })
     }
 
+    #[test]
+    fn test_plonky2_vm_can_traslate_the_x_times_x_program_equals_constant() {
+        // Given
+        let public_input = Witness(0);
+        let only_opcode = two_times_x_times_x_opcode(public_input);
+        let circuit = circuit_with_single_opcode(only_opcode, vec![public_input]);
+
+        // When
+        let (circuit_data, witness_target_map) = generate_plonky2_circuit_from_acir_circuit(&circuit);
+
+        // Then
+        let mut witnesses = PartialWitness::<F>::new();
+        let four = F::from_canonical_u64(4);
+        let public_input_plonky2_target = witness_target_map.get(&public_input).unwrap();
+        witnesses.set_target(*public_input_plonky2_target, four);
+        let proof = circuit_data.prove(witnesses).unwrap();
+
+        assert_eq!(four, proof.public_inputs[0]);
+        circuit_data.verify(proof).expect("Verification failed");
+    }
+
+    fn two_times_x_times_x_opcode(public_input: Witness) -> Opcode {
+        AssertZero(Expression {
+            mul_terms: vec![(FieldElement::from_hex("0x02").unwrap(), public_input, public_input)],
+            linear_combinations: vec![],
+            q_c: -FieldElement::from_hex("0x20").unwrap()
+        })
+    }
 
     // #[test]
     // fn test_solo_plonky2() {

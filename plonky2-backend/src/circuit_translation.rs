@@ -25,90 +25,105 @@ type C = KeccakGoldilocksConfig;
 type F = <C as GenericConfig<D>>::F;
 type CB = CircuitBuilder::<F, D>;
 
-fn field_element_to_goldilocks_field(fe: &FieldElement) -> F {
-    let fe_as_big_uint = BigUint::from_bytes_be(&fe.to_be_bytes() as &[u8]);
-    F::from_noncanonical_biguint(fe_as_big_uint)
+struct CircuitBuilderFromAcirToPlonky2 {
+    builder: CB,
+    witness_target_map: HashMap<Witness, Target>
 }
 
-fn _compute_cuadratic_term_target(builder: &mut CB,
-                                  witness_target_map: &HashMap<Witness, Target>,
-                                  f_cuadratic_factor: &FieldElement,
-                                  public_input_witness_1: &Witness,
-                                  public_input_witness_2: &Witness) -> Target {
-    let g_cuadratic_factor = field_element_to_goldilocks_field(f_cuadratic_factor);
-    let first_public_input_target = *witness_target_map.get(public_input_witness_1).unwrap();
-    let second_public_input_target = *witness_target_map.get(public_input_witness_2).unwrap();
-
-    let cuadratic_target = builder.mul(first_public_input_target, second_public_input_target);
-    builder.mul_const(g_cuadratic_factor, cuadratic_target)
-}
-
-fn _compute_linear_combination_target(builder: &mut CB,
-                                      witness_target_map: &HashMap<Witness, Target>,
-                                      f_multiply_constant_factor: &FieldElement,
-                                      public_input_witness: &Witness) -> Target{
-    let first_public_input_target = *witness_target_map.get(public_input_witness).unwrap();
-    let g_first_pi_factor = field_element_to_goldilocks_field(f_multiply_constant_factor);
-    builder.mul_const(g_first_pi_factor, first_public_input_target)
-}
-
-fn translate_assert_zero(builder: &mut CB, expression: &Expression, witness_target_map: &mut HashMap<Witness, Target>) {
-    println!("{:?}", expression);
-    let g_constant = field_element_to_goldilocks_field(&expression.q_c);
-    let linear_combinations = &expression.linear_combinations;
-
-    let constant_target = builder.constant(g_constant);
-    let mut current_acc_target = constant_target;
-    for (f_multiply_factor, second_public_input_witness) in linear_combinations {
-        let linear_combination_target = _compute_linear_combination_target(builder,
-               witness_target_map, f_multiply_factor, second_public_input_witness);
-        let new_target = builder.add(linear_combination_target, current_acc_target);
-        current_acc_target = new_target;
+impl CircuitBuilderFromAcirToPlonky2 {
+    fn new() -> Self {
+        let config = CircuitConfig::standard_recursion_config();
+        let mut builder = CB::new(config);
+        let mut witness_target_map: HashMap<Witness, Target> = HashMap::new();
+        Self {builder, witness_target_map}
     }
 
-    let mul_terms = &expression.mul_terms;
-    for mul_term in mul_terms {
-        let (f_cuadratic_factor, public_input_witness_1, public_input_witness_2) = mul_term;
-        let cuadratic_target  = _compute_cuadratic_term_target(builder, witness_target_map,
-                             f_cuadratic_factor, public_input_witness_1, public_input_witness_2);
-        let new_target = builder.add(cuadratic_target, current_acc_target);
-        current_acc_target = new_target;
+    fn translate_circuit(self: &mut Self, circuit: &Circuit) {// -> (CircuitData<F, C, 2>, HashMap<Witness, Target>) {
+        self._register_public_parameters_from_acir_circuit(circuit);
+
+        for opcode in &circuit.opcodes {
+            match opcode {
+                AssertZero(expr) => self.translate_assert_zero(&expr),
+                _ => { () }
+            }
+        }
+
+        // let circuit_data = self.builder.build::<C>();
+        // (circuit_data, self.witness_target_map.clone())
     }
 
-    builder.assert_zero(current_acc_target);
-}
-
-fn generate_plonky2_circuit_from_acir_circuit(circuit: &Circuit) -> (CircuitData<F, C, 2>, HashMap<Witness, Target>){
-    let config = CircuitConfig::standard_recursion_config();
-    let mut builder = CB::new(config);
-    let mut witness_target_map: HashMap<Witness, Target> = HashMap::new();
-
-    _register_public_parameters_from_acir_circuit(circuit, &mut builder, &mut witness_target_map);
-
-    for opcode in &circuit.opcodes {
-        match opcode {
-            AssertZero(expr) => translate_assert_zero(&mut builder, &expr, &mut witness_target_map),
-            _ => { () }
+    fn _register_public_parameters_from_acir_circuit(self: &mut Self, circuit: &Circuit) {
+        let public_parameters_as_list: Vec<Witness> = circuit.public_parameters.0.iter().cloned().collect();
+        for public_parameter_witness in public_parameters_as_list {
+            self._register_new_public_input_from_witness(public_parameter_witness);
         }
     }
 
-    (builder.build::<C>(), witness_target_map)
-}
+    fn _register_new_public_input_from_witness(self: &mut Self, public_input_witness: Witness) {
+        let public_input_target = self.builder.add_virtual_target();
+        self.builder.register_public_input(public_input_target);
+        self.witness_target_map.insert(public_input_witness, public_input_target);
+    }
 
-fn _register_public_parameters_from_acir_circuit(circuit: &Circuit, mut builder: &mut CircuitBuilder<GoldilocksField, 2>, mut witness_target_map: &mut HashMap<Witness, Target>) {
-    let public_parameters_as_list: Vec<Witness> = circuit.public_parameters.0.iter().cloned().collect();
-    for public_parameter_witness in public_parameters_as_list {
-        _register_new_public_input_from_witness(public_parameter_witness, &mut builder, &mut witness_target_map);
+    fn field_element_to_goldilocks_field(self: &mut Self, fe: &FieldElement) -> F {
+        let fe_as_big_uint = BigUint::from_bytes_be(&fe.to_be_bytes() as &[u8]);
+        F::from_noncanonical_biguint(fe_as_big_uint)
+    }
+
+    fn translate_assert_zero(self: &mut Self, expression: &Expression) {
+        println!("{:?}", expression);
+        let g_constant = self.field_element_to_goldilocks_field(&expression.q_c);
+        let linear_combinations = &expression.linear_combinations;
+        let mul_terms = &expression.mul_terms;
+
+        let constant_target = self.builder.constant(g_constant);
+        let mut current_acc_target = constant_target;
+
+        for (f_multiply_factor, public_input_witness) in linear_combinations {
+            let linear_combination_target = self._compute_linear_combination_target(f_multiply_factor, public_input_witness);
+            let new_target = self.builder.add(linear_combination_target, current_acc_target);
+            current_acc_target = new_target;
+        }
+
+        for mul_term in mul_terms {
+            let (f_cuadratic_factor, public_input_witness_1, public_input_witness_2) = mul_term;
+            let cuadratic_target  = self._compute_cuadratic_term_target(f_cuadratic_factor, public_input_witness_1, public_input_witness_2);
+            let new_target = self.builder.add(cuadratic_target, current_acc_target);
+            current_acc_target = new_target;
+        }
+
+        self.builder.assert_zero(current_acc_target);
+    }
+
+    fn _compute_linear_combination_target(self: &mut Self,
+                                          f_multiply_constant_factor: &FieldElement,
+                                          public_input_witness: &Witness) -> Target {
+        let first_public_input_target = *self.witness_target_map.get(public_input_witness).unwrap();
+        let g_first_pi_factor = self.field_element_to_goldilocks_field(f_multiply_constant_factor);
+        self.builder.mul_const(g_first_pi_factor, first_public_input_target)
+    }
+
+    fn _compute_cuadratic_term_target(self: &mut Self,
+                                      f_cuadratic_factor: &FieldElement,
+                                      public_input_witness_1: &Witness,
+                                      public_input_witness_2: &Witness) -> Target {
+        let g_cuadratic_factor = self.field_element_to_goldilocks_field(f_cuadratic_factor);
+        let first_public_input_target = *self.witness_target_map.get(public_input_witness_1).unwrap();
+        let second_public_input_target = *self.witness_target_map.get(public_input_witness_2).unwrap();
+
+        let cuadratic_target = self.builder.mul(first_public_input_target, second_public_input_target);
+        self.builder.mul_const(g_cuadratic_factor, cuadratic_target)
     }
 }
 
-fn _register_new_public_input_from_witness(public_input_witness: Witness,
-                                           builder: &mut CB,
-                                           witness_target_map: &mut HashMap<Witness, Target>) {
-    let public_input_target = builder.add_virtual_target();
-    builder.register_public_input(public_input_target);
-    witness_target_map.insert(public_input_witness, public_input_target);
+
+fn generate_plonky2_circuit_from_acir_circuit(circuit: &Circuit) -> (CircuitData<F, C, 2>, HashMap<Witness, Target>){
+    let mut translator = CircuitBuilderFromAcirToPlonky2::new();
+    translator.translate_circuit(circuit);
+    let CircuitBuilderFromAcirToPlonky2 {builder, witness_target_map} = translator;
+    (builder.build::<C>(), witness_target_map)
 }
+
 
 #[cfg(test)]
 mod tests {

@@ -325,11 +325,9 @@ mod tests {
         let (circuit_data, witness_target_map) = generate_plonky2_circuit_from_acir_circuit(&circuit);
 
         // Then
-        let mut witnesses = PartialWitness::<F>::new();
         let four = F::from_canonical_u64(4);
-        let public_input_plonky2_target = witness_target_map.get(&public_input).unwrap();
-        witnesses.set_target(*public_input_plonky2_target, four);
-        let proof = circuit_data.prove(witnesses).unwrap();
+        let proof = generate_plonky2_proof_using_witness_values(
+            vec![(public_input, four)], &witness_target_map, &circuit_data);
 
         assert_eq!(four, proof.public_inputs[0]);
         circuit_data.verify(proof).expect("Verification failed");
@@ -355,14 +353,11 @@ mod tests {
         let (circuit_data, witness_target_map) = generate_plonky2_circuit_from_acir_circuit(&circuit);
 
         // Then
-        let mut witnesses = PartialWitness::<F>::new();
         let four = F::from_canonical_u64(4);
         let five = F::from_canonical_u64(5);
-        let public_input_plonky2_target_1 = witness_target_map.get(&public_input_1).unwrap();
-        let public_input_plonky2_target_2 = witness_target_map.get(&public_input_2).unwrap();
-        witnesses.set_target(*public_input_plonky2_target_1, four);
-        witnesses.set_target(*public_input_plonky2_target_2, five);
-        let proof = circuit_data.prove(witnesses).unwrap();
+        let proof = generate_plonky2_proof_using_witness_values(
+            vec![(public_input_1, four), (public_input_2, five)],
+            &witness_target_map, &circuit_data);
 
         assert_eq!(four, proof.public_inputs[0]);
         assert_eq!(five, proof.public_inputs[1]);
@@ -388,15 +383,11 @@ mod tests {
         let (circuit_data, witness_target_map) = generate_plonky2_circuit_from_acir_circuit(&circuit);
 
         // Then
-        let mut witnesses = PartialWitness::<F>::new();
-
         let two = F::from_canonical_u64(2);
-        for pi in &public_inputs {
-            let public_input_plonky2_target = witness_target_map.get(pi).unwrap();
-            witnesses.set_target(*public_input_plonky2_target, two);
-        }
-
-        let proof = circuit_data.prove(witnesses).unwrap();
+        let proof = generate_plonky2_proof_using_witness_values(
+            vec![(public_inputs[0], two), (public_inputs[1], two),
+                 (public_inputs[2], two), (public_inputs[3], two)],
+            &witness_target_map, &circuit_data);
 
         assert_eq!(two, proof.public_inputs[0]);
         assert_eq!(two, proof.public_inputs[1]);

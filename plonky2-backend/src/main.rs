@@ -51,8 +51,6 @@ fn main() {
         let functions = acir_program.functions;
         let circuit = &functions[0];
         println!("{:?}", circuit);
-
-
     } else {
         println!("If you're watching this you probably shouldn't want to");
     }

@@ -20,6 +20,7 @@ pub fn circuit_with_single_opcode(only_expr: Opcode, public_input_witnesses: Vec
         recursive: false,
     }
 }
+
 pub fn x_equals_4_opcode(public_input_witness: Witness) -> Opcode {
     AssertZero(Expression {
         mul_terms: Vec::new(),
@@ -27,6 +28,7 @@ pub fn x_equals_4_opcode(public_input_witness: Witness) -> Opcode {
         q_c: -FieldElement::from_hex("0x04").unwrap(),
     })
 }
+
 pub fn x_times_3_equals_12_opcode(public_input_witness: Witness) -> Opcode {
     AssertZero(Expression {
         mul_terms: Vec::new(),
@@ -34,6 +36,7 @@ pub fn x_times_3_equals_12_opcode(public_input_witness: Witness) -> Opcode {
         q_c: -FieldElement::from_hex("0x0C").unwrap(),
     })
 }
+
 pub fn x_times_3_plus_y_times_4_equals_constant(first_public_input_witness: Witness, second_public_input_witness: Witness) -> Opcode {
     AssertZero(Expression {
         mul_terms: vec![],
@@ -44,6 +47,7 @@ pub fn x_times_3_plus_y_times_4_equals_constant(first_public_input_witness: Witn
         q_c: -FieldElement::from_hex("0x0c").unwrap(),
     })
 }
+
 pub fn multiple_linear_combinations_opcode(public_inputs: &Vec<Witness>) -> Opcode {
     AssertZero(Expression {
         mul_terms: vec![],
@@ -51,6 +55,7 @@ pub fn multiple_linear_combinations_opcode(public_inputs: &Vec<Witness>) -> Opco
         q_c: -FieldElement::from_hex("0x0c").unwrap(),
     })
 }
+
 pub fn two_times_x_times_x_opcode(public_input: Witness) -> Opcode {
     AssertZero(Expression {
         mul_terms: vec![(FieldElement::from_hex("0x02").unwrap(), public_input, public_input)],
@@ -58,6 +63,7 @@ pub fn two_times_x_times_x_opcode(public_input: Witness) -> Opcode {
         q_c: -FieldElement::from_hex("0x20").unwrap(),
     })
 }
+
 pub fn two_times_x_times_y_opcode(public_input_1: Witness, public_input_2: Witness) -> Opcode {
     AssertZero(Expression {
         mul_terms: vec![(FieldElement::from_hex("0x02").unwrap(), public_input_1, public_input_2)],
@@ -65,6 +71,7 @@ pub fn two_times_x_times_y_opcode(public_input_1: Witness, public_input_2: Witne
         q_c: -FieldElement::from_hex("0x28").unwrap(),
     })
 }
+
 pub fn multiple_cuadratic_terms_opcode(public_inputs: &Vec<Witness>) -> Opcode {
     AssertZero(Expression {
         mul_terms: vec![
@@ -79,6 +86,7 @@ pub fn multiple_cuadratic_terms_opcode(public_inputs: &Vec<Witness>) -> Opcode {
         q_c: -FieldElement::from_hex("0x6c").unwrap(),
     })
 }
+
 pub fn multiple_cuadratic_terms_and_linear_combinations_opcode(public_inputs: &Vec<Witness>) -> Opcode {
     AssertZero(Expression {
         mul_terms: vec![
@@ -98,8 +106,9 @@ pub fn multiple_cuadratic_terms_and_linear_combinations_opcode(public_inputs: &V
         q_c: -FieldElement::from_hex("0x80").unwrap(),
     })
 }
+
 pub fn circuit_with_a_public_input_and_two_assert_zero_operands(public_input_witness: Witness,
-                                                            intermediate_witness: Witness) -> Circuit {
+                                                                intermediate_witness: Witness) -> Circuit {
     Circuit {
         current_witness_index: 0,
         expression_width: ExpressionWidth::Unbounded,

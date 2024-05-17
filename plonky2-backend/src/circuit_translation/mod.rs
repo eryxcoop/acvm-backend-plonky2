@@ -1,4 +1,5 @@
 mod tests;
+pub mod assert_zero_translator;
 
 use std::collections::{HashMap};
 use std::error::Error;
@@ -44,7 +45,10 @@ impl CircuitBuilderFromAcirToPlonky2 {
         self._register_public_parameters_from_acir_circuit(circuit);
         for opcode in &circuit.opcodes {
             match opcode {
-                AssertZero(expr) => self._translate_assert_zero(&expr),
+                AssertZero(expr) => {
+                    self._register_intermediate_witnesses_for_assert_zero(&expr);
+                    self._translate_assert_zero(&expr);
+                },
                 _ => { () }
             }
         }
@@ -66,6 +70,20 @@ impl CircuitBuilderFromAcirToPlonky2 {
     fn _field_element_to_goldilocks_field(self: &mut Self, fe: &FieldElement) -> F {
         let fe_as_big_uint = BigUint::from_bytes_be(&fe.to_be_bytes() as &[u8]);
         F::from_noncanonical_biguint(fe_as_big_uint)
+    }
+
+    fn _register_intermediate_witnesses_for_assert_zero(self: &mut Self, expr: &Expression) {
+        for (_, witness_1, witness_2) in &expr.mul_terms {
+            self._register_witness_if_not_already_registered(*witness_1);
+            self._register_witness_if_not_already_registered(*witness_2);
+        }
+        for (_, witness) in &expr.linear_combinations {
+            self._register_witness_if_not_already_registered(*witness);
+        }
+    }
+
+    fn _register_witness_if_not_already_registered(self: &mut Self, witness: Witness) {
+        self.witness_target_map.entry(witness).or_insert(self.builder.add_virtual_target());
     }
 
     fn _translate_assert_zero(self: &mut Self, expression: &Expression) {

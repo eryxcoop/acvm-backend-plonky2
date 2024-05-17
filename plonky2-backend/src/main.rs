@@ -1,6 +1,6 @@
 extern crate core;
 
-mod circuit_translation;
+pub mod circuit_translation;
 
 use std::env;
 use std::fs::File;

@@ -1,4 +1,4 @@
-fn main(x: pub Field){
-   assert(x == 0);
+fn main(x: pub Field) -> pub Field {
+   x
 }
 

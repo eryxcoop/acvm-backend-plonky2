@@ -121,7 +121,7 @@ impl CircuitBuilderFromAcirToPlonky2 {
     fn _compute_linear_combination_target(self: &mut Self,
                                           f_multiply_constant_factor: &FieldElement,
                                           public_input_witness: &Witness) -> Target {
-        let factor_target = *self.witness_target_map.entry(*public_input_witness).or_insert(self.builder.add_virtual_target());
+        let factor_target = *self.witness_target_map.get(public_input_witness).unwrap();
         let g_first_pi_factor = self._field_element_to_goldilocks_field(f_multiply_constant_factor);
         self.builder.mul_const(g_first_pi_factor, factor_target)
     }

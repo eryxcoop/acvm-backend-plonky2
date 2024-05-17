@@ -122,6 +122,8 @@ impl CircuitBuilderFromAcirToPlonky2 {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
     fn generate_plonky2_circuit_from_acir_circuit(circuit: &Circuit) -> (CircuitData<F, C, 2>, HashMap<Witness, Target>) {
         let mut translator = CircuitBuilderFromAcirToPlonky2::new();
         translator.translate_circuit(circuit);
@@ -139,8 +141,6 @@ mod tests {
         }
         circuit_data.prove(witnesses).unwrap()
     }
-
-    use super::*;
 
     #[test]
     fn test_plonky2_vm_can_traslate_the_assert_x_equals_zero_program() {
@@ -409,9 +409,9 @@ mod tests {
         // Then
         let two = F::from_canonical_u64(2);
         let proof = generate_plonky2_proof_using_witness_values(
-vec![(public_inputs[0], two), (public_inputs[1], two),
-                     (public_inputs[2], two), (public_inputs[3], two)],
-                &witness_target_map, &circuit_data);
+            vec![(public_inputs[0], two), (public_inputs[1], two),
+                 (public_inputs[2], two), (public_inputs[3], two)],
+            &witness_target_map, &circuit_data);
 
         assert_eq!(two, proof.public_inputs[0]);
         assert_eq!(two, proof.public_inputs[1]);

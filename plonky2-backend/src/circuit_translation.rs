@@ -252,16 +252,11 @@ mod tests {
         let (circuit_data, witness_target_map) = generate_plonky2_circuit_from_acir_circuit(&circuit);
 
         // Then
-        let mut witnesses = PartialWitness::<F>::new();
-
         let one = F::from_canonical_u64(1);
-        let public_input_plonky2_target = witness_target_map.get(&first_public_input_witness).unwrap();
-        witnesses.set_target(*public_input_plonky2_target, one);
+        let proof = generate_plonky2_proof_using_witness_values(
+            vec![(first_public_input_witness, one), (second_public_input_witness, one)],
+            &witness_target_map, &circuit_data);
 
-        let public_input_plonky2_target_2 = witness_target_map.get(&second_public_input_witness).unwrap();
-        witnesses.set_target(*public_input_plonky2_target_2, one);
-
-        let proof = circuit_data.prove(witnesses).unwrap();
         assert_eq!(one, proof.public_inputs[0]);
         assert_eq!(one, proof.public_inputs[1]);
         circuit_data.verify(proof).expect("Verification failed");
@@ -289,15 +284,11 @@ mod tests {
         let (circuit_data, witness_target_map) = generate_plonky2_circuit_from_acir_circuit(&circuit);
 
         // Then
-        let mut witnesses = PartialWitness::<F>::new();
-
         let one = F::from_canonical_u64(1);
-        for pi in &public_inputs {
-            let public_input_plonky2_target = witness_target_map.get(pi).unwrap();
-            witnesses.set_target(*public_input_plonky2_target, one);
-        }
-
-        let proof = circuit_data.prove(witnesses).unwrap();
+        let proof = generate_plonky2_proof_using_witness_values(
+            vec![(public_inputs[0], one), (public_inputs[1], one),
+                 (public_inputs[2], one), (public_inputs[3], one)],
+            &witness_target_map, &circuit_data);
 
         assert_eq!(one, proof.public_inputs[0]);
         assert_eq!(one, proof.public_inputs[1]);

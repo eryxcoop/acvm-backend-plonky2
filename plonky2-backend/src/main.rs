@@ -10,7 +10,7 @@ use acir::circuit::Program;
 use acir::native_types::WitnessStack;
 use jemallocator::Jemalloc;
 
-#[global_allocator]
+#[global_allocator] // This is a plonky2 recommendation
 static GLOBAL: Jemalloc = Jemalloc;
 
 

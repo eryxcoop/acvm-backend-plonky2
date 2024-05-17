@@ -1,4 +1,5 @@
 use super::*;
+use super::factories::circuit_factory::*;
 
 fn generate_plonky2_circuit_from_acir_circuit(circuit: &Circuit) -> (CircuitData<F, C, 2>, HashMap<Witness, Target>) {
     let mut translator = CircuitBuilderFromAcirToPlonky2::new();
@@ -36,27 +37,6 @@ fn test_plonky2_vm_can_traslate_the_assert_x_equals_zero_program() {
     circuit_data.verify(proof).expect("Verification failed");
 }
 
-fn circuit_with_single_opcode(only_expr: Opcode, public_input_witnesses: Vec<Witness>) -> Circuit {
-    Circuit {
-        current_witness_index: 0,
-        expression_width: ExpressionWidth::Unbounded,
-        opcodes: vec![only_expr],
-        private_parameters: BTreeSet::new(),
-        public_parameters: PublicInputs(BTreeSet::from_iter(public_input_witnesses)),
-        return_values: PublicInputs(BTreeSet::new()),
-        assert_messages: Default::default(),
-        recursive: false,
-    }
-}
-
-fn x_equals_0_opcode(public_input_witness: Witness) -> Opcode {
-    AssertZero(Expression {
-        mul_terms: Vec::new(),
-        linear_combinations: vec![(FieldElement::one(), public_input_witness)],
-        q_c: FieldElement::zero(),
-    })
-}
-
 #[test]
 fn test_plonky2_vm_can_traslate_the_assert_x_equals_constant_program() {
     // Given
@@ -75,14 +55,6 @@ fn test_plonky2_vm_can_traslate_the_assert_x_equals_constant_program() {
     circuit_data.verify(proof).expect("Verification failed");
 }
 
-fn x_equals_4_opcode(public_input_witness: Witness) -> Opcode {
-    AssertZero(Expression {
-        mul_terms: Vec::new(),
-        linear_combinations: vec![(FieldElement::one(), public_input_witness)],
-        q_c: -FieldElement::from_hex("0x04").unwrap(),
-    })
-}
-
 #[test]
 fn test_plonky2_vm_can_traslate_the_assert_c_times_x_equals_constant_program() {
     // Given
@@ -99,14 +71,6 @@ fn test_plonky2_vm_can_traslate_the_assert_c_times_x_equals_constant_program() {
         vec![(public_input_witness, four)], &witness_target_map, &circuit_data);
     assert_eq!(four, proof.public_inputs[0]);
     circuit_data.verify(proof).expect("Verification failed");
-}
-
-fn x_times_3_equals_12_opcode(public_input_witness: Witness) -> Opcode {
-    AssertZero(Expression {
-        mul_terms: Vec::new(),
-        linear_combinations: vec![(FieldElement::from_hex("0x03").unwrap(), public_input_witness)],
-        q_c: -FieldElement::from_hex("0x0C").unwrap(),
-    })
 }
 
 #[test]
@@ -130,17 +94,6 @@ fn test_plonky2_vm_can_traslate_the_x_times_3_plus_y_times_4_equals_constant_pro
     assert_eq!(one, proof.public_inputs[0]);
     assert_eq!(one, proof.public_inputs[1]);
     circuit_data.verify(proof).expect("Verification failed");
-}
-
-fn x_times_3_plus_y_times_4_equals_constant(first_public_input_witness: Witness, second_public_input_witness: Witness) -> Opcode {
-    AssertZero(Expression {
-        mul_terms: vec![],
-        linear_combinations: vec![
-            (FieldElement::from_hex("0x03").unwrap(), first_public_input_witness),
-            (FieldElement::from_hex("0x09").unwrap(), second_public_input_witness),
-        ],
-        q_c: -FieldElement::from_hex("0x0c").unwrap(),
-    })
 }
 
 #[test]
@@ -167,14 +120,6 @@ fn test_plonky2_vm_can_traslate_multiple_linear_combinations() {
     circuit_data.verify(proof).expect("Verification failed");
 }
 
-fn multiple_linear_combinations_opcode(public_inputs: &Vec<Witness>) -> Opcode {
-    AssertZero(Expression {
-        mul_terms: vec![],
-        linear_combinations: public_inputs.iter().map(|a_witness| (FieldElement::from_hex("0x03").unwrap(), *a_witness)).rev().collect(),
-        q_c: -FieldElement::from_hex("0x0c").unwrap(),
-    })
-}
-
 #[test]
 fn test_plonky2_vm_can_traslate_the_x_times_x_program_equals_constant() {
     // Given
@@ -192,14 +137,6 @@ fn test_plonky2_vm_can_traslate_the_x_times_x_program_equals_constant() {
 
     assert_eq!(four, proof.public_inputs[0]);
     circuit_data.verify(proof).expect("Verification failed");
-}
-
-fn two_times_x_times_x_opcode(public_input: Witness) -> Opcode {
-    AssertZero(Expression {
-        mul_terms: vec![(FieldElement::from_hex("0x02").unwrap(), public_input, public_input)],
-        linear_combinations: vec![],
-        q_c: -FieldElement::from_hex("0x20").unwrap(),
-    })
 }
 
 #[test]
@@ -223,14 +160,6 @@ fn test_plonky2_vm_can_traslate_the_c_times_x_times_y_program_equals_constant() 
     assert_eq!(four, proof.public_inputs[0]);
     assert_eq!(five, proof.public_inputs[1]);
     circuit_data.verify(proof).expect("Verification failed");
-}
-
-fn two_times_x_times_y_opcode(public_input_1: Witness, public_input_2: Witness) -> Opcode {
-    AssertZero(Expression {
-        mul_terms: vec![(FieldElement::from_hex("0x02").unwrap(), public_input_1, public_input_2)],
-        linear_combinations: vec![],
-        q_c: -FieldElement::from_hex("0x28").unwrap(),
-    })
 }
 
 #[test]
@@ -257,21 +186,6 @@ fn test_plonky2_vm_can_traslate_multiple_cuadratic_terms() {
     circuit_data.verify(proof).expect("Verification failed");
 }
 
-fn multiple_cuadratic_terms_opcode(public_inputs: &Vec<Witness>) -> Opcode {
-    AssertZero(Expression {
-        mul_terms: vec![
-            (FieldElement::from_hex("0x02").unwrap(), public_inputs[0], public_inputs[0]),
-            (FieldElement::from_hex("0x03").unwrap(), public_inputs[0], public_inputs[1]),
-            (FieldElement::from_hex("0x04").unwrap(), public_inputs[1], public_inputs[2]),
-            (FieldElement::from_hex("0x05").unwrap(), public_inputs[2], public_inputs[3]),
-            (FieldElement::from_hex("0x06").unwrap(), public_inputs[3], public_inputs[3]),
-            (FieldElement::from_hex("0x07").unwrap(), public_inputs[1], public_inputs[1]),
-        ],
-        linear_combinations: vec![],
-        q_c: -FieldElement::from_hex("0x6c").unwrap(),
-    })
-}
-
 #[test]
 fn test_plonky2_vm_can_traslate_multiple_cuadratic_terms_and_linear_combinations() {
     // Given
@@ -296,26 +210,6 @@ fn test_plonky2_vm_can_traslate_multiple_cuadratic_terms_and_linear_combinations
     circuit_data.verify(proof).expect("Verification failed");
 }
 
-fn multiple_cuadratic_terms_and_linear_combinations_opcode(public_inputs: &Vec<Witness>) -> Opcode {
-    AssertZero(Expression {
-        mul_terms: vec![
-            (FieldElement::from_hex("0x02").unwrap(), public_inputs[0], public_inputs[0]),
-            (FieldElement::from_hex("0x03").unwrap(), public_inputs[0], public_inputs[1]),
-            (FieldElement::from_hex("0x04").unwrap(), public_inputs[1], public_inputs[2]),
-            (FieldElement::from_hex("0x05").unwrap(), public_inputs[2], public_inputs[3]),
-            (FieldElement::from_hex("0x06").unwrap(), public_inputs[3], public_inputs[3]),
-            (FieldElement::from_hex("0x07").unwrap(), public_inputs[1], public_inputs[1]),
-        ],
-        linear_combinations: vec![
-            (FieldElement::from_hex("0x01").unwrap(), public_inputs[0]),
-            (FieldElement::from_hex("0x02").unwrap(), public_inputs[1]),
-            (FieldElement::from_hex("0x03").unwrap(), public_inputs[2]),
-            (FieldElement::from_hex("0x04").unwrap(), public_inputs[3]),
-        ],
-        q_c: -FieldElement::from_hex("0x80").unwrap(),
-    })
-}
-
 #[test]
 fn test_plonky2_vm_can_translate_circuits_with_2_assert_zero_opcodes() {
     // Given
@@ -336,31 +230,6 @@ fn test_plonky2_vm_can_translate_circuits_with_2_assert_zero_opcodes() {
 
     assert_eq!(one, proof.public_inputs[0]);
     circuit_data.verify(proof).expect("Verification failed");
-}
-
-fn circuit_with_a_public_input_and_two_assert_zero_operands(public_input_witness: Witness,
-                                                            intermediate_witness: Witness) -> Circuit {
-    Circuit {
-        current_witness_index: 0,
-        expression_width: ExpressionWidth::Unbounded,
-        opcodes: vec![
-            AssertZero(Expression {
-                mul_terms: vec![],
-                linear_combinations: vec![(FieldElement::one(), public_input_witness), (-FieldElement::one(), intermediate_witness)],
-                q_c: FieldElement::from_hex("0x04").unwrap(),
-            }),
-            AssertZero(Expression {
-                mul_terms: vec![(FieldElement::one(), intermediate_witness, intermediate_witness)],
-                linear_combinations: vec![],
-                q_c: -FieldElement::from_hex("0x19").unwrap(),
-            }),
-        ],
-        private_parameters: BTreeSet::new(),
-        public_parameters: PublicInputs(BTreeSet::from_iter(vec![public_input_witness])),
-        return_values: PublicInputs(BTreeSet::new()),
-        assert_messages: Default::default(),
-        recursive: false,
-    }
 }
 
 // #[test]

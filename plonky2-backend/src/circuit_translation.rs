@@ -101,9 +101,9 @@ impl CircuitBuilderFromAcirToPlonky2 {
     fn _compute_linear_combination_target(self: &mut Self,
                                           f_multiply_constant_factor: &FieldElement,
                                           public_input_witness: &Witness) -> Target {
-        let first_public_input_target = *self.witness_target_map.get(public_input_witness).unwrap();
+        let factor_target = *self.witness_target_map.entry(*public_input_witness).or_insert(self.builder.add_virtual_target());
         let g_first_pi_factor = self._field_element_to_goldilocks_field(f_multiply_constant_factor);
-        self.builder.mul_const(g_first_pi_factor, first_public_input_target)
+        self.builder.mul_const(g_first_pi_factor, factor_target)
     }
 
     fn _compute_cuadratic_term_target(self: &mut Self,
@@ -129,6 +129,17 @@ mod tests {
         let CircuitBuilderFromAcirToPlonky2 {builder, witness_target_map} = translator;
         (builder.build::<C>(), witness_target_map)
     }
+
+    // fn generate_plonky2_proof_using_witness_values(witness_assignment: &Vec<(Witness, F)>,
+    //                                                witness_target_map: &HashMap<Witness, Target>,
+    //                                                circuit_data: &CircuitData<F, C, 2>) -> ProofWithPublicInputs<GoldilocksField, C, 2>{
+    //     let mut witnesses = PartialWitness::<F>::new();
+    //     for (witness, value) in witness_assignment {
+    //         let plonky2_target = witness_target_map.get(&witness).unwrap();
+    //         witnesses.set_target(*plonky2_target, *value);
+    //     }
+    //     circuit_data.prove(witnesses).unwrap()
+    // }
 
     use super::*;
     #[test]
@@ -457,28 +468,77 @@ mod tests {
         })
     }
 
+    #[test]
+    fn test_plonky2_vm_can_translate_circuits_with_2_assert_zero_opcodes() {
+        // Given
+        let public_input_witness = Witness(0);
+        let circuit = circuit_with_a_public_input_and_two_assert_zero_operands(public_input_witness);
+
+        // When
+        let (circuit_data, witness_target_map) = generate_plonky2_circuit_from_acir_circuit(&circuit);
+
+        // Then
+        let mut witnesses = PartialWitness::<F>::new();
+        let one= F::from_canonical_u64(1);
+        let public_input_plonky2_target = witness_target_map.get(&public_input_witness).unwrap();
+        witnesses.set_target(*public_input_plonky2_target, one);
+
+        let five = F::from_canonical_u64(5);
+        let intermediate_plonky2_target = witness_target_map.get(&Witness(1)).unwrap();
+        witnesses.set_target(*intermediate_plonky2_target,
+                             five);
+
+        let proof = circuit_data.prove(witnesses).unwrap();
+        assert_eq!(one, proof.public_inputs[0]);
+        circuit_data.verify(proof).expect("Verification failed");
+    }
+
+    fn circuit_with_a_public_input_and_two_assert_zero_operands(public_input_witness: Witness) -> Circuit {
+        Circuit {
+            current_witness_index: 0,
+            expression_width: ExpressionWidth::Unbounded,
+            opcodes: vec![
+                AssertZero(Expression {
+                    mul_terms: vec![],
+                    linear_combinations: vec![(FieldElement::one(), public_input_witness), (-FieldElement::one(), Witness(1))],
+                    q_c: FieldElement::from_hex("0x04").unwrap()
+                }),
+                AssertZero(Expression {
+                    mul_terms: vec![(FieldElement::one(), Witness(1), Witness(1))],
+                    linear_combinations: vec![],
+                    q_c: -FieldElement::from_hex("0x19").unwrap()
+                }),
+            ],
+            private_parameters: BTreeSet::new(),
+            public_parameters: PublicInputs(BTreeSet::from_iter(vec![public_input_witness])),
+            return_values: PublicInputs(BTreeSet::new()),
+            assert_messages: Default::default(),
+            recursive: false,
+        }
+    }
+
     // #[test]
     // fn test_solo_plonky2() {
     //     let config = CircuitConfig::standard_recursion_config();
     //     let mut builder = CB::new(config);
     //
-    //     let public_input_target = builder.add_virtual_target();
-    //     builder.register_public_input(public_input_target);
+    //     let tar1 = builder.add_virtual_target();
+    //     builder.register_public_input(tar1);
+    //     let tar2 = builder.add_virtual_target();
     //
-    //     let public_input_target_2 = builder.add_virtual_target();
-    //     builder.register_public_input(public_input_target_2);
-    //
-    //     let result_target = builder.mul(public_input_target_2, public_input_target);
-    //     builder.assert_zero(result_target);
-    //
-    //     let mut witnesses = PartialWitness::<F>::new();
-    //     let one = GoldilocksField::from_canonical_u64(1);
-    //     let zero = GoldilocksField::from_canonical_u64(0);
+    //     let tar3 = builder.mul_const(F::from_canonical_u64(18446744069414584320), tar2);
+    //     let tar4 = builder.add(tar1, tar3);
+    //     let tar5 = builder.add_const(tar4, F::from_canonical_u64(4));
+    //     builder.assert_zero(tar5);
+    //     let tar6 = builder.mul(tar2, tar2);
+    //     let tar7 = builder.add_const(tar6, F::from_canonical_u64(18446744069414584296));
+    //     builder.assert_zero(tar7);
     //
     //     let circuit_data: CircuitData<F, C, 2> = builder.build();
     //
-    //     witnesses.set_target(public_input_target, one);
-    //     witnesses.set_target(public_input_target_2, zero);
+    //     let mut witnesses = PartialWitness::<F>::new();
+    //     witnesses.set_target(tar1, GoldilocksField::from_canonical_u64(1));
+    //     witnesses.set_target(tar2, GoldilocksField::from_canonical_u64(5));
     //
     //     let proof = circuit_data.prove(witnesses).unwrap();
     //     circuit_data.verify(proof).expect("as");

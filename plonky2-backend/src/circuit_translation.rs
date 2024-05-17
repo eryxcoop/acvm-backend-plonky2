@@ -1,4 +1,3 @@
-
 use std::collections::{HashMap};
 use std::error::Error;
 use acir::circuit::{Circuit};
@@ -15,19 +14,20 @@ use plonky2::plonk::circuit_data::CircuitData;
 use plonky2::plonk::config::{GenericConfig, KeccakGoldilocksConfig};
 use num_bigint::BigUint;
 use plonky2::iop::witness::PartialWitness;
-use plonky2::iop::witness:: WitnessWrite;
+use plonky2::iop::witness::WitnessWrite;
 use plonky2::plonk::proof::ProofWithPublicInputs;
 use std::collections::BTreeSet;
 use acir::circuit::Opcode;
 
 const D: usize = 2;
+
 type C = KeccakGoldilocksConfig;
 type F = <C as GenericConfig<D>>::F;
 type CB = CircuitBuilder::<F, D>;
 
 struct CircuitBuilderFromAcirToPlonky2 {
     builder: CB,
-    witness_target_map: HashMap<Witness, Target>
+    witness_target_map: HashMap<Witness, Target>,
 }
 
 impl CircuitBuilderFromAcirToPlonky2 {
@@ -35,7 +35,7 @@ impl CircuitBuilderFromAcirToPlonky2 {
         let config = CircuitConfig::standard_recursion_config();
         let mut builder = CB::new(config);
         let mut witness_target_map: HashMap<Witness, Target> = HashMap::new();
-        Self {builder, witness_target_map}
+        Self { builder, witness_target_map }
     }
 
     fn translate_circuit(self: &mut Self, circuit: &Circuit) {
@@ -88,7 +88,7 @@ impl CircuitBuilderFromAcirToPlonky2 {
         current_acc_target
     }
 
-    fn _add_linear_combinations(self: &mut Self, expression: &Expression, mut current_acc_target: Target) -> Target{
+    fn _add_linear_combinations(self: &mut Self, expression: &Expression, mut current_acc_target: Target) -> Target {
         let linear_combinations = &expression.linear_combinations;
         for (f_multiply_factor, public_input_witness) in linear_combinations {
             let linear_combination_target = self._compute_linear_combination_target(f_multiply_factor, public_input_witness);
@@ -122,17 +122,16 @@ impl CircuitBuilderFromAcirToPlonky2 {
 
 #[cfg(test)]
 mod tests {
-
-    fn generate_plonky2_circuit_from_acir_circuit(circuit: &Circuit) -> (CircuitData<F, C, 2>, HashMap<Witness, Target>){
+    fn generate_plonky2_circuit_from_acir_circuit(circuit: &Circuit) -> (CircuitData<F, C, 2>, HashMap<Witness, Target>) {
         let mut translator = CircuitBuilderFromAcirToPlonky2::new();
         translator.translate_circuit(circuit);
-        let CircuitBuilderFromAcirToPlonky2 {builder, witness_target_map} = translator;
+        let CircuitBuilderFromAcirToPlonky2 { builder, witness_target_map } = translator;
         (builder.build::<C>(), witness_target_map)
     }
 
     fn generate_plonky2_proof_using_witness_values(witness_assignment: Vec<(Witness, F)>,
                                                    witness_target_map: &HashMap<Witness, Target>,
-                                                   circuit_data: &CircuitData<F, C, 2>) -> ProofWithPublicInputs<GoldilocksField, C, 2>{
+                                                   circuit_data: &CircuitData<F, C, 2>) -> ProofWithPublicInputs<GoldilocksField, C, 2> {
         let mut witnesses = PartialWitness::<F>::new();
         for (witness, value) in witness_assignment {
             let plonky2_target = witness_target_map.get(&witness).unwrap();
@@ -142,8 +141,9 @@ mod tests {
     }
 
     use super::*;
+
     #[test]
-    fn test_plonky2_vm_can_traslate_the_assert_x_equals_zero_program(){
+    fn test_plonky2_vm_can_traslate_the_assert_x_equals_zero_program() {
         // Given
         let public_input_witness = Witness(0);
         let only_opcode = x_equals_0_opcode(public_input_witness);
@@ -154,7 +154,7 @@ mod tests {
 
         // Then
         let mut witnesses = PartialWitness::<F>::new();
-        let g_zero= F::default();
+        let g_zero = F::default();
         let public_input_plonky2_target = witness_target_map.get(&public_input_witness).unwrap();
         witnesses.set_target(*public_input_plonky2_target, g_zero);
         let proof = circuit_data.prove(witnesses).unwrap();
@@ -179,12 +179,12 @@ mod tests {
         AssertZero(Expression {
             mul_terms: Vec::new(),
             linear_combinations: vec![(FieldElement::one(), public_input_witness)],
-            q_c: FieldElement::zero()
+            q_c: FieldElement::zero(),
         })
     }
 
     #[test]
-    fn test_plonky2_vm_can_traslate_the_assert_x_equals_constant_program(){
+    fn test_plonky2_vm_can_traslate_the_assert_x_equals_constant_program() {
         // Given
         let public_input_witness = Witness(0);
         let only_opcode = x_equals_4_opcode(public_input_witness);
@@ -207,7 +207,7 @@ mod tests {
         AssertZero(Expression {
             mul_terms: Vec::new(),
             linear_combinations: vec![(FieldElement::one(), public_input_witness)],
-            q_c: -FieldElement::from_hex("0x04").unwrap()
+            q_c: -FieldElement::from_hex("0x04").unwrap(),
         })
     }
 
@@ -235,7 +235,7 @@ mod tests {
         AssertZero(Expression {
             mul_terms: Vec::new(),
             linear_combinations: vec![(FieldElement::from_hex("0x03").unwrap(), public_input_witness)],
-            q_c: -FieldElement::from_hex("0x0C").unwrap()
+            q_c: -FieldElement::from_hex("0x0C").unwrap(),
         })
     }
 
@@ -274,7 +274,7 @@ mod tests {
                 (FieldElement::from_hex("0x03").unwrap(), first_public_input_witness),
                 (FieldElement::from_hex("0x09").unwrap(), second_public_input_witness),
             ],
-            q_c: -FieldElement::from_hex("0x0c").unwrap()
+            q_c: -FieldElement::from_hex("0x0c").unwrap(),
         })
     }
 
@@ -310,7 +310,7 @@ mod tests {
         AssertZero(Expression {
             mul_terms: vec![],
             linear_combinations: public_inputs.iter().map(|a_witness| (FieldElement::from_hex("0x03").unwrap(), *a_witness)).rev().collect(),
-            q_c: -FieldElement::from_hex("0x0c").unwrap()
+            q_c: -FieldElement::from_hex("0x0c").unwrap(),
         })
     }
 
@@ -339,7 +339,7 @@ mod tests {
         AssertZero(Expression {
             mul_terms: vec![(FieldElement::from_hex("0x02").unwrap(), public_input, public_input)],
             linear_combinations: vec![],
-            q_c: -FieldElement::from_hex("0x20").unwrap()
+            q_c: -FieldElement::from_hex("0x20").unwrap(),
         })
     }
 
@@ -373,7 +373,7 @@ mod tests {
         AssertZero(Expression {
             mul_terms: vec![(FieldElement::from_hex("0x02").unwrap(), public_input_1, public_input_2)],
             linear_combinations: vec![],
-            q_c: -FieldElement::from_hex("0x28").unwrap()
+            q_c: -FieldElement::from_hex("0x28").unwrap(),
         })
     }
 
@@ -416,7 +416,7 @@ mod tests {
                 (FieldElement::from_hex("0x07").unwrap(), public_inputs[1], public_inputs[1]),
             ],
             linear_combinations: vec![],
-            q_c: -FieldElement::from_hex("0x6c").unwrap()
+            q_c: -FieldElement::from_hex("0x6c").unwrap(),
         })
     }
 
@@ -464,7 +464,7 @@ mod tests {
                 (FieldElement::from_hex("0x03").unwrap(), public_inputs[2]),
                 (FieldElement::from_hex("0x04").unwrap(), public_inputs[3]),
             ],
-            q_c: -FieldElement::from_hex("0x80").unwrap()
+            q_c: -FieldElement::from_hex("0x80").unwrap(),
         })
     }
 
@@ -472,36 +472,39 @@ mod tests {
     fn test_plonky2_vm_can_translate_circuits_with_2_assert_zero_opcodes() {
         // Given
         let public_input_witness = Witness(0);
-        let circuit = circuit_with_a_public_input_and_two_assert_zero_operands(public_input_witness);
+        let intermediate_witness = Witness(1);
+        let circuit = circuit_with_a_public_input_and_two_assert_zero_operands(public_input_witness,
+                                                                               intermediate_witness);
 
         // When
         let (circuit_data, witness_target_map) = generate_plonky2_circuit_from_acir_circuit(&circuit);
 
         // Then
-        let one= F::from_canonical_u64(1);
+        let one = F::from_canonical_u64(1);
         let five = F::from_canonical_u64(5);
         let proof = generate_plonky2_proof_using_witness_values(
-            vec![(public_input_witness, one), (Witness(1), five)],
+            vec![(public_input_witness, one), (intermediate_witness, five)],
             &witness_target_map, &circuit_data);
 
         assert_eq!(one, proof.public_inputs[0]);
         circuit_data.verify(proof).expect("Verification failed");
     }
 
-    fn circuit_with_a_public_input_and_two_assert_zero_operands(public_input_witness: Witness) -> Circuit {
+    fn circuit_with_a_public_input_and_two_assert_zero_operands(public_input_witness: Witness,
+                                                                intermediate_witness: Witness) -> Circuit {
         Circuit {
             current_witness_index: 0,
             expression_width: ExpressionWidth::Unbounded,
             opcodes: vec![
                 AssertZero(Expression {
                     mul_terms: vec![],
-                    linear_combinations: vec![(FieldElement::one(), public_input_witness), (-FieldElement::one(), Witness(1))],
-                    q_c: FieldElement::from_hex("0x04").unwrap()
+                    linear_combinations: vec![(FieldElement::one(), public_input_witness), (-FieldElement::one(), intermediate_witness)],
+                    q_c: FieldElement::from_hex("0x04").unwrap(),
                 }),
                 AssertZero(Expression {
-                    mul_terms: vec![(FieldElement::one(), Witness(1), Witness(1))],
+                    mul_terms: vec![(FieldElement::one(), intermediate_witness, intermediate_witness)],
                     linear_combinations: vec![],
-                    q_c: -FieldElement::from_hex("0x19").unwrap()
+                    q_c: -FieldElement::from_hex("0x19").unwrap(),
                 }),
             ],
             private_parameters: BTreeSet::new(),
@@ -538,5 +541,4 @@ mod tests {
     //     let proof = circuit_data.prove(witnesses).unwrap();
     //     circuit_data.verify(proof).expect("as");
     // }
-
 }

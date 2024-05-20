@@ -28,20 +28,20 @@ type C = KeccakGoldilocksConfig;
 type F = <C as GenericConfig<D>>::F;
 type CB = CircuitBuilder::<F, D>;
 
-struct CircuitBuilderFromAcirToPlonky2 {
-    builder: CB,
-    witness_target_map: HashMap<Witness, Target>,
+pub struct CircuitBuilderFromAcirToPlonky2 {
+    pub builder: CB,
+    pub witness_target_map: HashMap<Witness, Target>,
 }
 
 impl CircuitBuilderFromAcirToPlonky2 {
-    fn new() -> Self {
+    pub fn new() -> Self {
         let config = CircuitConfig::standard_recursion_config();
         let mut builder = CB::new(config);
         let mut witness_target_map: HashMap<Witness, Target> = HashMap::new();
         Self { builder, witness_target_map }
     }
 
-    fn translate_circuit(self: &mut Self, circuit: &Circuit) {
+    pub fn translate_circuit(self: &mut Self, circuit: &Circuit) {
         self._register_public_parameters_from_acir_circuit(circuit);
         for opcode in &circuit.opcodes {
             match opcode {

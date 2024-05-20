@@ -2,13 +2,20 @@ extern crate core;
 
 pub mod circuit_translation;
 
+use std::collections::HashMap;
 use std::env;
 use std::fs::File;
 use std::vec::Vec;
 use std::io::Read;
-use acir::circuit::Program;
-use acir::native_types::WitnessStack;
+use acir::circuit::{Circuit, Program};
+use acir::native_types::{Witness, WitnessMap, WitnessStack};
 use jemallocator::Jemalloc;
+use plonky2::field::goldilocks_field::GoldilocksField;
+use plonky2::iop::target::Target;
+use plonky2::iop::witness::{PartialWitness, WitnessWrite};
+use plonky2::plonk::circuit_data::CircuitData;
+use plonky2::plonk::proof::ProofWithPublicInputs;
+
 
 #[global_allocator] // This is a plonky2 recommendation
 static GLOBAL: Jemalloc = Jemalloc;
@@ -44,18 +51,50 @@ fn main() {
     } else if args.len() > 1 && args[1] == "prove" {
         // let crs_path = &args[3];
         let acir_program: Program = deserialize_program_within_file_path(&args[5]);
-        let witness_stack: WitnessStack = deserialize_witnesses_within_file_path(&args[7]);
-        //println!("{:?}", acir_program);
-        println!("{:?}", witness_stack);
-
+        let mut witness_stack: WitnessStack = deserialize_witnesses_within_file_path(&args[7]);
         let functions = acir_program.functions;
         let circuit = &functions[0];
-        println!("{:?}", circuit);
+
+        let witness_assignment = adapt_witness_stack(&mut witness_stack);
+        let (circuit_data, witness_target_map) =
+            generate_plonky2_circuit_from_acir_circuit(circuit);
+        let proof = generate_plonky2_proof_using_witness_values(
+            witness_assignment, &witness_target_map, &circuit_data);
+        println!("{:?}", proof);
+
     } else {
         println!("If you're watching this you probably shouldn't want to");
     }
 }
 
+fn adapt_witness_stack(witness_stack: &mut WitnessStack) ->  Vec<(Witness, F)> {
+    let mut res: Vec<(Witness, F)> = vec![];
+    while(witness_stack.length() != 0){
+
+    }
+    for (key, value) in witness_stack {
+        res.push((key, value));
+    }
+    res
+}
+
+fn generate_plonky2_circuit_from_acir_circuit(circuit: &Circuit) -> (CircuitData<F, C, 2>, HashMap<Witness, Target>) {
+    let mut translator = circuit_translation::CircuitBuilderFromAcirToPlonky2::new();
+    translator.translate_circuit(circuit);
+    let circuit_translation::CircuitBuilderFromAcirToPlonky2 { builder, witness_target_map } = translator;
+    (builder.build::<C>(), witness_target_map)
+}
+
+fn generate_plonky2_proof_using_witness_values(witness_assignment: Vec<(Witness, F)>,
+                                               witness_target_map: &HashMap<Witness, Target>,
+                                               circuit_data: &CircuitData<F, C, 2>) -> ProofWithPublicInputs<GoldilocksField, C, 2> {
+    let mut witnesses = PartialWitness::<F>::new();
+    for (witness, value) in witness_assignment {
+        let plonky2_target = witness_target_map.get(&witness).unwrap();
+        witnesses.set_target(*plonky2_target, value);
+    }
+    circuit_data.prove(witnesses).unwrap()
+}
 
 fn _print_info_string() {
     println!(r#"{{

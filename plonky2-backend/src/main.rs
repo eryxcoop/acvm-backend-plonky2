@@ -10,12 +10,20 @@ use std::io::Read;
 use acir::circuit::{Circuit, Program};
 use acir::native_types::{Witness, WitnessMap, WitnessStack};
 use jemallocator::Jemalloc;
+use num_bigint::BigUint;
+use acir::FieldElement;
 use plonky2::field::goldilocks_field::GoldilocksField;
+use plonky2::field::types::Field;
 use plonky2::iop::target::Target;
 use plonky2::iop::witness::{PartialWitness, WitnessWrite};
 use plonky2::plonk::circuit_data::CircuitData;
+use plonky2::plonk::config::{GenericConfig, KeccakGoldilocksConfig};
 use plonky2::plonk::proof::ProofWithPublicInputs;
 
+const D: usize = 2;
+
+type C = KeccakGoldilocksConfig;
+type F = <C as GenericConfig<D>>::F;
 
 #[global_allocator] // This is a plonky2 recommendation
 static GLOBAL: Jemalloc = Jemalloc;
@@ -55,11 +63,10 @@ fn main() {
         let functions = acir_program.functions;
         let circuit = &functions[0];
 
-        let witness_assignment = adapt_witness_stack(&mut witness_stack);
         let (circuit_data, witness_target_map) =
             generate_plonky2_circuit_from_acir_circuit(circuit);
         let proof = generate_plonky2_proof_using_witness_values(
-            witness_assignment, &witness_target_map, &circuit_data);
+            witness_stack, &witness_target_map, &circuit_data);
         println!("{:?}", proof);
 
     } else {
@@ -67,16 +74,6 @@ fn main() {
     }
 }
 
-fn adapt_witness_stack(witness_stack: &mut WitnessStack) ->  Vec<(Witness, F)> {
-    let mut res: Vec<(Witness, F)> = vec![];
-    while(witness_stack.length() != 0){
-
-    }
-    for (key, value) in witness_stack {
-        res.push((key, value));
-    }
-    res
-}
 
 fn generate_plonky2_circuit_from_acir_circuit(circuit: &Circuit) -> (CircuitData<F, C, 2>, HashMap<Witness, Target>) {
     let mut translator = circuit_translation::CircuitBuilderFromAcirToPlonky2::new();
@@ -85,15 +82,24 @@ fn generate_plonky2_circuit_from_acir_circuit(circuit: &Circuit) -> (CircuitData
     (builder.build::<C>(), witness_target_map)
 }
 
-fn generate_plonky2_proof_using_witness_values(witness_assignment: Vec<(Witness, F)>,
+fn _field_element_to_goldilocks_field(fe: &FieldElement) -> F {
+    let fe_as_big_uint = BigUint::from_bytes_be(&fe.to_be_bytes() as &[u8]);
+    F::from_noncanonical_biguint(fe_as_big_uint)
+}
+
+fn generate_plonky2_proof_using_witness_values(mut witness_stack: WitnessStack,
                                                witness_target_map: &HashMap<Witness, Target>,
-                                               circuit_data: &CircuitData<F, C, 2>) -> ProofWithPublicInputs<GoldilocksField, C, 2> {
+                                               circuit_data: &CircuitData<F, C, 2>) -> Vec<u8> {
     let mut witnesses = PartialWitness::<F>::new();
-    for (witness, value) in witness_assignment {
+    let mut witness_map = witness_stack.pop().unwrap().witness;
+    for (witness, value) in witness_map.into_iter() {
         let plonky2_target = witness_target_map.get(&witness).unwrap();
-        witnesses.set_target(*plonky2_target, value);
+        witnesses.set_target(*plonky2_target, _field_element_to_goldilocks_field(&value));
     }
-    circuit_data.prove(witnesses).unwrap()
+    let verifier_data_digest = &circuit_data.verifier_only.circuit_digest;
+    let common = &circuit_data.common;
+    let proof = circuit_data.prove(witnesses);
+    proof.unwrap().compress(verifier_data_digest, common).unwrap().to_bytes()
 }
 
 fn _print_info_string() {

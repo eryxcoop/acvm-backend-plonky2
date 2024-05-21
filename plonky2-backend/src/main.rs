@@ -35,11 +35,11 @@ fn deserialize_witnesses_within_file_path(witnesses_path: &String) -> WitnessSta
     witness_stack.unwrap()
 }
 
-fn get_command(args: &Vec<String>) -> Result<String, &str> {
+fn get_command(args: &Vec<String>) -> Result<&String, &str> {
     if args.len() == 1 {
         Err("You must specify a command")
     } else {
-        Ok(args[1].clone())
+        Ok(&args[1])
     }
 }
 

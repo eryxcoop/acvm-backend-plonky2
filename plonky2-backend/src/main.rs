@@ -50,13 +50,21 @@ fn deserialize_witnesses_within_file_path(witnesses_path: &String) -> WitnessSta
     witness_stack.unwrap()
 }
 
+fn get_command(args: &Vec<String>) -> Result<&String, &str> {
+    if args.len() == 1 {
+        Err("You must specify a command")
+    } else {
+        Ok(&args[1])
+    }
+}
 
 fn main() {
     let args: Vec<String> = env::args().collect();
+    let command = get_command(&args).unwrap();
 
-    if args.len() > 1 && args[1] == "info" {
+    if command.eq("info") {
         _print_info_string();
-    } else if args.len() > 1 && args[1] == "prove" {
+    } else if command.eq("prove") {
         // let crs_path = &args[3];
         let acir_program: Program = deserialize_program_within_file_path(&args[5]);
         let mut witness_stack: WitnessStack = deserialize_witnesses_within_file_path(&args[7]);

@@ -1,11 +1,9 @@
+use crate::prover_interface::ProverInterface;
 use super::*;
 use super::factories::circuit_factory::*;
 
 fn generate_plonky2_circuit_from_acir_circuit(circuit: &Circuit) -> (CircuitData<F, C, 2>, HashMap<Witness, Target>) {
-    let mut translator = CircuitBuilderFromAcirToPlonky2::new();
-    translator.translate_circuit(circuit);
-    let CircuitBuilderFromAcirToPlonky2 { builder, witness_target_map } = translator;
-    (builder.build::<C>(), witness_target_map)
+    ProverInterface.generate_plonky2_circuit_from_acir_circuit(circuit)
 }
 
 fn generate_plonky2_proof_using_witness_values(witness_assignment: Vec<(Witness, F)>,

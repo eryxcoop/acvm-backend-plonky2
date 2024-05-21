@@ -16,7 +16,3 @@ jemallocator = "0.5.0"
 acir = { path = "../noir/acvm-repo/acir"}
 acir_field = { path = "../noir/acvm-repo/acir_field"}
 plonky2 = { path = "../plonky2/plonky2"}
-
-#[features]
-#default = ["bls12_381"]
-#bls12_381 = ["dep:ark.bls12-381", "dep:ark-ff"]

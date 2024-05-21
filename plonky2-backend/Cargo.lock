@@ -4,7 +4,7 @@ version = 3
 
 [[package]]
 name = "acir"
-version = "0.45.0"
+version = "0.46.0"
 dependencies = [
  "acir_field",
  "base64",
@@ -18,7 +18,7 @@ dependencies = [
 
 [[package]]
 name = "acir_field"
-version = "0.45.0"
+version = "0.46.0"
 dependencies = [
  "ark-ff",
  "cfg-if",
@@ -140,7 +140,7 @@ dependencies = [
 
 [[package]]
 name = "brillig"
-version = "0.45.0"
+version = "0.46.0"
 dependencies = [
  "acir_field",
  "serde",

@@ -19,9 +19,10 @@ plonky-2-backend-for-acir
 
 ## Soon...
 For some manual testing, the workflow is as follows:
-* In the noir_example folder there's a Noir project. In the noir_example/src/main.nr file you can write the main function of any noir program you want to prove.
-* Back in the root directory, you can run ```python run-commands.py build prove``` to generate a custom plonky2 prove
+* In the ```noir_example``` folder there's a Noir project. In the ```noir_example/src/main.nr``` file you can write the main function of any noir program you want to prove.
+* Back in the root directory, you can run ```python run-commands.py build prove``` to generate a custom plonky2 proof
   * ```build``` builds the backend and copies the executable in the folder Noir expects it to be
   * ```prove``` uses the 'customized' Noir project to run the ```prove``` command over the corresponding backend
+  * ```verify``` is not implemented yet. 
 
 The stdout in the custom plonky2 backend is used in the noir workflow as the return value, but in our custom noir project it is also printed by stdout.

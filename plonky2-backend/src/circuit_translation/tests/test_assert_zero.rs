@@ -1,9 +1,9 @@
-use crate::prover_interface::ProverInterface;
+use crate::prove_action::ProveAction;
 use super::*;
 use super::factories::circuit_factory::*;
 
 fn generate_plonky2_circuit_from_acir_circuit(circuit: &Circuit) -> (CircuitData<F, C, 2>, HashMap<Witness, Target>) {
-    ProverInterface.generate_plonky2_circuit_from_acir_circuit(circuit)
+    ProveAction.generate_plonky2_circuit_from_acir_circuit(circuit)
 }
 
 fn generate_plonky2_proof_using_witness_values(witness_assignment: Vec<(Witness, F)>,
@@ -14,7 +14,7 @@ fn generate_plonky2_proof_using_witness_values(witness_assignment: Vec<(Witness,
         let plonky2_target = witness_target_map.get(&witness).unwrap();
         witnesses.set_target(*plonky2_target, value);
     }
-    circuit_data.prove(witnesses).unwrap()
+    ProveAction.generate_plonky2_proof_from_partial_witnesses(circuit_data, witnesses)
 }
 
 #[test]

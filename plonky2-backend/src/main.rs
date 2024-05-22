@@ -14,7 +14,7 @@ use num_bigint::BigUint;
 
 
 pub mod circuit_translation;
-pub mod prover_interface;
+pub mod prove_action;
 
 #[global_allocator] // This is a plonky2 recommendation
 static GLOBAL: Jemalloc = Jemalloc;
@@ -65,8 +65,9 @@ fn deserialize_witnesses_within_file_path(witnesses_path: &String) -> WitnessSta
 fn _execute_prove_command(args: &Vec<String>) {
     let acir_program: Program = deserialize_program_within_file_path(&args[5]);
     let mut witness_stack: WitnessStack = deserialize_witnesses_within_file_path(&args[7]);
-    let prover_interface = prover_interface::ProverInterface;
-    prover_interface.write_proof_in_standard_output(acir_program, witness_stack);
+    let prove_action = prove_action::ProveAction;
+    let proof = prove_action.run(acir_program, witness_stack);
+    println!("{:?}", proof);
 }
 
 fn _print_info_string() {

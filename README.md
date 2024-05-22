@@ -1,4 +1,4 @@
-# plonky-2-backend-for-acir
+# acvm-backend-plonky2
 This is an open source backend for the ACIR standard as implemented in the Noir programming languaje, written in Rust.
 
 For now, untill the corresponding PRs are made in the plonky2 and the noir repositories, you have to clone this repositories inside the project root.

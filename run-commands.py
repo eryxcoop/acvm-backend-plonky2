@@ -20,6 +20,14 @@ def read_proof():
         return f.read()
 
 
+def verify_proof():
+    os.chdir("./noir_example")
+    # os.system("cargo build --manifest-path ../noir/Cargo.toml")
+    # os.system("../noir/target/debug/nargo check")
+    os.system("NARGO_BACKEND_PATH=~/.nargo/backends/acvm-backend-plonky2/backend_binary ../noir/target/debug/nargo verify")
+    os.chdir("..")
+
+
 def hex_to_string(hex_values):
     byte_values = bytes.fromhex(hex_values)
     return byte_values.decode('utf-8')
@@ -35,6 +43,9 @@ def main(argc, argv):
     if "provetest" in argv:
         generate_proof()
         print(hex_to_string(read_proof()))
+
+    if "verify" in argv:
+        verify_proof()
 
 
 if __name__ == '__main__':

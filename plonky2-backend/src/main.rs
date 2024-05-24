@@ -3,15 +3,28 @@ extern crate core;
 use std::collections::HashMap;
 use std::env;
 use std::fs::File;
-use std::io::Read;
+use std::io::{Read, Write};
 use std::vec::Vec;
+
+use jemallocator::Jemalloc;
+use num_bigint::BigUint;
 
 use acir::circuit::{Circuit, Program};
 use acir::FieldElement;
 use acir::native_types::{Witness, WitnessMap, WitnessStack};
-use jemallocator::Jemalloc;
-use num_bigint::BigUint;
+use plonky2::plonk::circuit_builder::CircuitBuilder;
+use plonky2::plonk::circuit_data::{VerifierCircuitData, VerifierOnlyCircuitData};
+use plonky2::plonk::config::{GenericConfig, KeccakGoldilocksConfig};
+use plonky2::plonk::proof::CompressedProofWithPublicInputs;
+use plonky2::util::serialization::DefaultGateSerializer;
 
+use crate::circuit_translation::CircuitBuilderFromAcirToPlonky2;
+
+const D: usize = 2;
+
+type C = KeccakGoldilocksConfig;
+type F = <C as GenericConfig<D>>::F;
+type CB = CircuitBuilder::<F, D>;
 
 pub mod circuit_translation;
 pub mod prove_action;
@@ -27,7 +40,10 @@ fn main() {
         _print_info_string();
     } else if command.eq("prove") {
         _execute_prove_command(&args);
-
+    } else if command.eq("write_vk") {
+        _execute_write_vk_command(&args);
+    } else if command.eq("verify"){
+        _execute_verify_command(&args);
     } else {
         println!("If you're watching this you probably shouldn't want to");
     }
@@ -39,6 +55,23 @@ fn get_command(args: &Vec<String>) -> Result<&String, &str> {
     } else {
         Ok(&args[1])
     }
+}
+
+fn deserialize_verifying_key_within_file_path(verifying_key_path: &String) -> VerifierCircuitData<F,C,D> {
+    let buffer = read_file_to_bytes(verifying_key_path);
+    let gate_serializer = DefaultGateSerializer;
+    VerifierCircuitData::from_bytes(buffer, &gate_serializer).unwrap()
+}
+
+fn deserialize_proof_within_file_path(proof_path: &String, verifier_data: &VerifierCircuitData<F,C,D>) -> CompressedProofWithPublicInputs<F, C, D> {
+    let buffer = read_file_to_bytes(proof_path);
+    let common_circuit_data = &verifier_data.common;
+    let proof_result = CompressedProofWithPublicInputs::from_bytes(buffer, common_circuit_data);
+    let proof = match proof_result {
+        Ok(proof) => { proof },
+        Err(e) => { println!("{:?}", e); panic!() }
+    };
+    proof
 }
 
 fn read_file_to_bytes(file_path: &String) -> Vec<u8> {
@@ -68,6 +101,42 @@ fn _execute_prove_command(args: &Vec<String>) {
     let prove_action = prove_action::ProveAction;
     let proof = prove_action.run(acir_program, witness_stack);
     println!("{:?}", proof);
+}
+
+fn _execute_verify_command(args: &Vec<String>) {
+    println!("----- ESTAMOS EN LA VERIFICACION -----");
+    let proof_path = &args[5];
+    let vk_path = &args[7];
+    let verifier_data = deserialize_verifying_key_within_file_path(vk_path);
+    let proof = deserialize_proof_within_file_path(proof_path, &verifier_data);
+    println!("Proof public inputs: {:?}", proof.public_inputs);
+    println!("Circuit expected PIs: {:?}", verifier_data.common.num_public_inputs);
+    let verification = verifier_data.verify_compressed(proof);
+    match verification {
+        Ok(_) => println!("Verifiaction successfull"),
+        Err(e) => println!("Verification failed: {}", e)
+    }
+}
+
+fn _execute_write_vk_command(args: &Vec<String>) {
+    println!("----- ESTAMOS EN WRITE VK -----");
+    let bytecode_path = &args[5];
+    let vk_path_output = &args[7];
+    let acir_program: Program = deserialize_program_within_file_path(bytecode_path);
+    let acir_circuit = &acir_program.functions[0];
+    let mut translator = CircuitBuilderFromAcirToPlonky2::new();
+    translator.translate_circuit(acir_circuit);
+    let CircuitBuilderFromAcirToPlonky2 { builder, witness_target_map } = translator;
+    let plonky2_circuit = builder.build::<C>();
+    let verifier_data = plonky2_circuit.verifier_data();
+    let gate_serializer = DefaultGateSerializer;
+    let serialized_verifier_data = verifier_data.to_bytes(&gate_serializer).unwrap();
+    write_bytes_to_file_path(serialized_verifier_data, vk_path_output);
+}
+
+fn write_bytes_to_file_path(bytes: Vec<u8>, path: &String){
+    let mut file = File::create(path).expect("Failed to create file for vk");
+    file.write_all(&bytes).expect("Failed to write vk into file");
 }
 
 fn _print_info_string() {

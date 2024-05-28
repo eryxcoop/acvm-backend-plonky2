@@ -40,26 +40,13 @@ static GLOBAL: Jemalloc = Jemalloc;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    let command = get_command(&args).unwrap();
 
-    if command.eq("info") {
-        _print_info_string();
-    } else if command.eq("prove") {
-        _execute_prove_command(&args);
-    } else if command.eq("write_vk") {
-        _execute_write_vk_command(&args);
-    } else if command.eq("verify"){
-        _execute_verify_command(&args);
-    } else {
-        eprintln!("If you're watching this you probably shouldn't want to");
-    }
-}
-
-fn get_command(args: &Vec<String>) -> Result<&String, &str> {
-    if args.len() == 1 {
-        Err("You must specify a command")
-    } else {
-        Ok(&args[1])
+    match &args.get(1).expect("Must specify a command") {
+        String::from("info") => _print_info_string(),
+        String::from("prove") =>  _execute_prove_command(&args),
+        String::from("write_vk") => _execute_write_vk_command(&args),
+        String::from("verify") => _execute_verify_command(&args),
+        other => eprintln!("Invalid command: {}", other)
     }
 }
 

@@ -112,11 +112,7 @@ fn _execute_verify_command(args: &Vec<String>) {
     let vk_path = &args[7];
     let verifier_data = deserialize_verifying_key_within_file_path(vk_path);
     let mut compressed_proof = deserialize_proof_within_file_path(proof_path, &verifier_data);
-    let verification = verifier_data.verify_compressed(compressed_proof);
-    match verification {
-        Ok(_) => eprintln!("Verifiaction successfull"),
-        Err(e) => eprintln!("Verification failed: {}", e)
-    }
+    verifier_data.verify_compressed(compressed_proof).expect("Verification failed");
 }
 
 fn _execute_write_vk_command(args: &Vec<String>) {

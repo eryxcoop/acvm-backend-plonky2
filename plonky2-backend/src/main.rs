@@ -47,7 +47,7 @@ fn main() {
         "prove" =>  _execute_prove_command(&args),
         "write_vk" => _execute_write_vk_command(&args),
         "verify" => _execute_verify_command(&args),
-        other => eprintln!("Invalid command: {}", String::From(other))
+        other => eprintln!("Invalid command: {:?}", other)
     }
 }
 

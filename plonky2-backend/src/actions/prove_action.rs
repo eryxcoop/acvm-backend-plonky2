@@ -1,4 +1,6 @@
 use std::collections::HashMap;
+use std::io;
+use std::io::Write;
 use acir::circuit::{Circuit, Program};
 use acir::FieldElement;
 use acir::native_types::{Witness, WitnessStack};
@@ -19,11 +21,18 @@ type F = <C as GenericConfig<D>>::F;
 pub struct ProveAction;
 
 impl ProveAction {
-    pub fn run(&self, acir_program: Program, mut witness_stack: WitnessStack) -> Vec<u8>{
+    pub fn run(&self, acir_program: Program, mut witness_stack: WitnessStack) {
         let circuit = &acir_program.functions[0];
         let (circuit_data, witness_target_map) =
             self.generate_plonky2_circuit_from_acir_circuit(circuit);
-        self.generate_serialized_plonky2_proof(witness_stack, &witness_target_map, &circuit_data)
+        let proof = self.generate_serialized_plonky2_proof(witness_stack, &witness_target_map, &circuit_data);
+        self.expose_response_through_stdout(proof);
+    }
+
+    fn expose_response_through_stdout(&self, proof: Vec<u8>) {
+        let mut stdout = io::stdout();
+        stdout.write_all(&proof).expect("Failed to write in stdout");
+        stdout.flush().expect("Failed to flush");
     }
 
     pub fn generate_plonky2_circuit_from_acir_circuit(&self, circuit: &Circuit) -> (CircuitData<F, C, 2>, HashMap<Witness, Target>) {
@@ -39,8 +48,8 @@ impl ProveAction {
     }
 
     fn generate_serialized_plonky2_proof(&self, mut witness_stack: WitnessStack,
-                                             witness_target_map: &HashMap<Witness, Target>,
-                                             circuit_data: &CircuitData<F, C, 2>) -> Vec<u8> {
+                                         witness_target_map: &HashMap<Witness, Target>,
+                                         circuit_data: &CircuitData<F, C, 2>) -> Vec<u8> {
         let proof = self.generate_plonky2_proof_from_witness_stack(&mut witness_stack, witness_target_map, circuit_data);
         let verifier_data_digest = &circuit_data.verifier_only.circuit_digest;
         let common = &circuit_data.common;
@@ -54,7 +63,7 @@ impl ProveAction {
     }
 
     pub fn generate_plonky2_proof_from_partial_witnesses(&self, circuit_data: &CircuitData<GoldilocksField, C, 2>,
-                                                     witnesses: PartialWitness<GoldilocksField>) -> ProofWithPublicInputs<GoldilocksField, C, 2> {
+                                                         witnesses: PartialWitness<GoldilocksField>) -> ProofWithPublicInputs<GoldilocksField, C, 2> {
         circuit_data.prove(witnesses).unwrap()
     }
 

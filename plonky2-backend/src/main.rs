@@ -23,7 +23,6 @@ use plonky2::plonk::proof::CompressedProofWithPublicInputs;
 use plonky2::util::serialization::DefaultGateSerializer;
 
 use crate::circuit_translation::CircuitBuilderFromAcirToPlonky2;
-use crate::write_vk_action::WriteVKAction;
 
 const D: usize = 2;
 
@@ -32,8 +31,7 @@ type F = <C as GenericConfig<D>>::F;
 type CB = CircuitBuilder::<F, D>;
 
 pub mod circuit_translation;
-pub mod prove_action;
-pub mod write_vk_action;
+pub mod actions;
 
 #[global_allocator] // This is a plonky2 recommendation
 static GLOBAL: Jemalloc = Jemalloc;
@@ -101,26 +99,23 @@ fn deserialize_witnesses_within_file_path(witnesses_path: &String) -> WitnessSta
 fn _execute_prove_command(args: &Vec<String>) {
     let acir_program: Program = deserialize_program_within_file_path(&args[5]);
     let mut witness_stack: WitnessStack = deserialize_witnesses_within_file_path(&args[7]);
-    let prove_action = prove_action::ProveAction;
-    let proof = prove_action.run(acir_program, witness_stack);
-
-    let mut stdout = io::stdout();
-    stdout.write_all(&proof).expect("Failed to write in stdout");
-    stdout.flush().expect("Failed to flush");
+    let prove_action = actions::prove_action::ProveAction;
+    prove_action.run(acir_program, witness_stack);
 }
 
 fn _execute_verify_command(args: &Vec<String>) {
     let proof_path = &args[5];
     let vk_path = &args[7];
-    let verifier_data = deserialize_verifying_key_within_file_path(vk_path);
-    let mut compressed_proof = deserialize_proof_within_file_path(proof_path, &verifier_data);
-    verifier_data.verify_compressed(compressed_proof).expect("Verification failed");
+    let verify_action = actions::verify_action::VerifyAction{
+        proof_path: proof_path.clone(),
+        vk_path: vk_path.clone()};
+    verify_action.run()
 }
 
 fn _execute_write_vk_command(args: &Vec<String>) {
     let bytecode_path = &args[5];
     let vk_path_output = &args[7];
-    let write_vk_action = WriteVKAction{
+    let write_vk_action = actions::write_vk_action::WriteVKAction{
         bytecode_path: bytecode_path.clone(),
         vk_path_output: vk_path_output.clone()};
     write_vk_action.run()

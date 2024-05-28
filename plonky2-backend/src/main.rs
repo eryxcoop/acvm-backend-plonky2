@@ -23,6 +23,7 @@ use plonky2::plonk::proof::CompressedProofWithPublicInputs;
 use plonky2::util::serialization::DefaultGateSerializer;
 
 use crate::circuit_translation::CircuitBuilderFromAcirToPlonky2;
+use noir_and_plonky2_serialization::*;
 
 const D: usize = 2;
 
@@ -32,6 +33,7 @@ type CB = CircuitBuilder::<F, D>;
 
 pub mod circuit_translation;
 pub mod actions;
+pub mod noir_and_plonky2_serialization;
 
 #[global_allocator] // This is a plonky2 recommendation
 static GLOBAL: Jemalloc = Jemalloc;
@@ -61,41 +63,6 @@ fn get_command(args: &Vec<String>) -> Result<&String, &str> {
     }
 }
 
-fn deserialize_verifying_key_within_file_path(verifying_key_path: &String) -> VerifierCircuitData<F,C,D> {
-    let buffer = read_file_to_bytes(verifying_key_path);
-    let gate_serializer = DefaultGateSerializer;
-    VerifierCircuitData::from_bytes(buffer, &gate_serializer).unwrap()
-}
-
-fn deserialize_proof_within_file_path(proof_path: &String, verifier_data: &VerifierCircuitData<F,C,D>) -> CompressedProofWithPublicInputs<F, C, D> {
-    let buffer = read_file_to_bytes(proof_path);
-    let common_circuit_data = &verifier_data.common;
-    let proof: CompressedProofWithPublicInputs<F, C, D> = CompressedProofWithPublicInputs::from_bytes(
-        buffer, common_circuit_data).unwrap();
-    proof
-}
-
-fn read_file_to_bytes(file_path: &String) -> Vec<u8> {
-    let mut file = File::open(file_path).expect("There was a problem reading the file");
-    let mut buffer: Vec<u8> = Vec::new();
-    let _ = file.read_to_end(&mut buffer);
-    return buffer
-}
-
-fn deserialize_program_within_file_path(acir_program_path: &String) -> Program {
-    let buffer = read_file_to_bytes(acir_program_path);
-    let file_contents_slice: &[u8] = &buffer;
-    let program = Program::deserialize_program(file_contents_slice);
-    program.unwrap()
-}
-
-fn deserialize_witnesses_within_file_path(witnesses_path: &String) -> WitnessStack {
-    let buffer = read_file_to_bytes(witnesses_path);
-    let file_contents_slice: &[u8] = &buffer;
-    let witness_stack = WitnessStack::try_from(file_contents_slice);
-    witness_stack.unwrap()
-}
-
 fn _execute_prove_command(args: &Vec<String>) {
     let acir_program: Program = deserialize_program_within_file_path(&args[5]);
     let mut witness_stack: WitnessStack = deserialize_witnesses_within_file_path(&args[7]);
@@ -119,11 +86,6 @@ fn _execute_write_vk_command(args: &Vec<String>) {
         bytecode_path: bytecode_path.clone(),
         vk_path_output: vk_path_output.clone()};
     write_vk_action.run()
-}
-
-fn write_bytes_to_file_path(bytes: Vec<u8>, path: &String){
-    let mut file = File::create(path).expect("Failed to create file for vk");
-    file.write_all(&bytes).expect("Failed to write vk into file");
 }
 
 fn _print_info_string() {

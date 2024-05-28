@@ -1,4 +1,5 @@
 use super::*;
+use noir_and_plonky2_serialization::*;
 
 pub struct VerifyAction {
     pub proof_path: String,

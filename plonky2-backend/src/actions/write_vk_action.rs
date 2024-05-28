@@ -1,4 +1,5 @@
 use super::*;
+use noir_and_plonky2_serialization::*;
 
 pub struct WriteVKAction {
     pub bytecode_path: String,

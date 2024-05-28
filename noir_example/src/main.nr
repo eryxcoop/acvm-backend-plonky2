@@ -1,3 +1,3 @@
-fn main(x: pub Field, y: Field){
-   assert(x == y);
+fn main(x: pub u8){
+    assert(x == 0);
 }

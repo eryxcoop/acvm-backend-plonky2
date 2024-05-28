@@ -87,7 +87,6 @@ impl CircuitBuilderFromAcirToPlonky2 {
     }
 
     fn _translate_assert_zero(self: &mut Self, expression: &Expression) {
-        println!("{:?}", expression);
         let g_constant = self._field_element_to_goldilocks_field(&expression.q_c);
 
         let constant_target = self.builder.constant(g_constant);

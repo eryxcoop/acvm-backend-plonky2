@@ -9,7 +9,7 @@ use plonky2::iop::target::Target;
 use plonky2::iop::witness::{PartialWitness, WitnessWrite};
 use plonky2::plonk::circuit_data::CircuitData;
 use plonky2::plonk::config::{GenericConfig, KeccakGoldilocksConfig};
-use plonky2::plonk::proof::ProofWithPublicInputs;
+use plonky2::plonk::proof::{CompressedProofWithPublicInputs, ProofWithPublicInputs};
 use crate::circuit_translation;
 
 const D: usize = 2;
@@ -44,7 +44,8 @@ impl ProveAction {
         let proof = self.generate_plonky2_proof_from_witness_stack(&mut witness_stack, witness_target_map, circuit_data);
         let verifier_data_digest = &circuit_data.verifier_only.circuit_digest;
         let common = &circuit_data.common;
-        proof.compress(verifier_data_digest, common).unwrap().to_bytes()
+        let compressed_proof = proof.compress(verifier_data_digest, common).unwrap();
+        compressed_proof.to_bytes()
     }
 
     pub fn generate_plonky2_proof_from_witness_stack(&self, mut witness_stack: &mut WitnessStack, witness_target_map: &HashMap<Witness, Target>, circuit_data: &CircuitData<GoldilocksField, C, 2>) -> ProofWithPublicInputs<GoldilocksField, C, 2> {

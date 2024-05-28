@@ -23,6 +23,7 @@ use plonky2::plonk::proof::CompressedProofWithPublicInputs;
 use plonky2::util::serialization::DefaultGateSerializer;
 
 use crate::circuit_translation::CircuitBuilderFromAcirToPlonky2;
+use crate::write_vk_action::WriteVKAction;
 
 const D: usize = 2;
 
@@ -32,6 +33,7 @@ type CB = CircuitBuilder::<F, D>;
 
 pub mod circuit_translation;
 pub mod prove_action;
+pub mod write_vk_action;
 
 #[global_allocator] // This is a plonky2 recommendation
 static GLOBAL: Jemalloc = Jemalloc;
@@ -118,16 +120,10 @@ fn _execute_verify_command(args: &Vec<String>) {
 fn _execute_write_vk_command(args: &Vec<String>) {
     let bytecode_path = &args[5];
     let vk_path_output = &args[7];
-    let acir_program: Program = deserialize_program_within_file_path(bytecode_path);
-    let acir_circuit = &acir_program.functions[0];
-    let mut translator = CircuitBuilderFromAcirToPlonky2::new();
-    translator.translate_circuit(acir_circuit);
-    let CircuitBuilderFromAcirToPlonky2 { builder, witness_target_map } = translator;
-    let plonky2_circuit = builder.build::<C>();
-    let verifier_data = plonky2_circuit.verifier_data();
-    let gate_serializer = DefaultGateSerializer;
-    let serialized_verifier_data = verifier_data.to_bytes(&gate_serializer).unwrap();
-    write_bytes_to_file_path(serialized_verifier_data, vk_path_output);
+    let write_vk_action = WriteVKAction{
+        bytecode_path: bytecode_path.clone(),
+        vk_path_output: vk_path_output.clone()};
+    write_vk_action.run()
 }
 
 fn write_bytes_to_file_path(bytes: Vec<u8>, path: &String){

@@ -13,16 +13,27 @@ use plonky2::plonk::circuit_data::CircuitData;
 use plonky2::plonk::config::{GenericConfig, KeccakGoldilocksConfig};
 use plonky2::plonk::proof::{CompressedProofWithPublicInputs, ProofWithPublicInputs};
 use crate::circuit_translation;
+use crate::noir_and_plonky2_serialization::*;
 
 const D: usize = 2;
 type C = KeccakGoldilocksConfig;
 type F = <C as GenericConfig<D>>::F;
 
-pub struct ProveAction;
+pub struct ProveAction {
+    pub acir_program_path: String,
+    pub witness_stack_path: String
+}
 
 impl ProveAction {
-    pub fn run(&self, acir_program: Program, mut witness_stack: WitnessStack) {
+    pub fn run(&self) {
+        let acir_program: Program = deserialize_program_within_file_path(&self.acir_program_path);
+        let mut witness_stack: WitnessStack = deserialize_witnesses_within_file_path(&self.witness_stack_path);
         let circuit = &acir_program.functions[0];
+
+        self._execute_prove_action(witness_stack, circuit);
+    }
+
+    fn _execute_prove_action(&self, mut witness_stack: WitnessStack, circuit: &Circuit) {
         let (circuit_data, witness_target_map) =
             self.generate_plonky2_circuit_from_acir_circuit(circuit);
         let proof = self.generate_serialized_plonky2_proof(witness_stack, &witness_target_map, &circuit_data);

@@ -52,10 +52,13 @@ fn main() {
 }
 
 fn _execute_prove_command(args: &Vec<String>) {
-    let acir_program: Program = deserialize_program_within_file_path(&args[5]);
-    let mut witness_stack: WitnessStack = deserialize_witnesses_within_file_path(&args[7]);
-    let prove_action = actions::prove_action::ProveAction;
-    prove_action.run(acir_program, witness_stack);
+    let acir_program_path = &args[5];
+    let witness_stack_path = &args[7];
+    let prove_action = actions::prove_action::ProveAction {
+        acir_program_path: acir_program_path.clone(),
+        witness_stack_path: witness_stack_path.clone(),
+    };
+    prove_action.run();
 }
 
 fn _execute_verify_command(args: &Vec<String>) {

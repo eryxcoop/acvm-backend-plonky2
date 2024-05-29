@@ -1,3 +1,3 @@
-fn main(x: pub u8){
+fn main(x: pub Field){
     assert(x == 0);
 }

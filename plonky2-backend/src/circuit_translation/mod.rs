@@ -5,7 +5,6 @@ use std::collections::{HashMap};
 use std::error::Error;
 use acir::circuit::{Circuit};
 use acir::circuit::{ExpressionWidth, PublicInputs};
-use acir::circuit::Opcode::AssertZero;
 use acir::FieldElement;
 use acir::native_types::{Expression, Witness};
 use plonky2::field::goldilocks_field::GoldilocksField;
@@ -21,6 +20,7 @@ use plonky2::iop::witness::WitnessWrite;
 use plonky2::plonk::proof::ProofWithPublicInputs;
 use std::collections::BTreeSet;
 use acir::circuit::Opcode;
+// use acir::circuit::opcodes::BlackBoxFuncCall;
 
 const D: usize = 2;
 
@@ -45,11 +45,20 @@ impl CircuitBuilderFromAcirToPlonky2 {
         self._register_public_parameters_from_acir_circuit(circuit);
         for opcode in &circuit.opcodes {
             match opcode {
-                AssertZero(expr) => {
+                Opcode::AssertZero(expr) => {
                     self._register_intermediate_witnesses_for_assert_zero(&expr);
                     self._translate_assert_zero(&expr);
                 },
-                _ => { () }
+                // Opcode::BlackBoxFuncCall(func_call) => {
+                //     eprintln!("{:?}", func_call);
+                //     match func_call {
+                //         BlackBoxFuncCall::RANGE{input} => {
+                //             eprintln!("{:?}", input);
+                //         }
+                //         _ => {}
+                //     };
+                // }
+                _ => { panic!("Opcode not supported"); }
             }
         }
     }

@@ -110,10 +110,11 @@ pub fn multiple_cuadratic_terms_and_linear_combinations_opcode(public_inputs: &V
     })
 }
 
-pub fn black_box_range_8_opcode(public_input: Witness) -> Opcode {
-    let input = FunctionInput { witness: public_input, num_bits: 8 };
+pub fn black_box_range_opcode(public_input: Witness, max_bits: u32) -> Opcode {
+    let input = FunctionInput { witness: public_input, num_bits: max_bits };
     Opcode::BlackBoxFuncCall(opcodes::BlackBoxFuncCall::RANGE{input})
 }
+
 
 pub fn circuit_with_a_public_input_and_two_assert_zero_operands(public_input_witness: Witness,
                                                                 intermediate_witness: Witness) -> Circuit {

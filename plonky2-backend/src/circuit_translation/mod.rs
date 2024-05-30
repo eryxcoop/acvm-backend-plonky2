@@ -20,7 +20,7 @@ use plonky2::iop::witness::WitnessWrite;
 use plonky2::plonk::proof::ProofWithPublicInputs;
 use std::collections::BTreeSet;
 use acir::circuit::Opcode;
-// use acir::circuit::opcodes::BlackBoxFuncCall;
+use acir::circuit::opcodes;
 
 const D: usize = 2;
 
@@ -57,8 +57,25 @@ impl CircuitBuilderFromAcirToPlonky2 {
                     eprintln!("inputs: {:?}", inputs);
                     eprintln!("outputs: {:?}", outputs);
                     eprintln!("predicate: {:?}", predicate);
+                },
+                Opcode::BlackBoxFuncCall(func_call) => {
+                    eprintln!("{:?}", func_call);
+                    match func_call {
+                        opcodes::BlackBoxFuncCall::RANGE{input} => {
+                            eprintln!("{:?}", input);
+                            let witness = input.witness;
+                            let long_max_bits= input.num_bits.clone() as usize;
+                            let target = self.witness_target_map.get(&witness).unwrap();
+                            self.builder.range_check(*target, long_max_bits)
+                        }
+                        blackbox_func => {
+                            panic!("Blackbox func not supported yet: {:?}", blackbox_func);
+                        }
+                    };
                 }
-                opcode => { panic!("Opcode not supported yet{:?}", opcode); }
+                opcode => {
+                    panic!("Opcode not supported yet: {:?}", opcode);
+                }
             }
         }
     }

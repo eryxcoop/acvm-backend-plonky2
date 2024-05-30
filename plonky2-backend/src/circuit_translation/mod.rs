@@ -46,19 +46,19 @@ impl CircuitBuilderFromAcirToPlonky2 {
         for opcode in &circuit.opcodes {
             match opcode {
                 Opcode::AssertZero(expr) => {
+                    eprintln!("----------ASSERT ZERO--------");
+                    eprintln!("EXPR: {:?}"  , expr);
                     self._register_intermediate_witnesses_for_assert_zero(&expr);
                     self._translate_assert_zero(&expr);
                 },
-                // Opcode::BlackBoxFuncCall(func_call) => {
-                //     eprintln!("{:?}", func_call);
-                //     match func_call {
-                //         BlackBoxFuncCall::RANGE{input} => {
-                //             eprintln!("{:?}", input);
-                //         }
-                //         _ => {}
-                //     };
-                // }
-                _ => { panic!("Opcode not supported"); }
+                Opcode::BrilligCall {id, inputs, outputs, predicate} => {
+                    eprintln!("----------Brillig--------");
+                    eprintln!("id: {:?}", id);
+                    eprintln!("inputs: {:?}", inputs);
+                    eprintln!("outputs: {:?}", outputs);
+                    eprintln!("predicate: {:?}", predicate);
+                }
+                opcode => { panic!("Opcode not supported yet{:?}", opcode); }
             }
         }
     }

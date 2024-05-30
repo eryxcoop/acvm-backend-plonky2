@@ -6,7 +6,7 @@ use super::*;
 fn test_backend_can_translate_blackbox_func_call_range_check_u8() {
     let max_num_bits = 8;
     let max_allowed_witness_value = 2u16.pow(max_num_bits.clone()) - 1;
-    let max_allowed_witness_value_field = F::from_canonical_usize(max_allowed_witness_value.into());
+    let max_allowed_witness_value_field = F::from_noncanonical_u64(max_allowed_witness_value.into());
     test_range_check_with_witness_value(max_allowed_witness_value_field, max_num_bits);
 }
 
@@ -15,11 +15,26 @@ fn test_backend_can_translate_blackbox_func_call_range_check_u8() {
 fn test_backend_cannot_provide_witness_value_bigger_than_u8_for_u8_range_check() {
     let max_num_bits = 8;
     let min_not_allowed_witness_value = 2u16.pow(max_num_bits.clone());
-    let max_allowed_witness_value_field = F::from_canonical_usize(min_not_allowed_witness_value.into());
+    let max_allowed_witness_value_field = F::from_noncanonical_u64(min_not_allowed_witness_value.into());
     test_range_check_with_witness_value(max_allowed_witness_value_field, max_num_bits);
 }
 
+#[test]
+fn test_backend_can_translate_blackbox_func_call_range_check_u16() {
+    let max_num_bits = 16;
+    let max_allowed_witness_value = 2u32.pow(max_num_bits.clone()) - 1;
+    let max_allowed_witness_value_field = F::from_noncanonical_u64(max_allowed_witness_value.into());
+    test_range_check_with_witness_value(max_allowed_witness_value_field, max_num_bits);
+}
 
+#[test]
+#[should_panic]
+fn test_backend_cannot_provide_witness_value_bigger_than_u16_for_u16_range_check() {
+    let max_num_bits = 16;
+    let min_not_allowed_witness_value = 2u32.pow(max_num_bits.clone());
+    let max_allowed_witness_value_field = F::from_noncanonical_u64(min_not_allowed_witness_value.into());
+    test_range_check_with_witness_value(max_allowed_witness_value_field, max_num_bits);
+}
 
 fn test_range_check_with_witness_value(witness_value: F, max_num_bits: u32){
     //Given

@@ -23,23 +23,10 @@
     }
 }*/
 
-fn dyn_array(mut x: [u32; 5], y: Field) {
-    // assert(x[y] == 111);
-    // assert(x[z] == 101);
-    x[y] = 0;
-    // assert(x[y] == 111);
-    // assert(x[1] == 0);
-    // if y as u32 < 10 {
-    //     x[y] = x[y] - 2;
-    // } else {
-    //     x[y] = 0;
-    // }
-    assert(x[4] == 109);
-}
 
-fn main(mut x: [u32; 5], mut y: Field){
-    dyn_array(x,y);
-    //uuu(x,y)
+fn main(mut x: [Field; 1], mut y: Field){
+        x[y] = 1;
+        assert(x[0] == 1);
 }
 
 fn uuu(mut x: [u32; 5], mut y: Field) -> u32{

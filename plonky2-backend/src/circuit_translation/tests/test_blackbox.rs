@@ -76,3 +76,29 @@ fn test_range_check_with_witness_value(witness_value: F, max_num_bits: u32){
         vec![(public_input_witness, witness_value)], &witness_target_map, &circuit_data);
     circuit_data.verify(proof).expect("Verification failed");
 }
+
+// ---------------- BITWISE OPERATIONS ------------------ //
+
+#[test]
+fn test_backend_supports_bitwise_and_up_to_8_bits(){
+    // fn main(mut x: u8, y: u8) -> pub u8{
+    //     x & y
+    // }
+
+    // Given
+    let public_input_witness_0 = Witness(0);
+    let public_input_witness_1 = Witness(1);
+    let circuit = circuit_factory::bitwise_and_u8_circuit(public_input_witness_0,
+                                                          public_input_witness_1);
+
+    // When
+    let (circuit_data, witness_target_map) = generate_plonky2_circuit_from_acir_circuit(&circuit);
+
+    //Then
+    let one = F::from_canonical_u64(1);
+    let proof = generate_plonky2_proof_using_witness_values(
+        vec![(public_input_witness_0, F::from_canonical_u64(5)),
+             (public_input_witness_1, F::from_canonical_u64(3)), (Witness(2), one)],
+        &witness_target_map, &circuit_data);
+    circuit_data.verify(proof).expect("Verification failed");
+}

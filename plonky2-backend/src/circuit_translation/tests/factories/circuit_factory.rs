@@ -147,7 +147,7 @@ pub fn bitwise_and_u8_circuit(input_1: Witness, input_2: Witness) -> Circuit {
     // BLACKBOX::AND [(_0, num_bits: 8), (_1, num_bits: 8)] [ _2]
 
     let and_lhs = FunctionInput { witness: input_1, num_bits: 8 };
-    let and_rhs = FunctionInput { witness: input_1, num_bits: 8 };
+    let and_rhs = FunctionInput { witness: input_2, num_bits: 8 };
 
     Circuit {
         current_witness_index: 0,

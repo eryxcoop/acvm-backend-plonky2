@@ -96,9 +96,12 @@ fn test_backend_supports_bitwise_and_up_to_8_bits(){
 
     //Then
     let one = F::from_canonical_u64(1);
+    let three = F::from_canonical_u64(3);
+    let five = F::from_canonical_u64(5);
+
     let proof = generate_plonky2_proof_using_witness_values(
-        vec![(public_input_witness_0, F::from_canonical_u64(5)),
-             (public_input_witness_1, F::from_canonical_u64(3)), (Witness(2), one)],
+        vec![(public_input_witness_0, five),
+             (public_input_witness_1, three), (Witness(2), one)],
         &witness_target_map, &circuit_data);
     circuit_data.verify(proof).expect("Verification failed");
 }

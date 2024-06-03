@@ -79,11 +79,17 @@ impl CircuitBuilderFromAcirToPlonky2 {
                             let target = self._register_witness_if_not_already_registered(witness);
                             self.builder.range_check(target, long_max_bits)
                         }
+                        opcodes::BlackBoxFuncCall::AND{lhs, rhs, output} => {
+                            // eprintln!("{:?} and {:?} to {:?}", lhs, rhs, output);
+                            self._register_witness_if_not_already_registered(*output);
+
+                        }
                         blackbox_func => {
                             panic!("Blackbox func not supported yet: {:?}", blackbox_func);
                         }
                     };
                 }
+
                 opcode => {
                     panic!("Opcode not supported yet: {:?}", opcode);
                 }

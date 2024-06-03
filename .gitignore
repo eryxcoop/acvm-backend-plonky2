@@ -6,3 +6,5 @@ noir_example/Prover.toml
 noir_example/Verifier.toml
 noir/
 notes/
+plonky2/
+

@@ -20,9 +20,11 @@ fn test_plonky2_backend_can_translate_a_program_with_basic_memory_operations(){
 
     //Then
     let zero = F::from_canonical_u64(0);
+    let one = F::from_canonical_u64(1);
     let proof = generate_plonky2_proof_using_witness_values(
         vec![(array_only_position_input_witness, zero),
-             (index_input_witness, zero)], &witness_target_map, &circuit_data);
+             (index_input_witness, zero), (Witness(2), one), (Witness(3), zero), (Witness(4), one)],
+        &witness_target_map, &circuit_data);
     circuit_data.verify(proof).expect("Verification failed");
 }
 

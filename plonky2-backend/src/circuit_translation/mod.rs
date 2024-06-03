@@ -129,9 +129,14 @@ impl CircuitBuilderFromAcirToPlonky2 {
     }
 
     fn _register_witness_if_not_already_registered(self: &mut Self, witness: Witness) -> Target {
-        let target = self.builder.add_virtual_target();
-        self.witness_target_map.entry(witness).or_insert(target);
-        target
+        match self.witness_target_map.get(&witness) {
+            Some(target) => *target,
+            None => {
+                let target = self.builder.add_virtual_target();
+                self.witness_target_map.insert(witness, target);
+                target
+            }
+        }
     }
 
     fn _translate_assert_zero(self: &mut Self, expression: &Expression) {

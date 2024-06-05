@@ -9,7 +9,7 @@ use acir::FieldElement;
 use acir::native_types::{Expression, Witness};
 use plonky2::field::goldilocks_field::GoldilocksField;
 use plonky2::field::types::{Field, Field64};
-use plonky2::iop::target::Target;
+use plonky2::iop::target::{BoolTarget, Target};
 use plonky2::plonk::circuit_builder::CircuitBuilder;
 use plonky2::plonk::circuit_data::CircuitConfig;
 use plonky2::plonk::circuit_data::CircuitData;
@@ -21,13 +21,18 @@ use plonky2::plonk::proof::ProofWithPublicInputs;
 use std::collections::BTreeSet;
 use acir::circuit::Opcode;
 use acir::circuit::opcodes;
-use acir::circuit::opcodes::MemOp;
+use acir::circuit::opcodes::{FunctionInput, MemOp};
 
 const D: usize = 2;
 
 type C = KeccakGoldilocksConfig;
 type F = <C as GenericConfig<D>>::F;
 type CB = CircuitBuilder::<F, D>;
+
+#[derive(Clone, Debug)]
+pub struct ByteTarget {
+    pub bits: Vec<BoolTarget>,
+}
 
 pub struct CircuitBuilderFromAcirToPlonky2 {
     pub builder: CB,
@@ -48,41 +53,44 @@ impl CircuitBuilderFromAcirToPlonky2 {
             match opcode {
                 Opcode::AssertZero(expr) => {
                     eprintln!("----------ASSERT ZERO--------");
-                    eprintln!("EXPR: {:?}"  , expr);
+                    eprintln!("EXPR: {:?}", expr);
                     self._register_intermediate_witnesses_for_assert_zero(&expr);
                     self._translate_assert_zero(&expr);
-                },
-                Opcode::BrilligCall {id, inputs, outputs, predicate} => {
+                }
+                Opcode::BrilligCall { id, inputs, outputs, predicate } => {
                     eprintln!("----------Brillig--------");
                     eprintln!("id: {:?}", id);
                     eprintln!("inputs: {:?}", inputs);
                     eprintln!("outputs: {:?}", outputs);
                     eprintln!("predicate: {:?}", predicate);
-                },
-                Opcode::MemoryInit {block_id, init} => {
+                }
+                Opcode::MemoryInit { block_id, init } => {
                     eprintln!("outputs: {:?}", block_id);
                     eprintln!("predicate: {:?}", init);
-                },
-                Opcode::MemoryOp {block_id, op, predicate} => {
+                }
+                Opcode::MemoryOp { block_id, op, predicate } => {
                     // TODO: check whether we should register if the predicate is false
                     self._register_intermediate_witnesses_for_memory_op(&op);
                 }
                 Opcode::BlackBoxFuncCall(func_call) => {
                     eprintln!("{:?}", func_call);
                     match func_call {
-                        opcodes::BlackBoxFuncCall::RANGE{input} => {
+                        opcodes::BlackBoxFuncCall::RANGE { input } => {
                             eprintln!("{:?}", input);
-                            let long_max_bits= input.num_bits.clone() as usize;
+                            let long_max_bits = input.num_bits.clone() as usize;
                             assert!(long_max_bits <= 32,
                                     "Range checks with more than 32 bits are not allowed yet while using Plonky2 prover");
                             let witness = input.witness;
-                            let target = self._register_witness_if_not_already_registered(witness);
+                            let target = self._get_or_create_target_for_witness(witness);
                             self.builder.range_check(target, long_max_bits)
                         }
-                        opcodes::BlackBoxFuncCall::AND{lhs, rhs, output} => {
-                            // eprintln!("{:?} and {:?} to {:?}", lhs, rhs, output);
-                            self._register_witness_if_not_already_registered(*output);
+                        opcodes::BlackBoxFuncCall::AND { lhs, rhs, output } => {
+                            let lhs_byte_target = self._byte_target_for_witness(lhs.witness);
+                            let rhs_byte_target = self._byte_target_for_witness(rhs.witness);
 
+                            let output_byte_target = self._translate_u8_bitwise_and(lhs_byte_target, rhs_byte_target);
+                            let output_target = self.convert_byte_to_u8(output_byte_target);
+                            self.witness_target_map.insert(*output, output_target);
                         }
                         blackbox_func => {
                             panic!("Blackbox func not supported yet: {:?}", blackbox_func);
@@ -97,6 +105,43 @@ impl CircuitBuilderFromAcirToPlonky2 {
         }
     }
 
+    fn _byte_target_for_witness(self: &mut Self, w: Witness) -> ByteTarget {
+        let target = self._get_or_create_target_for_witness(w);
+        self.convert_u8_to_byte(target)
+    }
+
+    fn convert_u8_to_byte(&mut self, a: Target) -> ByteTarget {
+        ByteTarget {
+            bits: self.builder.split_le(a, 8).into_iter().rev().collect(),
+        }
+    }
+
+    fn convert_byte_to_u8(&mut self, a: ByteTarget) -> Target {
+        self.builder.le_sum(a.bits.into_iter().rev())
+    }
+
+    fn _constant_byte(&mut self, byte: u8) -> ByteTarget {
+        ByteTarget {
+            bits: (0u8..8u8)
+                .rev()
+                .map(|i| {
+                    let value = ((1u8 << i) & byte) >> i;
+                    BoolTarget::new_unsafe(
+                        self.builder.constant(F::from_canonical_u8(value)),
+                    )
+                })
+                .collect(),
+        }
+    }
+
+    fn _translate_u8_bitwise_and(self: &mut Self, lhs: ByteTarget, rhs: ByteTarget) -> ByteTarget {
+        ByteTarget {
+            bits: lhs
+                .bits.iter().zip(rhs.bits.iter())
+                .map(|(x, y)| self.builder.and(*x, *y)).collect(),
+        }
+    }
+
     fn _register_public_parameters_from_acir_circuit(self: &mut Self, circuit: &Circuit) {
         let public_parameters_as_list: Vec<Witness> = circuit.public_parameters.0.iter().cloned().collect();
         for public_parameter_witness in public_parameters_as_list {
@@ -104,7 +149,7 @@ impl CircuitBuilderFromAcirToPlonky2 {
         }
     }
 
-    fn _register_new_public_input_from_witness(self: &mut Self, public_input_witness: Witness) -> Target{
+    fn _register_new_public_input_from_witness(self: &mut Self, public_input_witness: Witness) -> Target {
         let public_input_target = self.builder.add_virtual_target();
         self.builder.register_public_input(public_input_target);
         self.witness_target_map.insert(public_input_witness, public_input_target);
@@ -118,23 +163,23 @@ impl CircuitBuilderFromAcirToPlonky2 {
 
     fn _register_intermediate_witnesses_for_assert_zero(self: &mut Self, expr: &Expression) {
         for (_, witness_1, witness_2) in &expr.mul_terms {
-            self._register_witness_if_not_already_registered(*witness_1);
-            self._register_witness_if_not_already_registered(*witness_2);
+            self._get_or_create_target_for_witness(*witness_1);
+            self._get_or_create_target_for_witness(*witness_2);
         }
         for (_, witness) in &expr.linear_combinations {
-            self._register_witness_if_not_already_registered(*witness);
+            self._get_or_create_target_for_witness(*witness);
         }
     }
 
     fn _register_intermediate_witnesses_for_memory_op(self: &mut Self, op: &MemOp) {
         let at = &op.index.linear_combinations[0].1;
-        self._register_witness_if_not_already_registered(*at);
+        self._get_or_create_target_for_witness(*at);
 
         let value = &op.value.linear_combinations[0].1;
-        self._register_witness_if_not_already_registered(*value);
+        self._get_or_create_target_for_witness(*value);
     }
 
-    fn _register_witness_if_not_already_registered(self: &mut Self, witness: Witness) -> Target {
+    fn _get_or_create_target_for_witness(self: &mut Self, witness: Witness) -> Target {
         match self.witness_target_map.get(&witness) {
             Some(target) => *target,
             None => {

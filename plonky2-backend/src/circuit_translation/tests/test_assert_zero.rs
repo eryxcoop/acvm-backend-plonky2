@@ -17,7 +17,7 @@ fn test_plonky2_vm_can_traslate_the_assert_x_equals_zero_program() {
     let proof = generate_plonky2_proof_using_witness_values(
         vec![(public_input_witness, g_zero)], &witness_target_map, &circuit_data);
     assert_eq!(g_zero, proof.public_inputs[0]);
-    circuit_data.verify(proof).expect("Verification failed");
+    assert!(circuit_data.verify(proof).is_ok());
 }
 
 #[test]
@@ -35,7 +35,7 @@ fn test_plonky2_vm_can_traslate_the_assert_x_equals_constant_program() {
     let proof = generate_plonky2_proof_using_witness_values(
         vec![(public_input_witness, four)], &witness_target_map, &circuit_data);
     assert_eq!(four, proof.public_inputs[0]);
-    circuit_data.verify(proof).expect("Verification failed");
+    assert!(circuit_data.verify(proof).is_ok());
 }
 
 #[test]
@@ -53,7 +53,7 @@ fn test_plonky2_vm_can_traslate_the_assert_c_times_x_equals_constant_program() {
     let proof = generate_plonky2_proof_using_witness_values(
         vec![(public_input_witness, four)], &witness_target_map, &circuit_data);
     assert_eq!(four, proof.public_inputs[0]);
-    circuit_data.verify(proof).expect("Verification failed");
+    assert!(circuit_data.verify(proof).is_ok());
 }
 
 #[test]
@@ -76,7 +76,7 @@ fn test_plonky2_vm_can_traslate_the_x_times_3_plus_y_times_4_equals_constant_pro
 
     assert_eq!(one, proof.public_inputs[0]);
     assert_eq!(one, proof.public_inputs[1]);
-    circuit_data.verify(proof).expect("Verification failed");
+    assert!(circuit_data.verify(proof).is_ok());
 }
 
 #[test]
@@ -100,7 +100,7 @@ fn test_plonky2_vm_can_traslate_multiple_linear_combinations() {
     assert_eq!(one, proof.public_inputs[1]);
     assert_eq!(one, proof.public_inputs[2]);
     assert_eq!(one, proof.public_inputs[3]);
-    circuit_data.verify(proof).expect("Verification failed");
+    assert!(circuit_data.verify(proof).is_ok());
 }
 
 #[test]
@@ -119,7 +119,7 @@ fn test_plonky2_vm_can_traslate_the_x_times_x_program_equals_constant() {
         vec![(public_input, four)], &witness_target_map, &circuit_data);
 
     assert_eq!(four, proof.public_inputs[0]);
-    circuit_data.verify(proof).expect("Verification failed");
+    assert!(circuit_data.verify(proof).is_ok());
 }
 
 #[test]
@@ -142,7 +142,7 @@ fn test_plonky2_vm_can_traslate_the_c_times_x_times_y_program_equals_constant() 
 
     assert_eq!(four, proof.public_inputs[0]);
     assert_eq!(five, proof.public_inputs[1]);
-    circuit_data.verify(proof).expect("Verification failed");
+    assert!(circuit_data.verify(proof).is_ok());
 }
 
 #[test]
@@ -166,7 +166,7 @@ fn test_plonky2_vm_can_traslate_multiple_cuadratic_terms() {
     assert_eq!(two, proof.public_inputs[1]);
     assert_eq!(two, proof.public_inputs[2]);
     assert_eq!(two, proof.public_inputs[3]);
-    circuit_data.verify(proof).expect("Verification failed");
+    assert!(circuit_data.verify(proof).is_ok());
 }
 
 #[test]
@@ -190,7 +190,7 @@ fn test_plonky2_vm_can_traslate_multiple_cuadratic_terms_and_linear_combinations
     assert_eq!(two, proof.public_inputs[1]);
     assert_eq!(two, proof.public_inputs[2]);
     assert_eq!(two, proof.public_inputs[3]);
-    circuit_data.verify(proof).expect("Verification failed");
+    assert!(circuit_data.verify(proof).is_ok());
 }
 
 #[test]
@@ -212,7 +212,7 @@ fn test_plonky2_vm_can_translate_circuits_with_2_assert_zero_opcodes() {
         &witness_target_map, &circuit_data);
 
     assert_eq!(one, proof.public_inputs[0]);
-    circuit_data.verify(proof).expect("Verification failed");
+    assert!(circuit_data.verify(proof).is_ok());
 }
 
 // #[test]

@@ -25,7 +25,7 @@ fn test_plonky2_backend_can_translate_a_program_with_basic_memory_operations(){
         vec![(array_only_position_input_witness, zero),
              (index_input_witness, zero), (Witness(2), one), (Witness(3), zero), (Witness(4), one)],
         &witness_target_map, &circuit_data);
-    circuit_data.verify(proof).expect("Verification failed");
+    assert!(circuit_data.verify(proof).is_ok());
 }
 
 fn _memory_opcodes_circuit(array_only_position_input_witness: Witness, index_input_witness: Witness) -> Circuit {

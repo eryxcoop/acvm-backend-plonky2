@@ -74,7 +74,7 @@ fn test_range_check_with_witness_value(witness_value: F, max_num_bits: u32){
     //Then
     let proof = generate_plonky2_proof_using_witness_values(
         vec![(public_input_witness, witness_value)], &witness_target_map, &circuit_data);
-    circuit_data.verify(proof).expect("Verification failed");
+    assert!(circuit_data.verify(proof).is_ok());
 }
 
 // ---------------- BITWISE OPERATIONS ------------------ //
@@ -107,5 +107,5 @@ fn test_backend_supports_bitwise_and_up_to_8_bits(){
     let proof = generate_plonky2_proof_using_witness_values(
         witness_assignment, &witness_target_map, &circuit_data);
 
-    circuit_data.verify(proof).expect("Verification failed");
+    assert!(circuit_data.verify(proof).is_ok());
 }

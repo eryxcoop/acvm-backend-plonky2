@@ -141,13 +141,30 @@ pub fn circuit_with_a_public_input_and_two_assert_zero_operands(public_input_wit
     }
 }
 
-pub fn bitwise_and_u8_circuit(input_1: Witness, input_2: Witness) -> Circuit {
+pub fn bitwise_and_u8_circuit(input_1: Witness, input_2: Witness, output: Witness) -> Circuit {
     // BLACKBOX::RANGE [(_0, num_bits: 8)] [ ]
     // BLACKBOX::RANGE [(_1, num_bits: 8)] [ ]
     // BLACKBOX::AND [(_0, num_bits: 8), (_1, num_bits: 8)] [ _2]
 
-    let and_lhs = FunctionInput { witness: input_1, num_bits: 8 };
-    let and_rhs = FunctionInput { witness: input_2, num_bits: 8 };
+    arithmetic_u8_circuit(
+        input_1, input_2, _bitwise_and_acir_opcode(output, input_1, input_2)
+    )
+}
+
+pub fn bitwise_xor_u8_circuit(input_1: Witness, input_2: Witness, output: Witness) -> Circuit {
+    // BLACKBOX::RANGE [(_0, num_bits: 8)] [ ]
+    // BLACKBOX::RANGE [(_1, num_bits: 8)] [ ]
+    // BLACKBOX::AND [(_0, num_bits: 8), (_1, num_bits: 8)] [ _2]
+
+    arithmetic_u8_circuit(
+        input_1, input_2, _bitwise_xor_acir_opcode(output, input_1, input_2)
+    )
+}
+
+fn arithmetic_u8_circuit(input_1: Witness, input_2: Witness, opcode: Opcode) -> Circuit {
+    // BLACKBOX::RANGE [(_0, num_bits: 8)] [ ]
+    // BLACKBOX::RANGE [(_1, num_bits: 8)] [ ]
+    // BLACKBOX::OPCODE [(_0, num_bits: 8), (_1, num_bits: 8)] [ _2]
 
     Circuit {
         current_witness_index: 0,
@@ -155,11 +172,7 @@ pub fn bitwise_and_u8_circuit(input_1: Witness, input_2: Witness) -> Circuit {
         opcodes: vec![
             black_box_range_opcode(input_1, 8),
             black_box_range_opcode(input_2, 8),
-            Opcode::BlackBoxFuncCall(opcodes::BlackBoxFuncCall::AND {
-                lhs: and_lhs,
-                rhs: and_rhs,
-                output: Witness(2)
-            })
+            opcode
         ],
         private_parameters: BTreeSet::new(),
         public_parameters: PublicInputs(BTreeSet::from_iter(vec![input_1, input_2])),
@@ -167,4 +180,26 @@ pub fn bitwise_and_u8_circuit(input_1: Witness, input_2: Witness) -> Circuit {
         assert_messages: Default::default(),
         recursive: false,
     }
+}
+
+fn _bitwise_and_acir_opcode(output: Witness, input_1: Witness, input_2: Witness) -> Opcode {
+    let and_lhs = FunctionInput { witness: input_1, num_bits: 8 };
+    let and_rhs = FunctionInput { witness: input_2, num_bits: 8 };
+
+    Opcode::BlackBoxFuncCall(opcodes::BlackBoxFuncCall::AND {
+        lhs: and_lhs,
+        rhs: and_rhs,
+        output,
+    })
+}
+
+fn _bitwise_xor_acir_opcode(output: Witness, input_1: Witness, input_2: Witness) -> Opcode {
+    let and_lhs = FunctionInput { witness: input_1, num_bits: 8 };
+    let and_rhs = FunctionInput { witness: input_2, num_bits: 8 };
+
+    Opcode::BlackBoxFuncCall(opcodes::BlackBoxFuncCall::XOR {
+        lhs: and_lhs,
+        rhs: and_rhs,
+        output,
+    })
 }

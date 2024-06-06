@@ -92,6 +92,14 @@ impl CircuitBuilderFromAcirToPlonky2 {
                             let output_target = self.convert_byte_to_u8(output_byte_target);
                             self.witness_target_map.insert(*output, output_target);
                         }
+                        opcodes::BlackBoxFuncCall::XOR { lhs, rhs, output } => {
+                            let lhs_byte_target = self._byte_target_for_witness(lhs.witness);
+                            let rhs_byte_target = self._byte_target_for_witness(rhs.witness);
+
+                            let output_byte_target = self._translate_u8_bitwise_xor(lhs_byte_target, rhs_byte_target);
+                            let output_target = self.convert_byte_to_u8(output_byte_target);
+                            self.witness_target_map.insert(*output, output_target);
+                        }
                         blackbox_func => {
                             panic!("Blackbox func not supported yet: {:?}", blackbox_func);
                         }
@@ -138,7 +146,15 @@ impl CircuitBuilderFromAcirToPlonky2 {
         ByteTarget {
             bits: lhs
                 .bits.iter().zip(rhs.bits.iter())
-                .map(|(x, y)| self.builder.and(*x, *y)).collect(),
+                .map(|(x, y)| self.and(*x, *y)).collect(),
+        }
+    }
+
+    fn _translate_u8_bitwise_xor(self: &mut Self, lhs: ByteTarget, rhs: ByteTarget) -> ByteTarget {
+        ByteTarget {
+            bits: lhs
+                .bits.iter().zip(rhs.bits.iter())
+                .map(|(x, y)| self.xor(*x, *y)).collect(),
         }
     }
 
@@ -239,6 +255,18 @@ impl CircuitBuilderFromAcirToPlonky2 {
 
         let cuadratic_target = self.builder.mul(first_public_input_target, second_public_input_target);
         self.builder.mul_const(g_cuadratic_factor, cuadratic_target)
+    }
+
+    fn and(&mut self, b1: BoolTarget, b2: BoolTarget) -> BoolTarget {
+        self.builder.and(b1, b2)
+    }
+
+    fn xor(&mut self, b1: BoolTarget, b2: BoolTarget) -> BoolTarget {
+        // a xor b = (a or b) and (not (a and b))
+        let b1_or_b2 = self.builder.or(b1, b2);
+        let b1_and_b2 = self.builder.and(b1, b2);
+        let not_b1_and_b2 = self.builder.not(b1_and_b2);
+        self.builder.and(b1_or_b2, not_b1_and_b2)
     }
 }
 

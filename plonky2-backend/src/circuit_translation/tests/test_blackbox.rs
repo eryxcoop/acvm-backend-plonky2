@@ -88,8 +88,9 @@ fn test_backend_supports_bitwise_and_up_to_8_bits(){
     // Given
     let public_input_witness_0 = Witness(0);
     let public_input_witness_1 = Witness(1);
-    let circuit = circuit_factory::bitwise_and_u8_circuit(public_input_witness_0,
-                                                          public_input_witness_1);
+    let output_witness_2 = Witness(2);
+    let circuit = circuit_factory::bitwise_and_u8_circuit(
+        public_input_witness_0, public_input_witness_1, output_witness_2);
 
     // When
     let (circuit_data, witness_target_map) = generate_plonky2_circuit_from_acir_circuit(&circuit);
@@ -102,7 +103,39 @@ fn test_backend_supports_bitwise_and_up_to_8_bits(){
     let witness_assignment = vec![
         (public_input_witness_0, five),
         (public_input_witness_1, three),
-        (Witness(2), one)];
+        (output_witness_2, one)];
+
+    let proof = generate_plonky2_proof_using_witness_values(
+        witness_assignment, &witness_target_map, &circuit_data);
+
+    assert!(circuit_data.verify(proof).is_ok());
+}
+
+#[test]
+fn test_backend_supports_bitwise_xor_up_to_8_bits(){
+    // fn main(mut x: u8, y: u8) -> pub u8{
+    //     x ^ y
+    // }
+
+    // Given
+    let public_input_witness_0 = Witness(0);
+    let public_input_witness_1 = Witness(1);
+    let output_witness_2 = Witness(2);
+    let circuit = circuit_factory::bitwise_xor_u8_circuit(
+        public_input_witness_0, public_input_witness_1, output_witness_2);
+
+    // When
+    let (circuit_data, witness_target_map) = generate_plonky2_circuit_from_acir_circuit(&circuit);
+
+    //Then
+    let three = F::from_canonical_u64(3);
+    let five = F::from_canonical_u64(5);
+    let six = F::from_canonical_u64(6);
+
+    let witness_assignment = vec![
+        (public_input_witness_0, five),
+        (public_input_witness_1, three),
+        (output_witness_2, six)];
 
     let proof = generate_plonky2_proof_using_witness_values(
         witness_assignment, &witness_target_map, &circuit_data);

@@ -47,6 +47,10 @@ impl CircuitBuilderFromAcirToPlonky2 {
         Self { builder, witness_target_map }
     }
 
+    pub fn unpack(self) -> (CircuitData<F, C, 2>, HashMap<Witness, Target>){
+        (self.builder.build::<C>(), self.witness_target_map)
+    }
+
     pub fn translate_circuit(self: &mut Self, circuit: &Circuit) {
         self._register_public_parameters_from_acir_circuit(circuit);
         for opcode in &circuit.opcodes {
@@ -85,24 +89,10 @@ impl CircuitBuilderFromAcirToPlonky2 {
                             self.builder.range_check(target, long_max_bits)
                         }
                         opcodes::BlackBoxFuncCall::AND { lhs, rhs, output } => {
-                            let lhs_byte_target = self._byte_target_for_witness(lhs.witness);
-                            let rhs_byte_target = self._byte_target_for_witness(rhs.witness);
-
-                            let output_byte_target = self._translate_u8_bitwise_operation(
-                                lhs_byte_target, rhs_byte_target, Self::and);
-
-                            let output_target = self.convert_byte_to_u8(output_byte_target);
-                            self.witness_target_map.insert(*output, output_target);
+                            self._extend_circuit_with_bitwise_u8_operation(lhs, rhs, output, Self::and);
                         }
                         opcodes::BlackBoxFuncCall::XOR { lhs, rhs, output } => {
-                            let lhs_byte_target = self._byte_target_for_witness(lhs.witness);
-                            let rhs_byte_target = self._byte_target_for_witness(rhs.witness);
-
-                            let output_byte_target = self._translate_u8_bitwise_operation(
-                                lhs_byte_target, rhs_byte_target, Self::xor);
-
-                            let output_target = self.convert_byte_to_u8(output_byte_target);
-                            self.witness_target_map.insert(*output, output_target);
+                            self._extend_circuit_with_bitwise_u8_operation(lhs, rhs, output, Self::xor);
                         }
                         blackbox_func => {
                             panic!("Blackbox func not supported yet: {:?}", blackbox_func);
@@ -115,6 +105,18 @@ impl CircuitBuilderFromAcirToPlonky2 {
                 }
             }
         }
+    }
+
+    fn _extend_circuit_with_bitwise_u8_operation(self: &mut Self, lhs: &FunctionInput, rhs: &FunctionInput,
+                                                 output: &Witness, operation: fn(&mut Self, BoolTarget, BoolTarget) -> BoolTarget) {
+        let lhs_byte_target = self._byte_target_for_witness(lhs.witness);
+        let rhs_byte_target = self._byte_target_for_witness(rhs.witness);
+
+        let output_byte_target = self._translate_u8_bitwise_operation(
+            lhs_byte_target, rhs_byte_target, operation);
+
+        let output_target = self.convert_byte_to_u8(output_byte_target);
+        self.witness_target_map.insert(*output, output_target);
     }
 
     fn _byte_target_for_witness(self: &mut Self, w: Witness) -> ByteTarget {
@@ -138,22 +140,6 @@ impl CircuitBuilderFromAcirToPlonky2 {
             bits: lhs
                 .bits.iter().zip(rhs.bits.iter())
                 .map(|(x, y)| operation(self, *x, *y)).collect(),
-        }
-    }
-
-    fn _translate_u8_bitwise_and(self: &mut Self, lhs: ByteTarget, rhs: ByteTarget) -> ByteTarget {
-        ByteTarget {
-            bits: lhs
-                .bits.iter().zip(rhs.bits.iter())
-                .map(|(x, y)| self.and(*x, *y)).collect(),
-        }
-    }
-
-    fn _translate_u8_bitwise_xor(self: &mut Self, lhs: ByteTarget, rhs: ByteTarget) -> ByteTarget {
-        ByteTarget {
-            bits: lhs
-                .bits.iter().zip(rhs.bits.iter())
-                .map(|(x, y)| self.xor(*x, *y)).collect(),
         }
     }
 

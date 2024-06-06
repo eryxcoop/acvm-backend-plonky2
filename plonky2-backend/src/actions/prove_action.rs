@@ -22,11 +22,13 @@ type F = <C as GenericConfig<D>>::F;
 pub struct ProveAction {
     pub acir_program_path: String,
     pub witness_stack_path: String,
-    // pub acir_program: Program,
-    // pub witness_stack: WitnessStack
 }
 
 impl ProveAction {
+    pub fn initialize_empty() -> Self{
+        Self {acir_program_path: String::from(""), witness_stack_path: String::from("")}
+    }
+
     pub fn run(&self) {
         let acir_program: Program = deserialize_program_within_file_path(&self.acir_program_path);
         let mut witness_stack: WitnessStack = deserialize_witnesses_within_file_path(&self.witness_stack_path);

@@ -1,8 +1,5 @@
 use super::*;
 
-// This is a planned refactor, currently this functionality is implemented in the
-// CircuitBuilderFromAcirToPlonky2 struct
-
 pub struct AssertZeroTranslator<'a> {
     builder: &'a mut CircuitBuilder::<F, D>,
     witness_target_map: &'a mut HashMap<Witness, Target>,

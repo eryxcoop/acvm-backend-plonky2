@@ -23,6 +23,7 @@ use acir::circuit::Opcode;
 use acir::circuit::opcodes;
 use acir::circuit::opcodes::{FunctionInput, MemOp};
 
+
 const D: usize = 2;
 
 type C = KeccakGoldilocksConfig;
@@ -56,10 +57,9 @@ impl CircuitBuilderFromAcirToPlonky2 {
         for opcode in &circuit.opcodes {
             match opcode {
                 Opcode::AssertZero(expr) => {
-                    eprintln!("----------ASSERT ZERO--------");
-                    eprintln!("EXPR: {:?}", expr);
-                    self._register_intermediate_witnesses_for_assert_zero(&expr);
-                    self._translate_assert_zero(&expr);
+                    let mut translator = assert_zero_translator::AssertZeroTranslator::new_for(
+                        &mut self.builder, &mut self.witness_target_map, &expr);
+                    translator.translate();
                 }
                 Opcode::BrilligCall { id, inputs, outputs, predicate } => {
                     eprintln!("----------Brillig--------");
@@ -157,21 +157,6 @@ impl CircuitBuilderFromAcirToPlonky2 {
         public_input_target
     }
 
-    fn _field_element_to_goldilocks_field(self: &mut Self, fe: &FieldElement) -> F {
-        let fe_as_big_uint = BigUint::from_bytes_be(&fe.to_be_bytes() as &[u8]);
-        F::from_noncanonical_biguint(fe_as_big_uint)
-    }
-
-    fn _register_intermediate_witnesses_for_assert_zero(self: &mut Self, expr: &Expression) {
-        for (_, witness_1, witness_2) in &expr.mul_terms {
-            self._get_or_create_target_for_witness(*witness_1);
-            self._get_or_create_target_for_witness(*witness_2);
-        }
-        for (_, witness) in &expr.linear_combinations {
-            self._get_or_create_target_for_witness(*witness);
-        }
-    }
-
     fn _register_intermediate_witnesses_for_memory_op(self: &mut Self, op: &MemOp) {
         let at = &op.index.linear_combinations[0].1;
         self._get_or_create_target_for_witness(*at);
@@ -189,57 +174,6 @@ impl CircuitBuilderFromAcirToPlonky2 {
                 target
             }
         }
-    }
-
-    fn _translate_assert_zero(self: &mut Self, expression: &Expression) {
-        let g_constant = self._field_element_to_goldilocks_field(&expression.q_c);
-
-        let constant_target = self.builder.constant(g_constant);
-        let mut current_acc_target = constant_target;
-        current_acc_target = self._add_linear_combinations(expression, current_acc_target);
-        current_acc_target = self._add_cuadratic_combinations(expression, current_acc_target);
-        self.builder.assert_zero(current_acc_target);
-    }
-
-    fn _add_cuadratic_combinations(self: &mut Self, expression: &Expression, mut current_acc_target: Target) -> Target {
-        let mul_terms = &expression.mul_terms;
-        for mul_term in mul_terms {
-            let (f_cuadratic_factor, public_input_witness_1, public_input_witness_2) = mul_term;
-            let cuadratic_target = self._compute_cuadratic_term_target(f_cuadratic_factor, public_input_witness_1, public_input_witness_2);
-            let new_target = self.builder.add(cuadratic_target, current_acc_target);
-            current_acc_target = new_target;
-        }
-        current_acc_target
-    }
-
-    fn _add_linear_combinations(self: &mut Self, expression: &Expression, mut current_acc_target: Target) -> Target {
-        let linear_combinations = &expression.linear_combinations;
-        for (f_multiply_factor, public_input_witness) in linear_combinations {
-            let linear_combination_target = self._compute_linear_combination_target(f_multiply_factor, public_input_witness);
-            let new_target = self.builder.add(linear_combination_target, current_acc_target);
-            current_acc_target = new_target;
-        }
-        current_acc_target
-    }
-
-    fn _compute_linear_combination_target(self: &mut Self,
-                                          f_multiply_constant_factor: &FieldElement,
-                                          public_input_witness: &Witness) -> Target {
-        let factor_target = *self.witness_target_map.get(public_input_witness).unwrap();
-        let g_first_pi_factor = self._field_element_to_goldilocks_field(f_multiply_constant_factor);
-        self.builder.mul_const(g_first_pi_factor, factor_target)
-    }
-
-    fn _compute_cuadratic_term_target(self: &mut Self,
-                                      f_cuadratic_factor: &FieldElement,
-                                      public_input_witness_1: &Witness,
-                                      public_input_witness_2: &Witness) -> Target {
-        let g_cuadratic_factor = self._field_element_to_goldilocks_field(f_cuadratic_factor);
-        let first_public_input_target = *self.witness_target_map.get(public_input_witness_1).unwrap();
-        let second_public_input_target = *self.witness_target_map.get(public_input_witness_2).unwrap();
-
-        let cuadratic_target = self.builder.mul(first_public_input_target, second_public_input_target);
-        self.builder.mul_const(g_cuadratic_factor, cuadratic_target)
     }
 
     fn and(&mut self, b1: BoolTarget, b2: BoolTarget) -> BoolTarget {

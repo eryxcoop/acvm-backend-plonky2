@@ -21,7 +21,9 @@ type F = <C as GenericConfig<D>>::F;
 
 pub struct ProveAction {
     pub acir_program_path: String,
-    pub witness_stack_path: String
+    pub witness_stack_path: String,
+    // pub acir_program: Program,
+    // pub witness_stack: WitnessStack
 }
 
 impl ProveAction {
@@ -50,8 +52,7 @@ impl ProveAction {
     pub fn generate_plonky2_circuit_from_acir_circuit(&self, circuit: &Circuit) -> (CircuitData<F, C, 2>, HashMap<Witness, Target>) {
         let mut translator = circuit_translation::CircuitBuilderFromAcirToPlonky2::new();
         translator.translate_circuit(circuit);
-        let circuit_translation::CircuitBuilderFromAcirToPlonky2 { builder, witness_target_map } = translator;
-        (builder.build::<C>(), witness_target_map)
+        translator.unpack()
     }
 
     fn _field_element_to_goldilocks_field(&self, fe: &FieldElement) -> F {

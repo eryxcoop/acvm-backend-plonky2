@@ -88,7 +88,9 @@ impl CircuitBuilderFromAcirToPlonky2 {
                             let lhs_byte_target = self._byte_target_for_witness(lhs.witness);
                             let rhs_byte_target = self._byte_target_for_witness(rhs.witness);
 
-                            let output_byte_target = self._translate_u8_bitwise_and(lhs_byte_target, rhs_byte_target);
+                            let output_byte_target = self._translate_u8_bitwise_operation(
+                                lhs_byte_target, rhs_byte_target, Self::and);
+
                             let output_target = self.convert_byte_to_u8(output_byte_target);
                             self.witness_target_map.insert(*output, output_target);
                         }
@@ -96,7 +98,9 @@ impl CircuitBuilderFromAcirToPlonky2 {
                             let lhs_byte_target = self._byte_target_for_witness(lhs.witness);
                             let rhs_byte_target = self._byte_target_for_witness(rhs.witness);
 
-                            let output_byte_target = self._translate_u8_bitwise_xor(lhs_byte_target, rhs_byte_target);
+                            let output_byte_target = self._translate_u8_bitwise_operation(
+                                lhs_byte_target, rhs_byte_target, Self::xor);
+
                             let output_target = self.convert_byte_to_u8(output_byte_target);
                             self.witness_target_map.insert(*output, output_target);
                         }
@@ -128,17 +132,12 @@ impl CircuitBuilderFromAcirToPlonky2 {
         self.builder.le_sum(a.bits.into_iter().rev())
     }
 
-    fn _constant_byte(&mut self, byte: u8) -> ByteTarget {
+    fn _translate_u8_bitwise_operation(self: &mut Self, lhs: ByteTarget, rhs: ByteTarget,
+                                       operation: fn(&mut Self, BoolTarget, BoolTarget) -> BoolTarget) -> ByteTarget {
         ByteTarget {
-            bits: (0u8..8u8)
-                .rev()
-                .map(|i| {
-                    let value = ((1u8 << i) & byte) >> i;
-                    BoolTarget::new_unsafe(
-                        self.builder.constant(F::from_canonical_u8(value)),
-                    )
-                })
-                .collect(),
+            bits: lhs
+                .bits.iter().zip(rhs.bits.iter())
+                .map(|(x, y)| operation(self, *x, *y)).collect(),
         }
     }
 

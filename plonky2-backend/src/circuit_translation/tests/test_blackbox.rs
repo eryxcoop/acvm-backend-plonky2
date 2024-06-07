@@ -85,25 +85,43 @@ fn test_backend_supports_bitwise_and_up_to_8_bits(){
     //     x & y
     // }
 
+    let one = F::from_canonical_u64(1);
+    let three = F::from_canonical_u64(3);
+    let five = F::from_canonical_u64(5);
+    _assert_backend_supports_bitwise_and(8, five, three, one);
+}
+
+#[test]
+fn test_backend_supports_bitwise_and_up_to_16_bits(){
+    // fn main(mut x: u8, y: u8) -> pub u8{
+    //     x & y
+    // }
+
+    let a = F::from_canonical_u64(0xFF00);
+    let b = F::from_canonical_u64(0xF0F0);
+    let output = F::from_canonical_u64(0xF000);
+    _assert_backend_supports_bitwise_and(16, a, b, output);
+}
+
+fn _assert_backend_supports_bitwise_and(max_bits: u32, a: GoldilocksField, b: GoldilocksField, output: GoldilocksField){
+    // fn main(mut x: u8, y: u8) -> pub u8{
+    //     x & y
+    // }
+
     // Given
     let public_input_witness_0 = Witness(0);
     let public_input_witness_1 = Witness(1);
     let output_witness_2 = Witness(2);
-    let circuit = circuit_factory::bitwise_and_u8_circuit(
-        public_input_witness_0, public_input_witness_1, output_witness_2);
+    let circuit = _bitwise_and_circuit(public_input_witness_0, public_input_witness_1, output_witness_2, max_bits);
 
     // When
     let (circuit_data, witness_target_map) = generate_plonky2_circuit_from_acir_circuit(&circuit);
 
     //Then
-    let one = F::from_canonical_u64(1);
-    let three = F::from_canonical_u64(3);
-    let five = F::from_canonical_u64(5);
-
     let witness_assignment = vec![
-        (public_input_witness_0, five),
-        (public_input_witness_1, three),
-        (output_witness_2, one)];
+        (public_input_witness_0, a),
+        (public_input_witness_1, b),
+        (output_witness_2, output)];
 
     let proof = generate_plonky2_proof_using_witness_values(
         witness_assignment, &witness_target_map, &circuit_data);
@@ -117,28 +135,58 @@ fn test_backend_supports_bitwise_xor_up_to_8_bits(){
     //     x ^ y
     // }
 
+    let three = F::from_canonical_u64(3);
+    let five = F::from_canonical_u64(5);
+    let six = F::from_canonical_u64(6);
+    _assert_backend_supports_bitwise_xor(8, three, five, six);
+}
+
+#[test]
+fn test_backend_supports_bitwise_xor_up_to_16_bits(){
+    // fn main(mut x: u8, y: u8) -> pub u8{
+    //     x ^ y
+    // }
+
+    let a = F::from_canonical_u64(0xFF00);
+    let b = F::from_canonical_u64(0xF0F0);
+    let output = F::from_canonical_u64(0x0FF0);
+    _assert_backend_supports_bitwise_xor(16, a, b, output);
+}
+
+fn _assert_backend_supports_bitwise_xor(max_bits: u32, a: GoldilocksField, b: GoldilocksField, output: GoldilocksField){
+    // fn main(mut x: u8, y: u8) -> pub u8{
+    //     x ^ y
+    // }
+
     // Given
     let public_input_witness_0 = Witness(0);
     let public_input_witness_1 = Witness(1);
     let output_witness_2 = Witness(2);
-    let circuit = circuit_factory::bitwise_xor_u8_circuit(
-        public_input_witness_0, public_input_witness_1, output_witness_2);
+    let circuit = _bitwise_xor_circuit(public_input_witness_0, public_input_witness_1, output_witness_2, max_bits);
 
     // When
     let (circuit_data, witness_target_map) = generate_plonky2_circuit_from_acir_circuit(&circuit);
 
     //Then
-    let three = F::from_canonical_u64(3);
-    let five = F::from_canonical_u64(5);
-    let six = F::from_canonical_u64(6);
-
     let witness_assignment = vec![
-        (public_input_witness_0, five),
-        (public_input_witness_1, three),
-        (output_witness_2, six)];
+        (public_input_witness_0, a),
+        (public_input_witness_1, b),
+        (output_witness_2, output)];
 
     let proof = generate_plonky2_proof_using_witness_values(
         witness_assignment, &witness_target_map, &circuit_data);
 
     assert!(circuit_data.verify(proof).is_ok());
+}
+
+fn _bitwise_and_circuit(public_input_witness_0: Witness, public_input_witness_1: Witness, output_witness_2: Witness, max_bits: u32) -> Circuit {
+    let circuit = circuit_factory::bitwise_and_circuit(
+        public_input_witness_0, public_input_witness_1, output_witness_2, max_bits);
+    circuit
+}
+
+fn _bitwise_xor_circuit(public_input_witness_0: Witness, public_input_witness_1: Witness, output_witness_2: Witness, max_bits: u32) -> Circuit {
+    let circuit = circuit_factory::bitwise_xor_circuit(
+        public_input_witness_0, public_input_witness_1, output_witness_2, max_bits);
+    circuit
 }

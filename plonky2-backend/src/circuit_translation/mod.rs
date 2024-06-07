@@ -1,6 +1,7 @@
 mod tests;
 pub mod assert_zero_translator;
 
+use std::cmp::max;
 use std::collections::{HashMap};
 use std::error::Error;
 use acir::circuit::{Circuit};
@@ -89,10 +90,12 @@ impl CircuitBuilderFromAcirToPlonky2 {
                             self.builder.range_check(target, long_max_bits)
                         }
                         opcodes::BlackBoxFuncCall::AND { lhs, rhs, output } => {
-                            self._extend_circuit_with_bitwise_u8_operation(lhs, rhs, output, Self::and);
+                            let binary_digits = max(lhs.num_bits, rhs.num_bits) as usize;
+                            self._extend_circuit_with_bitwise_operation(lhs, rhs, output, Self::and, binary_digits);
                         }
                         opcodes::BlackBoxFuncCall::XOR { lhs, rhs, output } => {
-                            self._extend_circuit_with_bitwise_u8_operation(lhs, rhs, output, Self::xor);
+                            let binary_digits = max(lhs.num_bits, rhs.num_bits) as usize;
+                            self._extend_circuit_with_bitwise_operation(lhs, rhs, output, Self::xor, binary_digits);
                         }
                         blackbox_func => {
                             panic!("Blackbox func not supported yet: {:?}", blackbox_func);
@@ -107,35 +110,36 @@ impl CircuitBuilderFromAcirToPlonky2 {
         }
     }
 
-    fn _extend_circuit_with_bitwise_u8_operation(self: &mut Self, lhs: &FunctionInput, rhs: &FunctionInput,
-                                                 output: &Witness, operation: fn(&mut Self, BoolTarget, BoolTarget) -> BoolTarget) {
-        let lhs_byte_target = self._byte_target_for_witness(lhs.witness);
-        let rhs_byte_target = self._byte_target_for_witness(rhs.witness);
+    fn _extend_circuit_with_bitwise_operation(self: &mut Self, lhs: &FunctionInput, rhs: &FunctionInput,
+                                              output: &Witness, operation: fn(&mut Self, BoolTarget, BoolTarget) -> BoolTarget,
+                                              binary_digits: usize) {
+        let lhs_binary_target = self._binary_number_target_for_witness(lhs.witness, binary_digits);
+        let rhs_binary_target = self._binary_number_target_for_witness(rhs.witness, binary_digits);
 
-        let output_byte_target = self._translate_u8_bitwise_operation(
-            lhs_byte_target, rhs_byte_target, operation);
+        let output_binary_target = self._translate_bitwise_operation(
+            lhs_binary_target, rhs_binary_target, operation);
 
-        let output_target = self.convert_byte_to_u8(output_byte_target);
+        let output_target = self.convert_binary_number_to_number(output_binary_target);
         self.witness_target_map.insert(*output, output_target);
     }
 
-    fn _byte_target_for_witness(self: &mut Self, w: Witness) -> ByteTarget {
+    fn _binary_number_target_for_witness(self: &mut Self, w: Witness, digits: usize) -> ByteTarget {
         let target = self._get_or_create_target_for_witness(w);
-        self.convert_u8_to_byte(target)
+        self.convert_number_to_binary_number(target, digits)
     }
 
-    fn convert_u8_to_byte(&mut self, a: Target) -> ByteTarget {
+    fn convert_number_to_binary_number(&mut self, a: Target, digits: usize) -> ByteTarget {
         ByteTarget {
-            bits: self.builder.split_le(a, 8).into_iter().rev().collect(),
+            bits: self.builder.split_le(a, digits).into_iter().rev().collect(),
         }
     }
 
-    fn convert_byte_to_u8(&mut self, a: ByteTarget) -> Target {
+    fn convert_binary_number_to_number(&mut self, a: ByteTarget) -> Target {
         self.builder.le_sum(a.bits.into_iter().rev())
     }
 
-    fn _translate_u8_bitwise_operation(self: &mut Self, lhs: ByteTarget, rhs: ByteTarget,
-                                       operation: fn(&mut Self, BoolTarget, BoolTarget) -> BoolTarget) -> ByteTarget {
+    fn _translate_bitwise_operation(self: &mut Self, lhs: ByteTarget, rhs: ByteTarget,
+                                    operation: fn(&mut Self, BoolTarget, BoolTarget) -> BoolTarget) -> ByteTarget {
         ByteTarget {
             bits: lhs
                 .bits.iter().zip(rhs.bits.iter())

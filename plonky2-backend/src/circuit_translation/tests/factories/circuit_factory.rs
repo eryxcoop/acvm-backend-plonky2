@@ -141,37 +141,37 @@ pub fn circuit_with_a_public_input_and_two_assert_zero_operands(public_input_wit
     }
 }
 
-pub fn bitwise_and_u8_circuit(input_1: Witness, input_2: Witness, output: Witness) -> Circuit {
-    // BLACKBOX::RANGE [(_0, num_bits: 8)] [ ]
-    // BLACKBOX::RANGE [(_1, num_bits: 8)] [ ]
-    // BLACKBOX::AND [(_0, num_bits: 8), (_1, num_bits: 8)] [ _2]
+pub fn bitwise_and_circuit(input_1: Witness, input_2: Witness, output: Witness, max_bits: u32) -> Circuit {
+    // BLACKBOX::RANGE [(_0, num_bits: max_bits)] [ ]
+    // BLACKBOX::RANGE [(_1, num_bits: max_bits)] [ ]
+    // BLACKBOX::AND [(_0, num_bits: max_bits), (_1, num_bits: max_bits)] [ _2]
 
-    arithmetic_u8_circuit(
-        input_1, input_2, _bitwise_and_acir_opcode(output, input_1, input_2)
+    arithmetic_circuit(
+        input_1, input_2, _bitwise_and_acir_opcode(output, input_1, input_2, max_bits), max_bits
     )
 }
 
-pub fn bitwise_xor_u8_circuit(input_1: Witness, input_2: Witness, output: Witness) -> Circuit {
-    // BLACKBOX::RANGE [(_0, num_bits: 8)] [ ]
-    // BLACKBOX::RANGE [(_1, num_bits: 8)] [ ]
-    // BLACKBOX::AND [(_0, num_bits: 8), (_1, num_bits: 8)] [ _2]
+pub fn bitwise_xor_circuit(input_1: Witness, input_2: Witness, output: Witness, max_bits: u32) -> Circuit {
+    // BLACKBOX::RANGE [(_0, num_bits: max_bits)] [ ]
+    // BLACKBOX::RANGE [(_1, num_bits: max_bits)] [ ]
+    // BLACKBOX::AND [(_0, num_bits: max_bits), (_1, num_bits: max_bits)] [ _2]
 
-    arithmetic_u8_circuit(
-        input_1, input_2, _bitwise_xor_acir_opcode(output, input_1, input_2)
+    arithmetic_circuit(
+        input_1, input_2, _bitwise_xor_acir_opcode(output, input_1, input_2, max_bits), max_bits
     )
 }
 
-fn arithmetic_u8_circuit(input_1: Witness, input_2: Witness, opcode: Opcode) -> Circuit {
-    // BLACKBOX::RANGE [(_0, num_bits: 8)] [ ]
-    // BLACKBOX::RANGE [(_1, num_bits: 8)] [ ]
-    // BLACKBOX::OPCODE [(_0, num_bits: 8), (_1, num_bits: 8)] [ _2]
+fn arithmetic_circuit(input_1: Witness, input_2: Witness, opcode: Opcode, max_bits: u32) -> Circuit {
+    // BLACKBOX::RANGE [(_0, num_bits: max_bits)] [ ]
+    // BLACKBOX::RANGE [(_1, num_bits: max_bits)] [ ]
+    // BLACKBOX::OPCODE [(_0, num_bits: max_bits), (_1, num_bits: max_bits)] [ _2]
 
     Circuit {
         current_witness_index: 0,
         expression_width: ExpressionWidth::Unbounded,
         opcodes: vec![
-            black_box_range_opcode(input_1, 8),
-            black_box_range_opcode(input_2, 8),
+            black_box_range_opcode(input_1, max_bits),
+            black_box_range_opcode(input_2, max_bits),
             opcode
         ],
         private_parameters: BTreeSet::new(),
@@ -182,9 +182,9 @@ fn arithmetic_u8_circuit(input_1: Witness, input_2: Witness, opcode: Opcode) -> 
     }
 }
 
-fn _bitwise_and_acir_opcode(output: Witness, input_1: Witness, input_2: Witness) -> Opcode {
-    let and_lhs = FunctionInput { witness: input_1, num_bits: 8 };
-    let and_rhs = FunctionInput { witness: input_2, num_bits: 8 };
+fn _bitwise_and_acir_opcode(output: Witness, input_1: Witness, input_2: Witness, max_bits: u32) -> Opcode {
+    let and_lhs = FunctionInput { witness: input_1, num_bits: max_bits };
+    let and_rhs = FunctionInput { witness: input_2, num_bits: max_bits };
 
     Opcode::BlackBoxFuncCall(opcodes::BlackBoxFuncCall::AND {
         lhs: and_lhs,
@@ -193,9 +193,9 @@ fn _bitwise_and_acir_opcode(output: Witness, input_1: Witness, input_2: Witness)
     })
 }
 
-fn _bitwise_xor_acir_opcode(output: Witness, input_1: Witness, input_2: Witness) -> Opcode {
-    let and_lhs = FunctionInput { witness: input_1, num_bits: 8 };
-    let and_rhs = FunctionInput { witness: input_2, num_bits: 8 };
+fn _bitwise_xor_acir_opcode(output: Witness, input_1: Witness, input_2: Witness, max_bits: u32) -> Opcode {
+    let and_lhs = FunctionInput { witness: input_1, num_bits: max_bits };
+    let and_rhs = FunctionInput { witness: input_2, num_bits: max_bits };
 
     Opcode::BlackBoxFuncCall(opcodes::BlackBoxFuncCall::XOR {
         lhs: and_lhs,

@@ -87,12 +87,10 @@ impl CircuitBuilderFromAcirToPlonky2 {
                             self.builder.range_check(target, long_max_bits)
                         }
                         opcodes::BlackBoxFuncCall::AND { lhs, rhs, output } => {
-                            let binary_digits = max(lhs.num_bits, rhs.num_bits) as usize;
-                            self._extend_circuit_with_bitwise_operation(lhs, rhs, output, Self::and, binary_digits);
+                            self._extend_circuit_with_bitwise_operation(lhs, rhs, output, Self::and);
                         }
                         opcodes::BlackBoxFuncCall::XOR { lhs, rhs, output } => {
-                            let binary_digits = max(lhs.num_bits, rhs.num_bits) as usize;
-                            self._extend_circuit_with_bitwise_operation(lhs, rhs, output, Self::xor, binary_digits);
+                            self._extend_circuit_with_bitwise_operation(lhs, rhs, output, Self::xor);
                         }
                         blackbox_func => {
                             panic!("Blackbox func not supported yet: {:?}", blackbox_func);
@@ -108,8 +106,9 @@ impl CircuitBuilderFromAcirToPlonky2 {
     }
 
     fn _extend_circuit_with_bitwise_operation(self: &mut Self, lhs: &FunctionInput, rhs: &FunctionInput,
-                                              output: &Witness, operation: fn(&mut Self, BoolTarget, BoolTarget) -> BoolTarget,
-                                              binary_digits: usize) {
+                                              output: &Witness, operation: fn(&mut Self, BoolTarget, BoolTarget) -> BoolTarget) {
+        assert_eq!(lhs.num_bits, rhs.num_bits);
+        let binary_digits = lhs.num_bits as usize;
         let lhs_binary_target = self._binary_number_target_for_witness(lhs.witness, binary_digits);
         let rhs_binary_target = self._binary_number_target_for_witness(rhs.witness, binary_digits);
 

@@ -1,4 +1,4 @@
-fn main(mut x: u8, y: u8) -> pub u8{
+fn main(mut x: u8, y: u16) -> pub u16{
         x & y
 }
 

@@ -85,9 +85,9 @@ fn test_backend_supports_bitwise_and_up_to_8_bits(){
     //     x & y
     // }
 
-    let one = F::from_canonical_u64(1);
-    let three = F::from_canonical_u64(3);
-    let five = F::from_canonical_u64(5);
+    let one = F::from_canonical_u8(1);
+    let three = F::from_canonical_u8(3);
+    let five = F::from_canonical_u8(5);
     _assert_backend_supports_bitwise_operation(_bitwise_and_circuit, 8, five, three, one);
 }
 
@@ -97,9 +97,9 @@ fn test_backend_supports_bitwise_and_up_to_16_bits(){
     //     x & y
     // }
 
-    let a = F::from_canonical_u64(0xFF00);
-    let b = F::from_canonical_u64(0xF0F0);
-    let output = F::from_canonical_u64(0xF000);
+    let a = F::from_canonical_u16(0xFF00);
+    let b = F::from_canonical_u16(0xF0F0);
+    let output = F::from_canonical_u16(0xF000);
     _assert_backend_supports_bitwise_operation(_bitwise_and_circuit, 16, a, b, output);
 }
 
@@ -109,9 +109,9 @@ fn test_backend_supports_bitwise_and_up_to_32_bits(){
     //     x & y
     // }
 
-    let a = F::from_canonical_u64(0xFF00FF00);
-    let b = F::from_canonical_u64(0xF0F0F0F0);
-    let output = F::from_canonical_u64(0xF000F000);
+    let a = F::from_canonical_u32(0xFF00FF00);
+    let b = F::from_canonical_u32(0xF0F0F0F0);
+    let output = F::from_canonical_u32(0xF000F000);
     _assert_backend_supports_bitwise_operation(_bitwise_and_circuit, 32, a, b, output);
 }
 
@@ -121,9 +121,9 @@ fn test_backend_supports_bitwise_xor_up_to_8_bits(){
     //     x ^ y
     // }
 
-    let three = F::from_canonical_u64(3);
-    let five = F::from_canonical_u64(5);
-    let six = F::from_canonical_u64(6);
+    let three = F::from_canonical_u8(3);
+    let five = F::from_canonical_u8(5);
+    let six = F::from_canonical_u8(6);
     _assert_backend_supports_bitwise_operation(_bitwise_xor_circuit, 8, three, five, six);
 }
 
@@ -133,9 +133,9 @@ fn test_backend_supports_bitwise_xor_up_to_16_bits(){
     //     x ^ y
     // }
 
-    let a = F::from_canonical_u64(0xFF00);
-    let b = F::from_canonical_u64(0xF0F0);
-    let output = F::from_canonical_u64(0x0FF0);
+    let a = F::from_canonical_u16(0xFF00);
+    let b = F::from_canonical_u16(0xF0F0);
+    let output = F::from_canonical_u16(0x0FF0);
     _assert_backend_supports_bitwise_operation(_bitwise_xor_circuit, 16, a, b, output);
 }
 
@@ -145,9 +145,9 @@ fn test_backend_supports_bitwise_xor_up_to_32_bits(){
     //     x ^ y
     // }
 
-    let a = F::from_canonical_u64(0xFF00FF00);
-    let b = F::from_canonical_u64(0xF0F0F0F0);
-    let output = F::from_canonical_u64(0x0FF00FF0);
+    let a = F::from_canonical_u32(0xFF00FF00);
+    let b = F::from_canonical_u32(0xF0F0F0F0);
+    let output = F::from_canonical_u32(0x0FF00FF0);
     _assert_backend_supports_bitwise_operation(_bitwise_xor_circuit, 32, a, b, output);
 }
 

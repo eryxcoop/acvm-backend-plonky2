@@ -88,7 +88,7 @@ fn test_backend_supports_bitwise_and_up_to_8_bits(){
     let one = F::from_canonical_u64(1);
     let three = F::from_canonical_u64(3);
     let five = F::from_canonical_u64(5);
-    _assert_backend_supports_bitwise_operation(8, five, three, one, _bitwise_and_circuit);
+    _assert_backend_supports_bitwise_operation(_bitwise_and_circuit, 8, five, three, one);
 }
 
 #[test]
@@ -100,7 +100,19 @@ fn test_backend_supports_bitwise_and_up_to_16_bits(){
     let a = F::from_canonical_u64(0xFF00);
     let b = F::from_canonical_u64(0xF0F0);
     let output = F::from_canonical_u64(0xF000);
-    _assert_backend_supports_bitwise_operation(16, a, b, output, _bitwise_and_circuit);
+    _assert_backend_supports_bitwise_operation(_bitwise_and_circuit, 16, a, b, output);
+}
+
+#[test]
+fn test_backend_supports_bitwise_and_up_to_32_bits(){
+    // fn main(mut x: u32, y: u32) -> pub u32{
+    //     x & y
+    // }
+
+    let a = F::from_canonical_u64(0xFF00FF00);
+    let b = F::from_canonical_u64(0xF0F0F0F0);
+    let output = F::from_canonical_u64(0xF000F000);
+    _assert_backend_supports_bitwise_operation(_bitwise_and_circuit, 32, a, b, output);
 }
 
 #[test]
@@ -112,7 +124,7 @@ fn test_backend_supports_bitwise_xor_up_to_8_bits(){
     let three = F::from_canonical_u64(3);
     let five = F::from_canonical_u64(5);
     let six = F::from_canonical_u64(6);
-    _assert_backend_supports_bitwise_operation(8, three, five, six, _bitwise_xor_circuit);
+    _assert_backend_supports_bitwise_operation(_bitwise_xor_circuit, 8, three, five, six);
 }
 
 #[test]
@@ -124,11 +136,23 @@ fn test_backend_supports_bitwise_xor_up_to_16_bits(){
     let a = F::from_canonical_u64(0xFF00);
     let b = F::from_canonical_u64(0xF0F0);
     let output = F::from_canonical_u64(0x0FF0);
-    _assert_backend_supports_bitwise_operation(16, a, b, output, _bitwise_xor_circuit);
+    _assert_backend_supports_bitwise_operation(_bitwise_xor_circuit, 16, a, b, output);
 }
 
-fn _assert_backend_supports_bitwise_operation(max_bits: u32, a: GoldilocksField, b: GoldilocksField,
-                                              output: GoldilocksField, operation: fn(Witness, Witness, Witness, u32) -> Circuit){
+#[test]
+fn test_backend_supports_bitwise_xor_up_to_32_bits(){
+    // fn main(mut x: u32, y: u32) -> pub u32{
+    //     x ^ y
+    // }
+
+    let a = F::from_canonical_u64(0xFF00FF00);
+    let b = F::from_canonical_u64(0xF0F0F0F0);
+    let output = F::from_canonical_u64(0x0FF00FF0);
+    _assert_backend_supports_bitwise_operation(_bitwise_xor_circuit, 32, a, b, output);
+}
+
+fn _assert_backend_supports_bitwise_operation(operation: fn(Witness, Witness, Witness, u32) -> Circuit, max_bits: u32, a: GoldilocksField, b: GoldilocksField,
+                                              output: GoldilocksField){
     // fn main(mut x: u_maxbits, y: u_maxbits) -> pub u_maxbits{
     //     x (operation) y
     // }

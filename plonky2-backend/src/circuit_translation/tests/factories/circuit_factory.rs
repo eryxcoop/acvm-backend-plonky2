@@ -146,7 +146,7 @@ pub fn bitwise_and_circuit(input_1: Witness, input_2: Witness, output: Witness, 
     // BLACKBOX::RANGE [(_1, num_bits: max_bits)] [ ]
     // BLACKBOX::AND [(_0, num_bits: max_bits), (_1, num_bits: max_bits)] [ _2]
 
-    arithmetic_circuit(
+    _circuit_with_bitwise_operation(
         input_1, input_2, _bitwise_and_acir_opcode(output, input_1, input_2, max_bits), max_bits
     )
 }
@@ -156,12 +156,12 @@ pub fn bitwise_xor_circuit(input_1: Witness, input_2: Witness, output: Witness, 
     // BLACKBOX::RANGE [(_1, num_bits: max_bits)] [ ]
     // BLACKBOX::AND [(_0, num_bits: max_bits), (_1, num_bits: max_bits)] [ _2]
 
-    arithmetic_circuit(
+    _circuit_with_bitwise_operation(
         input_1, input_2, _bitwise_xor_acir_opcode(output, input_1, input_2, max_bits), max_bits
     )
 }
 
-fn arithmetic_circuit(input_1: Witness, input_2: Witness, opcode: Opcode, max_bits: u32) -> Circuit {
+fn _circuit_with_bitwise_operation(input_1: Witness, input_2: Witness, opcode: Opcode, max_bits: u32) -> Circuit {
     // BLACKBOX::RANGE [(_0, num_bits: max_bits)] [ ]
     // BLACKBOX::RANGE [(_1, num_bits: max_bits)] [ ]
     // BLACKBOX::OPCODE [(_0, num_bits: max_bits), (_1, num_bits: max_bits)] [ _2]

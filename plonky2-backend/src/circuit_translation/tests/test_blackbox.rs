@@ -88,7 +88,7 @@ fn test_backend_supports_bitwise_and_up_to_8_bits(){
     let one = F::from_canonical_u8(1);
     let three = F::from_canonical_u8(3);
     let five = F::from_canonical_u8(5);
-    _assert_backend_supports_bitwise_operation(_bitwise_and_circuit, 8, five, three, one);
+    _assert_backend_supports_bitwise_operation(circuit_factory::bitwise_and_circuit, 8, five, three, one);
 }
 
 #[test]
@@ -100,7 +100,7 @@ fn test_backend_supports_bitwise_and_up_to_16_bits(){
     let a = F::from_canonical_u16(0xFF00);
     let b = F::from_canonical_u16(0xF0F0);
     let output = F::from_canonical_u16(0xF000);
-    _assert_backend_supports_bitwise_operation(_bitwise_and_circuit, 16, a, b, output);
+    _assert_backend_supports_bitwise_operation(circuit_factory::bitwise_and_circuit, 16, a, b, output);
 }
 
 #[test]
@@ -112,7 +112,7 @@ fn test_backend_supports_bitwise_and_up_to_32_bits(){
     let a = F::from_canonical_u32(0xFF00FF00);
     let b = F::from_canonical_u32(0xF0F0F0F0);
     let output = F::from_canonical_u32(0xF000F000);
-    _assert_backend_supports_bitwise_operation(_bitwise_and_circuit, 32, a, b, output);
+    _assert_backend_supports_bitwise_operation(circuit_factory::bitwise_and_circuit, 32, a, b, output);
 }
 
 #[test]
@@ -124,7 +124,7 @@ fn test_backend_supports_bitwise_xor_up_to_8_bits(){
     let three = F::from_canonical_u8(3);
     let five = F::from_canonical_u8(5);
     let six = F::from_canonical_u8(6);
-    _assert_backend_supports_bitwise_operation(_bitwise_xor_circuit, 8, three, five, six);
+    _assert_backend_supports_bitwise_operation(circuit_factory::bitwise_xor_circuit, 8, three, five, six);
 }
 
 #[test]
@@ -136,7 +136,7 @@ fn test_backend_supports_bitwise_xor_up_to_16_bits(){
     let a = F::from_canonical_u16(0xFF00);
     let b = F::from_canonical_u16(0xF0F0);
     let output = F::from_canonical_u16(0x0FF0);
-    _assert_backend_supports_bitwise_operation(_bitwise_xor_circuit, 16, a, b, output);
+    _assert_backend_supports_bitwise_operation(circuit_factory::bitwise_xor_circuit, 16, a, b, output);
 }
 
 #[test]
@@ -148,7 +148,7 @@ fn test_backend_supports_bitwise_xor_up_to_32_bits(){
     let a = F::from_canonical_u32(0xFF00FF00);
     let b = F::from_canonical_u32(0xF0F0F0F0);
     let output = F::from_canonical_u32(0x0FF00FF0);
-    _assert_backend_supports_bitwise_operation(_bitwise_xor_circuit, 32, a, b, output);
+    _assert_backend_supports_bitwise_operation(circuit_factory::bitwise_xor_circuit, 32, a, b, output);
 }
 
 fn _assert_backend_supports_bitwise_operation(operation: fn(Witness, Witness, Witness, u32) -> Circuit, max_bits: u32, a: GoldilocksField, b: GoldilocksField,
@@ -176,14 +176,4 @@ fn _assert_backend_supports_bitwise_operation(operation: fn(Witness, Witness, Wi
         witness_assignment, &witness_target_map, &circuit_data);
 
     assert!(circuit_data.verify(proof).is_ok());
-}
-
-fn _bitwise_and_circuit(public_input_witness_0: Witness, public_input_witness_1: Witness, output_witness_2: Witness, max_bits: u32) -> Circuit {
-    circuit_factory::bitwise_and_circuit(
-        public_input_witness_0, public_input_witness_1, output_witness_2, max_bits)
-}
-
-fn _bitwise_xor_circuit(public_input_witness_0: Witness, public_input_witness_1: Witness, output_witness_2: Witness, max_bits: u32) -> Circuit {
-    circuit_factory::bitwise_xor_circuit(
-        public_input_witness_0, public_input_witness_1, output_witness_2, max_bits)
 }

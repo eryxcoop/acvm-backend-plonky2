@@ -141,27 +141,27 @@ pub fn circuit_with_a_public_input_and_two_assert_zero_operands(public_input_wit
     }
 }
 
-pub fn bitwise_and_circuit(input_1: Witness, input_2: Witness, output: Witness, max_bits: u32) -> Circuit {
+pub fn bitwise_and_circuit(input_1: Witness, input_2: Witness, output: Witness, bit_size: u32) -> Circuit {
     // BLACKBOX::RANGE [(_0, num_bits: max_bits)] [ ]
     // BLACKBOX::RANGE [(_1, num_bits: max_bits)] [ ]
     // BLACKBOX::AND [(_0, num_bits: max_bits), (_1, num_bits: max_bits)] [ _2]
 
     _circuit_with_bitwise_operation(
-        input_1, input_2, _bitwise_and_acir_opcode(output, input_1, input_2, max_bits), max_bits
+        input_1, input_2, _bitwise_and_acir_opcode(output, input_1, input_2, bit_size), bit_size
     )
 }
 
-pub fn bitwise_xor_circuit(input_1: Witness, input_2: Witness, output: Witness, max_bits: u32) -> Circuit {
+pub fn bitwise_xor_circuit(input_1: Witness, input_2: Witness, output: Witness, bit_size: u32) -> Circuit {
     // BLACKBOX::RANGE [(_0, num_bits: max_bits)] [ ]
     // BLACKBOX::RANGE [(_1, num_bits: max_bits)] [ ]
-    // BLACKBOX::AND [(_0, num_bits: max_bits), (_1, num_bits: max_bits)] [ _2]
+    // BLACKBOX::XOR [(_0, num_bits: max_bits), (_1, num_bits: max_bits)] [ _2]
 
     _circuit_with_bitwise_operation(
-        input_1, input_2, _bitwise_xor_acir_opcode(output, input_1, input_2, max_bits), max_bits
+        input_1, input_2, _bitwise_xor_acir_opcode(output, input_1, input_2, bit_size), bit_size
     )
 }
 
-fn _circuit_with_bitwise_operation(input_1: Witness, input_2: Witness, opcode: Opcode, max_bits: u32) -> Circuit {
+fn _circuit_with_bitwise_operation(input_1: Witness, input_2: Witness, opcode: Opcode, bit_size: u32) -> Circuit {
     // BLACKBOX::RANGE [(_0, num_bits: max_bits)] [ ]
     // BLACKBOX::RANGE [(_1, num_bits: max_bits)] [ ]
     // BLACKBOX::OPCODE [(_0, num_bits: max_bits), (_1, num_bits: max_bits)] [ _2]
@@ -170,8 +170,8 @@ fn _circuit_with_bitwise_operation(input_1: Witness, input_2: Witness, opcode: O
         current_witness_index: 0,
         expression_width: ExpressionWidth::Unbounded,
         opcodes: vec![
-            black_box_range_opcode(input_1, max_bits),
-            black_box_range_opcode(input_2, max_bits),
+            black_box_range_opcode(input_1, bit_size),
+            black_box_range_opcode(input_2, bit_size),
             opcode
         ],
         private_parameters: BTreeSet::new(),
@@ -182,9 +182,9 @@ fn _circuit_with_bitwise_operation(input_1: Witness, input_2: Witness, opcode: O
     }
 }
 
-fn _bitwise_and_acir_opcode(output: Witness, input_1: Witness, input_2: Witness, max_bits: u32) -> Opcode {
-    let and_lhs = FunctionInput { witness: input_1, num_bits: max_bits };
-    let and_rhs = FunctionInput { witness: input_2, num_bits: max_bits };
+fn _bitwise_and_acir_opcode(output: Witness, input_1: Witness, input_2: Witness, bit_size: u32) -> Opcode {
+    let and_lhs = FunctionInput { witness: input_1, num_bits: bit_size };
+    let and_rhs = FunctionInput { witness: input_2, num_bits: bit_size };
 
     Opcode::BlackBoxFuncCall(opcodes::BlackBoxFuncCall::AND {
         lhs: and_lhs,

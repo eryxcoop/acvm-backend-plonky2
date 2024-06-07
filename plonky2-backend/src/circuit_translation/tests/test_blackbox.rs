@@ -151,7 +151,7 @@ fn test_backend_supports_bitwise_xor_up_to_32_bits(){
     _assert_backend_supports_bitwise_operation(circuit_factory::bitwise_xor_circuit, 32, a, b, output);
 }
 
-fn _assert_backend_supports_bitwise_operation(operation: fn(Witness, Witness, Witness, u32) -> Circuit, max_bits: u32, a: GoldilocksField, b: GoldilocksField,
+fn _assert_backend_supports_bitwise_operation(operation: fn(Witness, Witness, Witness, u32) -> Circuit, bit_size: u32, a: GoldilocksField, b: GoldilocksField,
                                               output: GoldilocksField){
     // fn main(mut x: u_maxbits, y: u_maxbits) -> pub u_maxbits{
     //     x (operation) y
@@ -161,7 +161,7 @@ fn _assert_backend_supports_bitwise_operation(operation: fn(Witness, Witness, Wi
     let public_input_witness_0 = Witness(0);
     let public_input_witness_1 = Witness(1);
     let output_witness_2 = Witness(2);
-    let circuit = operation(public_input_witness_0, public_input_witness_1, output_witness_2, max_bits);
+    let circuit = operation(public_input_witness_0, public_input_witness_1, output_witness_2, bit_size);
 
     // When
     let (circuit_data, witness_target_map) = generate_plonky2_circuit_from_acir_circuit(&circuit);

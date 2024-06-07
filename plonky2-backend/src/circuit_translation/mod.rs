@@ -1,5 +1,6 @@
 mod tests;
 pub mod assert_zero_translator;
+mod targets;
 
 use std::cmp::max;
 use std::collections::{HashMap};
@@ -23,6 +24,7 @@ use std::collections::BTreeSet;
 use acir::circuit::Opcode;
 use acir::circuit::opcodes;
 use acir::circuit::opcodes::{FunctionInput, MemOp};
+use crate::circuit_translation::targets::BinaryDigitsTarget;
 
 
 const D: usize = 2;
@@ -30,11 +32,6 @@ const D: usize = 2;
 type C = KeccakGoldilocksConfig;
 type F = <C as GenericConfig<D>>::F;
 type CB = CircuitBuilder::<F, D>;
-
-#[derive(Clone, Debug)]
-pub struct ByteTarget {
-    pub bits: Vec<BoolTarget>,
-}
 
 pub struct CircuitBuilderFromAcirToPlonky2 {
     pub builder: CB,
@@ -123,24 +120,24 @@ impl CircuitBuilderFromAcirToPlonky2 {
         self.witness_target_map.insert(*output, output_target);
     }
 
-    fn _binary_number_target_for_witness(self: &mut Self, w: Witness, digits: usize) -> ByteTarget {
+    fn _binary_number_target_for_witness(self: &mut Self, w: Witness, digits: usize) -> BinaryDigitsTarget {
         let target = self._get_or_create_target_for_witness(w);
         self.convert_number_to_binary_number(target, digits)
     }
 
-    fn convert_number_to_binary_number(&mut self, a: Target, digits: usize) -> ByteTarget {
-        ByteTarget {
+    fn convert_number_to_binary_number(&mut self, a: Target, digits: usize) -> BinaryDigitsTarget {
+        BinaryDigitsTarget {
             bits: self.builder.split_le(a, digits).into_iter().rev().collect(),
         }
     }
 
-    fn convert_binary_number_to_number(&mut self, a: ByteTarget) -> Target {
+    fn convert_binary_number_to_number(&mut self, a: BinaryDigitsTarget) -> Target {
         self.builder.le_sum(a.bits.into_iter().rev())
     }
 
-    fn _translate_bitwise_operation(self: &mut Self, lhs: ByteTarget, rhs: ByteTarget,
-                                    operation: fn(&mut Self, BoolTarget, BoolTarget) -> BoolTarget) -> ByteTarget {
-        ByteTarget {
+    fn _translate_bitwise_operation(self: &mut Self, lhs: BinaryDigitsTarget, rhs: BinaryDigitsTarget,
+                                    operation: fn(&mut Self, BoolTarget, BoolTarget) -> BoolTarget) -> BinaryDigitsTarget {
+        BinaryDigitsTarget {
             bits: lhs
                 .bits.iter().zip(rhs.bits.iter())
                 .map(|(x, y)| operation(self, *x, *y)).collect(),

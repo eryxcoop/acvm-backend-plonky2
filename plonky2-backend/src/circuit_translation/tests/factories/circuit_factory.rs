@@ -112,7 +112,7 @@ pub fn multiple_cuadratic_terms_and_linear_combinations_opcode(public_inputs: &V
 
 pub fn black_box_range_opcode(public_input: Witness, max_bits: u32) -> Opcode {
     let input = FunctionInput { witness: public_input, num_bits: max_bits };
-    Opcode::BlackBoxFuncCall(opcodes::BlackBoxFuncCall::RANGE{input})
+    Opcode::BlackBoxFuncCall(opcodes::BlackBoxFuncCall::RANGE { input })
 }
 
 
@@ -147,7 +147,7 @@ pub fn bitwise_and_circuit(input_1: Witness, input_2: Witness, output: Witness, 
     // BLACKBOX::AND [(_0, num_bits: max_bits), (_1, num_bits: max_bits)] [ _2]
 
     _circuit_with_bitwise_operation(
-        input_1, input_2, _bitwise_and_acir_opcode(output, input_1, input_2, bit_size), bit_size
+        input_1, input_2, _bitwise_and_acir_opcode(output, input_1, input_2, bit_size), bit_size,
     )
 }
 
@@ -157,7 +157,7 @@ pub fn bitwise_xor_circuit(input_1: Witness, input_2: Witness, output: Witness, 
     // BLACKBOX::XOR [(_0, num_bits: max_bits), (_1, num_bits: max_bits)] [ _2]
 
     _circuit_with_bitwise_operation(
-        input_1, input_2, _bitwise_xor_acir_opcode(output, input_1, input_2, bit_size), bit_size
+        input_1, input_2, _bitwise_xor_acir_opcode(output, input_1, input_2, bit_size), bit_size,
     )
 }
 
@@ -172,7 +172,7 @@ fn _circuit_with_bitwise_operation(input_1: Witness, input_2: Witness, opcode: O
         opcodes: vec![
             black_box_range_opcode(input_1, bit_size),
             black_box_range_opcode(input_2, bit_size),
-            opcode
+            opcode,
         ],
         private_parameters: BTreeSet::new(),
         public_parameters: PublicInputs(BTreeSet::from_iter(vec![input_1, input_2])),
@@ -202,4 +202,30 @@ fn _bitwise_xor_acir_opcode(output: Witness, input_1: Witness, input_2: Witness,
         rhs: and_rhs,
         output,
     })
+}
+
+pub fn sha256_circuit_with_inputs(public_input_witnesses: Vec<Witness>,
+                                  output_witnesses: [Witness; 32]) -> Circuit {
+    let function_inputs = public_input_witnesses.clone().into_iter().map(
+        |w| FunctionInput { witness: w, num_bits: 8 }).collect();
+
+    Circuit {
+        current_witness_index: 0,
+        expression_width: ExpressionWidth::Unbounded,
+        opcodes: vec![
+            black_box_range_opcode(public_input_witnesses[0], 8u32),
+            black_box_range_opcode(public_input_witnesses[1], 8u32),
+            black_box_range_opcode(public_input_witnesses[2], 8u32),
+            black_box_range_opcode(public_input_witnesses[3], 8u32),
+            Opcode::BlackBoxFuncCall(opcodes::BlackBoxFuncCall::SHA256 {
+                inputs: function_inputs,
+                outputs: Box::new(output_witnesses),
+            }),
+        ],
+        private_parameters: BTreeSet::new(),
+        public_parameters: PublicInputs(BTreeSet::from_iter(public_input_witnesses)),
+        return_values: PublicInputs(BTreeSet::from_iter([Witness(2)])),
+        assert_messages: Default::default(),
+        recursive: false,
+    }
 }

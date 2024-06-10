@@ -1,4 +1,5 @@
-fn main(mut x: u8, y: u16) -> pub u16{
-        x & y
+fn main(){
+   let x = [163, 117, 178, 149]; // some random bytes
+   let hash = std::sha256::sha256_var(x, 4);
 }
 

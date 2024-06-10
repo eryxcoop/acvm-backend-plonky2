@@ -1,5 +1,6 @@
 use crate::circuit_translation::tests::factories::circuit_factory;
 use crate::circuit_translation::tests::factories::utils::*;
+use sha2::{Sha256, Digest};
 use super::*;
 
 #[test]
@@ -171,6 +172,43 @@ fn _assert_backend_supports_bitwise_operation(operation: fn(Witness, Witness, Wi
         (public_input_witness_0, a),
         (public_input_witness_1, b),
         (output_witness_2, output)];
+
+    let proof = generate_plonky2_proof_using_witness_values(
+        witness_assignment, &witness_target_map, &circuit_data);
+
+    assert!(circuit_data.verify(proof).is_ok());
+}
+
+// --------------------- SHA256 --------------------- //
+
+#[test]
+fn test_backend_can_translate_sha256_acir_opcode_with_short_input(){
+    // fn main(in: [u8, 4]) -> pub [u8, 32]{
+    //     std::hash::sha256(in, 4);
+    // }
+
+    // Given
+    let public_input_witnesses = vec![Witness(0), Witness(1), Witness(2), Witness(3)];
+    let output_witnesses: [Witness; 32] = (4..36).map(Witness).collect::<Vec<_>>().try_into().unwrap();
+    let circuit = circuit_factory::sha256_circuit_with_inputs(public_input_witnesses.clone(), output_witnesses);
+
+    // When
+    let (circuit_data, witness_target_map) = generate_plonky2_circuit_from_acir_circuit(&circuit);
+
+    //Then
+    let mut witness_assignment = vec![
+        (public_input_witnesses[0], F::from_canonical_u8(112)),  // h
+        (public_input_witnesses[1], F::from_canonical_u8(97)),   // o
+        (public_input_witnesses[2], F::from_canonical_u8(119)),  // l
+        (public_input_witnesses[3], F::from_canonical_u8(110))]; // a
+
+    let str_to_be_hashed = b"hola";
+    let mut hasher = Sha256::new();
+    hasher.update(str_to_be_hashed);
+    let result = hasher.finalize();
+    let result_as_bytes: Vec<_> = result.into_iter().map(|b| F::from_canonical_u8(b)).collect();
+
+    witness_assignment.extend(output_witnesses.into_iter().zip(result_as_bytes));
 
     let proof = generate_plonky2_proof_using_witness_values(
         witness_assignment, &witness_target_map, &circuit_data);

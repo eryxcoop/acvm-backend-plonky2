@@ -11,6 +11,7 @@ acir = "0.46.0"
 plonky2 = { version = "0.2", default-features = false, features = ["std", "parallel"]}
 num-bigint = "0.4"
 jemallocator = "0.5.0"
+sha2 = "0.10.8"
 
 [patch.crates-io]
 acir = { path = "../noir/acvm-repo/acir"}

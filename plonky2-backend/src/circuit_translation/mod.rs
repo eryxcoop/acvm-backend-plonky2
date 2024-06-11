@@ -4,7 +4,6 @@ mod binary_digits_target;
 mod sha256_translator;
 
 
-use std::cmp::max;
 use std::collections::{HashMap};
 use std::error::Error;
 use acir::circuit::{Circuit};
@@ -26,7 +25,8 @@ use std::collections::BTreeSet;
 use acir::circuit::Opcode;
 use acir::circuit::opcodes;
 use acir::circuit::opcodes::{FunctionInput, MemOp};
-use crate::circuit_translation::targets::BinaryDigitsTarget;
+use crate::circuit_translation::binary_digits_target::BinaryDigitsTarget;
+use crate::circuit_translation::sha256_translator::Sha256Translator;
 
 
 const D: usize = 2;

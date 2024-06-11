@@ -1,6 +1,8 @@
 mod tests;
 pub mod assert_zero_translator;
 mod binary_digits_target;
+mod sha256_translator;
+
 
 use std::cmp::max;
 use std::collections::{HashMap};

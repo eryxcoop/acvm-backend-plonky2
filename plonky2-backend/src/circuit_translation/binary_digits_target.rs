@@ -10,7 +10,12 @@ impl BinaryDigitsTarget {
         self.bits.len()
     }
 
-    fn shift_right(&mut self, times: usize) -> Self {
+    pub fn new_with_digits(d: usize) -> BinaryDigitsTarget {
+        let bits = vec![BoolTarget(); d];
+        BinaryDigitsTarget { bits }
+    }
+
+    pub fn shift_right(&self, times: usize) -> Self {
         let mut new_bits = Vec::new();
         // Fill zero bits
         for _ in 0..times {
@@ -27,7 +32,7 @@ impl BinaryDigitsTarget {
         Self { bits: new_bits }
     }
 
-    fn rotate_right(&mut self, times: usize) -> Self {
+    pub fn rotate_right(&self, times: usize) -> Self {
         let mut new_bits = Vec::new();
         // Wrap bits around
         for i in 0..times {

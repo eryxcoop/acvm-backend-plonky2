@@ -89,10 +89,10 @@ impl CircuitBuilderFromAcirToPlonky2 {
                             self.builder.range_check(target, long_max_bits)
                         }
                         opcodes::BlackBoxFuncCall::AND { lhs, rhs, output } => {
-                            self._extend_circuit_with_bitwise_operation(lhs, rhs, output, Self::and);
+                            self._extend_circuit_with_operation(lhs, rhs, output, Self::and);
                         }
                         opcodes::BlackBoxFuncCall::XOR { lhs, rhs, output } => {
-                            self._extend_circuit_with_bitwise_operation(lhs, rhs, output, Self::xor);
+                            self._extend_circuit_with_operation(lhs, rhs, output, Self::xor);
                         }
                         opcodes::BlackBoxFuncCall::SHA256 { inputs, outputs } => {
                             self._extend_circuit_with_sha256_operation(inputs, outputs);
@@ -116,15 +116,14 @@ impl CircuitBuilderFromAcirToPlonky2 {
         translator.translate();
     }
 
-    fn _extend_circuit_with_bitwise_operation(self: &mut Self, lhs: &FunctionInput, rhs: &FunctionInput,
-                                              output: &Witness, operation: fn(&mut Self, BoolTarget, BoolTarget) -> BoolTarget) {
+    fn _extend_circuit_with_operation(self: &mut Self, lhs: &FunctionInput, rhs: &FunctionInput,
+                                      output: &Witness, operation: fn(&mut Self, BinaryDigitsTarget, BinaryDigitsTarget) -> BinaryDigitsTarget) {
         assert_eq!(lhs.num_bits, rhs.num_bits);
         let binary_digits = lhs.num_bits as usize;
         let lhs_binary_target = self._binary_number_target_for_witness(lhs.witness, binary_digits);
         let rhs_binary_target = self._binary_number_target_for_witness(rhs.witness, binary_digits);
 
-        let output_binary_target = self._translate_bitwise_operation(
-            lhs_binary_target, rhs_binary_target, operation);
+        let output_binary_target = operation(self, lhs_binary_target, rhs_binary_target);
 
         let output_target = self.convert_binary_number_to_number(output_binary_target);
         self.witness_target_map.insert(*output, output_target);
@@ -143,15 +142,6 @@ impl CircuitBuilderFromAcirToPlonky2 {
 
     fn convert_binary_number_to_number(&mut self, a: BinaryDigitsTarget) -> Target {
         self.builder.le_sum(a.bits.into_iter().rev())
-    }
-
-    fn _translate_bitwise_operation(self: &mut Self, lhs: BinaryDigitsTarget, rhs: BinaryDigitsTarget,
-                                    operation: fn(&mut Self, BoolTarget, BoolTarget) -> BoolTarget) -> BinaryDigitsTarget {
-        BinaryDigitsTarget {
-            bits: lhs
-                .bits.iter().zip(rhs.bits.iter())
-                .map(|(x, y)| operation(self, *x, *y)).collect(),
-        }
     }
 
     fn _register_public_parameters_from_acir_circuit(self: &mut Self, circuit: &Circuit) {
@@ -187,11 +177,30 @@ impl CircuitBuilderFromAcirToPlonky2 {
         }
     }
 
-    fn and(&mut self, b1: BoolTarget, b2: BoolTarget) -> BoolTarget {
+    fn xor(&mut self, b1: BinaryDigitsTarget, b2: BinaryDigitsTarget) -> BinaryDigitsTarget {
+        self.apply_bitwise(b1, b2, Self::bit_xor)
+    }
+
+    fn and(&mut self, b1: BinaryDigitsTarget, b2: BinaryDigitsTarget) -> BinaryDigitsTarget {
+        self.apply_bitwise(b1, b2, Self::bit_and)
+    }
+
+    fn apply_bitwise(&mut self, b1: BinaryDigitsTarget, b2: BinaryDigitsTarget,
+                     op: fn(&mut self, BoolTarget, BoolTarget) -> BoolTarget) -> BinaryDigitsTarget {
+        BinaryDigitsTarget {
+            bits: b1.bits
+                .iter()
+                .zip(b2.bits.iter())
+                .map(|(bit1, bit2)| op(self, *bit1, *bit2))
+                .collect()
+        }
+    }
+
+    fn bit_and(&mut self, b1: BoolTarget, b2: BoolTarget) -> BoolTarget {
         self.builder.and(b1, b2)
     }
 
-    fn xor(&mut self, b1: BoolTarget, b2: BoolTarget) -> BoolTarget {
+    fn bit_xor(&mut self, b1: BoolTarget, b2: BoolTarget) -> BoolTarget {
         // a xor b = (a or b) and (not (a and b))
         let b1_or_b2 = self.builder.or(b1, b2);
         let b1_and_b2 = self.builder.and(b1, b2);

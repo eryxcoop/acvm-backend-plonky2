@@ -48,7 +48,7 @@ impl CircuitBuilderFromAcirToPlonky2 {
         Self { builder, witness_target_map }
     }
 
-    pub fn unpack(self) -> (CircuitData<F, C, 2>, HashMap<Witness, Target>){
+    pub fn unpack(self) -> (CircuitData<F, C, 2>, HashMap<Witness, Target>) {
         (self.builder.build::<C>(), self.witness_target_map)
     }
 
@@ -110,9 +110,8 @@ impl CircuitBuilderFromAcirToPlonky2 {
         }
     }
 
-   fn _extend_circuit_with_sha256_operation(&self, inputs: &Vec<FunctionInput>, outputs: &Box<[Witness; 32]>) {
-        let translator = Sha256Translator::new_for(
-             &mut self, &mut self.witness_target_map, &inputs, outputs);
+    fn _extend_circuit_with_sha256_operation(&mut self, inputs: &Vec<FunctionInput>, outputs: &Box<[Witness; 32]>) {
+        let mut translator = Sha256Translator::new_for(self, inputs, outputs);
         translator.translate();
     }
 
@@ -120,8 +119,8 @@ impl CircuitBuilderFromAcirToPlonky2 {
                                       output: &Witness, operation: fn(&mut Self, BinaryDigitsTarget, BinaryDigitsTarget) -> BinaryDigitsTarget) {
         assert_eq!(lhs.num_bits, rhs.num_bits);
         let binary_digits = lhs.num_bits as usize;
-        let lhs_binary_target = self._binary_number_target_for_witness(lhs.witness, binary_digits);
-        let rhs_binary_target = self._binary_number_target_for_witness(rhs.witness, binary_digits);
+        let lhs_binary_target = self.binary_number_target_for_witness(lhs.witness, binary_digits);
+        let rhs_binary_target = self.binary_number_target_for_witness(rhs.witness, binary_digits);
 
         let output_binary_target = operation(self, lhs_binary_target, rhs_binary_target);
 
@@ -129,9 +128,22 @@ impl CircuitBuilderFromAcirToPlonky2 {
         self.witness_target_map.insert(*output, output_target);
     }
 
-    fn _binary_number_target_for_witness(self: &mut Self, w: Witness, digits: usize) -> BinaryDigitsTarget {
+    pub fn binary_number_target_for_witness(&mut self, w: Witness, digits: usize) -> BinaryDigitsTarget {
         let target = self._get_or_create_target_for_witness(w);
         self.convert_number_to_binary_number(target, digits)
+    }
+
+    pub fn binary_number_target_for_constant(&mut self, c: usize, digits: usize) -> BinaryDigitsTarget {
+        let bits = (0..digits).map(|i| self._constant_bool_target_for_bit(c, i)).collect();
+        BinaryDigitsTarget { bits }
+    }
+
+    fn _constant_bool_target_for_bit(&mut self, n: usize, i: usize) -> BoolTarget {
+        if (n & (1 << i)) == 0 {
+            BoolTarget::new_unsafe(self.builder.zero())
+        } else {
+            BoolTarget::new_unsafe(self.builder.one())
+        }
     }
 
     fn convert_number_to_binary_number(&mut self, a: Target, digits: usize) -> BinaryDigitsTarget {
@@ -142,6 +154,10 @@ impl CircuitBuilderFromAcirToPlonky2 {
 
     fn convert_binary_number_to_number(&mut self, a: BinaryDigitsTarget) -> Target {
         self.builder.le_sum(a.bits.into_iter().rev())
+    }
+
+    fn zeroes(&mut self, digits: usize) -> Vec<BoolTarget> {
+        vec![BoolTarget::new_unsafe(self.builder.zero()); digits]
     }
 
     fn _register_public_parameters_from_acir_circuit(self: &mut Self, circuit: &Circuit) {
@@ -186,7 +202,7 @@ impl CircuitBuilderFromAcirToPlonky2 {
     }
 
     fn apply_bitwise(&mut self, b1: BinaryDigitsTarget, b2: BinaryDigitsTarget,
-                     op: fn(&mut self, BoolTarget, BoolTarget) -> BoolTarget) -> BinaryDigitsTarget {
+                     op: fn(&mut CircuitBuilderFromAcirToPlonky2, BoolTarget, BoolTarget) -> BoolTarget) -> BinaryDigitsTarget {
         BinaryDigitsTarget {
             bits: b1.bits
                 .iter()
@@ -206,5 +222,39 @@ impl CircuitBuilderFromAcirToPlonky2 {
         let b1_and_b2 = self.builder.and(b1, b2);
         let not_b1_and_b2 = self.builder.not(b1_and_b2);
         self.builder.and(b1_or_b2, not_b1_and_b2)
+    }
+
+    pub fn shift_right(&mut self, target: &BinaryDigitsTarget, times: usize) -> BinaryDigitsTarget {
+        let mut new_bits = Vec::new();
+        // Fill zero bits
+        for _ in 0..times {
+            new_bits.push(BoolTarget::new_unsafe(
+                self.builder.constant(F::from_canonical_u8(0)),
+            ));
+        }
+
+        for i in times..8 {
+            let new_bool_target = self.builder.add_virtual_bool_target_safe();
+            self.builder.connect(target.bits[i - times].target, new_bool_target.target);
+            new_bits.push(new_bool_target);
+        }
+        BinaryDigitsTarget { bits: new_bits }
+    }
+
+    pub fn rotate_right(&mut self, target: &BinaryDigitsTarget, times: usize) -> BinaryDigitsTarget {
+        let mut new_bits = Vec::new();
+        // Wrap bits around
+        for i in 0..times {
+            let new_bool_target = self.builder.add_virtual_bool_target_safe();
+            self.builder.connect(target.bits[target.number_of_digits() + i - times].target, new_bool_target.target);
+            new_bits.push(new_bool_target);
+        }
+
+        for i in times..8 {
+            let new_bool_target = self.builder.add_virtual_bool_target_safe();
+            self.builder.connect(target.bits[i - times].target, new_bool_target.target);
+            new_bits.push(new_bool_target);
+        }
+        BinaryDigitsTarget { bits: new_bits }
     }
 }

@@ -2,58 +2,57 @@ use super::*;
 
 pub struct Sha256Translator<'a> {
     circuit_builder: &'a mut CircuitBuilderFromAcirToPlonky2,
-    witness_target_map: &'a mut HashMap<Witness, Target>,
     inputs: &'a Vec<FunctionInput>,
-    outputs: Box<[Witness; 32]>
+    outputs: &'a Box<[Witness; 32]>
 }
 
 impl<'a> Sha256Translator<'a> {
     pub fn new_for(circuit_builder: &'a mut CircuitBuilderFromAcirToPlonky2,
-                   witness_target_map: &'a mut HashMap<Witness, Target>,
-                   inputs: &Vec<FunctionInput>,
-                   outputs: Box<[Witness; 32]>) -> Sha256Translator<'a> {
-        Self { circuit_builder, witness_target_map, inputs, outputs }
+                   inputs: &'a Vec<FunctionInput>,
+                   outputs: &'a Box<[Witness; 32]>) -> Sha256Translator<'a> {
+        Self { circuit_builder, inputs, outputs }
     }
 
     pub fn translate(&mut self) {
         eprintln!("----------SHA256--------");
-        let mut M = vec![];
+        let mut M: Vec<BinaryDigitsTarget> = vec![];
         let input_bytes_0 = vec![self.inputs[0], self.inputs[1], self.inputs[2], self.inputs[3]];
         let M_0 = self.binary_digit_of_32_bits_from_witnesses(self._extract_witnesses(input_bytes_0));
         M.push(M_0);
-        for i in 0..14 {
+        for _ in 0..14 {
             // Fill with zeroes
-            M.push(self.binary_digit_of_32_bits_from_witnesses(vec![]));
+            M.push(self.circuit_builder.binary_number_target_for_constant(0, 32));
         }
         // Size is 4
-        let binary_digits_target = BinaryDigitsTarget::new_with_digits(32);
-        self.circuit_builder.builder.connect(binary_digits_target.bits[30],
-                                             self.circuit_builder.builder.constant(F::from_canonical_u8(1)));
+        let binary_digits_target = self.circuit_builder.binary_number_target_for_constant(4, 32);
         M.push(binary_digits_target);
     }
 
-    fn binary_digit_of_32_bits_from_witnesses(&mut self, witness_bytes: Vec<Witness>) {
-        let targets = witness_bytes.map(|witness| self.circuit_builder._get_or_create_target_for_witness(*witness)).collect();
-        let byte_targets = targets.map(|target| self.circuit_builder.convert_number_to_binary_number(target, 8)).collect();
+    fn binary_digit_of_32_bits_from_witnesses(&mut self, witness_bytes: Vec<Witness>) -> BinaryDigitsTarget {
+        let targets: Vec<Target> = witness_bytes.into_iter().map(|witness| self.circuit_builder._get_or_create_target_for_witness(witness)).collect();
+        let byte_targets: Vec<BinaryDigitsTarget> = targets.iter().map(|target| self.circuit_builder.convert_number_to_binary_number(*target, 8)).collect();
 
-        let binary_digits_target = BinaryDigitsTarget::new_with_digits(32);
-
-        for idx_byte in 0..witness_bytes.len() {
-            for idx_bit in 0..8 {
-                self.circuit_builder.builder.connect(binary_digits_target.bits[idx_byte], byte_targets[idx_byte].bits[idx_bit]);
+        let mut bits = vec![];
+        for idx_byte in 0..4 {
+            if idx_byte < byte_targets.len() {
+                for idx_bit in 0..8 {
+                    bits.push(byte_targets[idx_byte].bits[idx_bit]);
+                }
+            } else {
+                for _ in 0..8 {
+                    let zeroes: &mut Vec<BoolTarget> = &mut self.circuit_builder.zeroes(8);
+                    bits.append(zeroes);
+                }
             }
         }
-        for idx_byte in witness_bytes.len()..4 {
-            for idx_bit in 0..8 {
-                self.circuit_builder.builder.connect(binary_digits_target.bits[idx_byte][idx_bit], self.circuit_builder.builder.constant(F::from_canonical_u8(0)));
-            }
-        }
+
+        BinaryDigitsTarget { bits }
     }
 
-    fn sigma_0(&mut self, target: &mut BinaryDigitsTarget) -> BinaryDigitsTarget {
-        let x1 = target.rotate_right(7);
-        let x2 = target.rotate_right(18);
-        let x3 = target.shift_right(3);
+    fn sigma_0(&mut self, target: &BinaryDigitsTarget) -> BinaryDigitsTarget {
+        let x1 = self.circuit_builder.rotate_right(target,7);
+        let x2 = self.circuit_builder.rotate_right(target,18);
+        let x3 = self.circuit_builder.shift_right(target,3);
 
         let y1 = self.circuit_builder.xor(x1, x2);
         let y2 = self.circuit_builder.xor(y1, x3);
@@ -62,9 +61,9 @@ impl<'a> Sha256Translator<'a> {
     }
 
     fn sigma_1(&mut self, target: &BinaryDigitsTarget) -> BinaryDigitsTarget {
-        let x1 = target.rotate_right(17);
-        let x2 = target.rotate_right(19);
-        let x3 = target.shift_right(10);
+        let x1 = self.circuit_builder.rotate_right(target,17);
+        let x2 = self.circuit_builder.rotate_right(target,19);
+        let x3 = self.circuit_builder.shift_right(target,10);
 
         let y1 = self.circuit_builder.xor(x1, x2);
         let y2 = self.circuit_builder.xor(y1, x3);
@@ -72,8 +71,8 @@ impl<'a> Sha256Translator<'a> {
         y2
     }
 
-    fn _extract_witnesses(inputs: Vec<FunctionInput>) -> Vec<Witness> {
-        inputs.map(|input| input.witness).collect()
+    fn _extract_witnesses(&self, inputs: Vec<FunctionInput>) -> Vec<Witness> {
+        inputs.into_iter().map(|input| input.witness).collect()
     }
 
     //         h = ['0x6a09e667', '0xbb67ae85', '0x3c6ef372', '0xa54ff53a', '0x510e527f', '0x9b05688c', '0x1f83d9ab', '0x5be0cd19']

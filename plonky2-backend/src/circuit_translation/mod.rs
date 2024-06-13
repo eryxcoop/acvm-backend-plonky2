@@ -112,6 +112,7 @@ impl CircuitBuilderFromAcirToPlonky2 {
     }
 
     fn _check_output_target_consistency(self: &mut Self, circuit: &Circuit) {
+        //TODO: Move to the tests
         // We must make sure that all targets linked to output witness exist and are actual Wires
         // (instead of VirtualTargets). Otherwise it means that te circuit is not doing what we
         // expect and might fall into false positive tests.

@@ -15,10 +15,12 @@ impl<'a> Sha256Translator<'a> {
 
     pub fn translate(&mut self) {
         eprintln!("----------SHA256--------");
-        let mut M: Vec<BinaryDigitsTarget> = vec![];
+        self._register_targets_for_output_witnesses();
+
+        let mut m: Vec<BinaryDigitsTarget> = vec![];
         let input_bytes_0 = vec![self.inputs[0], self.inputs[1], self.inputs[2], self.inputs[3]];
-        let M_0 = self.binary_digit_of_32_bits_from_witnesses(self._extract_witnesses(input_bytes_0));
-        M.push(M_0);
+        let m_0 = self.binary_digit_of_32_bits_from_witnesses(self._extract_witnesses(input_bytes_0));
+        M.push(m_0);
         for _ in 0..14 {
             // Fill with zeroes
             M.push(self.circuit_builder.binary_number_target_for_constant(0, 32));
@@ -26,6 +28,12 @@ impl<'a> Sha256Translator<'a> {
         // Size is 4
         let binary_digits_target = self.circuit_builder.binary_number_target_for_constant(4, 32);
         M.push(binary_digits_target);
+    }
+
+    fn _register_targets_for_output_witnesses(&mut self) {
+        for output in self.outputs.iter() {
+            self._get_or_create_target_for_witness(*output);
+        }
     }
 
     fn binary_digit_of_32_bits_from_witnesses(&mut self, witness_bytes: Vec<Witness>) -> BinaryDigitsTarget {
@@ -73,6 +81,18 @@ impl<'a> Sha256Translator<'a> {
 
     fn _extract_witnesses(&self, inputs: Vec<FunctionInput>) -> Vec<Witness> {
         inputs.into_iter().map(|input| input.witness).collect()
+    }
+
+    fn _get_or_create_target_for_witness(self: &mut Self, witness: Witness) -> Target {
+        match self.circuit_builder.witness_target_map.get(&witness) {
+            Some(target) => *target,
+            _ => {
+                // None
+                let target = self.circuit_builder.builder.add_virtual_target();
+                self.circuit_builder.witness_target_map.insert(witness, target);
+                target
+            }
+        }
     }
 
     //         h = ['0x6a09e667', '0xbb67ae85', '0x3c6ef372', '0xa54ff53a', '0x510e527f', '0x9b05688c', '0x1f83d9ab', '0x5be0cd19']

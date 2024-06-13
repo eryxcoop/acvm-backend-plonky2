@@ -17,7 +17,7 @@ impl<'a> Sha256Translator<'a> {
         eprintln!("----------SHA256--------");
         self._register_targets_for_output_witnesses();
 
-        let mut m: Vec<BinaryDigitsTarget> = vec![];
+        let mut M: Vec<BinaryDigitsTarget> = vec![];
         let input_bytes_0 = vec![self.inputs[0], self.inputs[1], self.inputs[2], self.inputs[3]];
         let m_0 = self.binary_digit_of_32_bits_from_witnesses(self._extract_witnesses(input_bytes_0));
         M.push(m_0);
@@ -28,6 +28,13 @@ impl<'a> Sha256Translator<'a> {
         // Size is 4
         let binary_digits_target = self.circuit_builder.binary_number_target_for_constant(4, 32);
         M.push(binary_digits_target);
+
+        // Set a dummy output value so the test fails, until finished
+        let a_target = self.circuit_builder.witness_target_map[&self.outputs[0]];
+        let cte = self.circuit_builder.builder.constant(F::from_canonical_u8(3));
+        self.circuit_builder.builder.connect(
+            cte,
+            a_target)
     }
 
     fn _register_targets_for_output_witnesses(&mut self) {

@@ -224,7 +224,7 @@ pub fn sha256_circuit_with_inputs(public_input_witnesses: Vec<Witness>,
         ],
         private_parameters: BTreeSet::new(),
         public_parameters: PublicInputs(BTreeSet::from_iter(public_input_witnesses)),
-        return_values: PublicInputs(BTreeSet::from_iter([Witness(2)])),
+        return_values: PublicInputs(BTreeSet::from_iter(output_witnesses)),
         assert_messages: Default::default(),
         recursive: false,
     }

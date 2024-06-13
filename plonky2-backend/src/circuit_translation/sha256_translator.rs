@@ -28,13 +28,6 @@ impl<'a> Sha256Translator<'a> {
         // Size is 4
         let binary_digits_target = self.circuit_builder.binary_number_target_for_constant(4, 32);
         M.push(binary_digits_target);
-
-        // Set a dummy output value so the test fails, until finished
-        let a_target = self.circuit_builder.witness_target_map[&self.outputs[0]];
-        let cte = self.circuit_builder.builder.constant(F::from_canonical_u8(3));
-        self.circuit_builder.builder.connect(
-            cte,
-            a_target)
     }
 
     fn _register_targets_for_output_witnesses(&mut self) {

@@ -108,6 +108,24 @@ impl CircuitBuilderFromAcirToPlonky2 {
                 }
             }
         }
+        self._check_output_target_consistency(circuit);
+    }
+
+    fn _check_output_target_consistency(self: &mut Self, circuit: &Circuit) {
+        // We must make sure that all targets linked to output witness exist and are actual Wires
+        // (instead of VirtualTargets). Otherwise it means that te circuit is not doing what we
+        // expect and might fall into false positive tests.
+        for witness_index in circuit.return_values.indices() {
+            match self.witness_target_map.get(&Witness(witness_index)) {
+                Some(target) => {
+                    match target {
+                        Target::VirtualTarget { index } => panic!("An output target is not linked to the circuit"),
+                        Target::Wire(_wire) => {}
+                    }
+                },
+                None => panic!("An output witness has not an associated target")
+            }
+        }
     }
 
     fn _extend_circuit_with_sha256_operation(&mut self, inputs: &Vec<FunctionInput>, outputs: &Box<[Witness; 32]>) {

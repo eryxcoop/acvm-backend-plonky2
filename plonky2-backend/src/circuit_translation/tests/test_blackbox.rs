@@ -1,5 +1,6 @@
 use crate::circuit_translation::tests::factories::circuit_factory;
 use crate::circuit_translation::tests::factories::utils::*;
+use crate::circuit_translation::tests::factories::utils;
 use sha2::{Sha256, Digest};
 use super::*;
 
@@ -73,6 +74,7 @@ fn test_range_check_with_witness_value(witness_value: F, max_num_bits: u32){
     let (circuit_data, witness_target_map) = generate_plonky2_circuit_from_acir_circuit(&circuit);
 
     //Then
+    utils::check_linked_output_targets_property(&circuit, &witness_target_map);
     let proof = generate_plonky2_proof_using_witness_values(
         vec![(public_input_witness, witness_value)], &witness_target_map, &circuit_data);
     assert!(circuit_data.verify(proof).is_ok());
@@ -173,6 +175,7 @@ fn _assert_backend_supports_bitwise_operation(operation: fn(Witness, Witness, Wi
         (public_input_witness_1, b),
         (output_witness_2, output)];
 
+    utils::check_linked_output_targets_property(&circuit, &witness_target_map);
     let proof = generate_plonky2_proof_using_witness_values(
         witness_assignment, &witness_target_map, &circuit_data);
 
@@ -210,6 +213,7 @@ fn test_backend_can_translate_sha256_acir_opcode_with_short_input(){
 
     witness_assignment.extend(output_witnesses.into_iter().zip(result_as_bytes));
 
+    utils::check_linked_output_targets_property(&circuit, &witness_target_map);
     let proof = generate_plonky2_proof_using_witness_values(
         witness_assignment, &witness_target_map, &circuit_data);
 

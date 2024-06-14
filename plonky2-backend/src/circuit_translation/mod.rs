@@ -157,14 +157,6 @@ impl CircuitBuilderFromAcirToPlonky2 {
         BinaryDigitsTarget { bits }
     }
 
-    fn _constant_bool_target_for_bit(&mut self, n: usize, i: usize) -> BoolTarget {
-        if (n & (1 << i)) == 0 {
-            BoolTarget::new_unsafe(self.builder.zero())
-        } else {
-            BoolTarget::new_unsafe(self.builder.one())
-        }
-    }
-
     fn convert_number_to_binary_number(&mut self, a: Target, digits: usize) -> BinaryDigitsTarget {
         BinaryDigitsTarget {
             bits: self.builder.split_le(a, digits).into_iter().rev().collect(),
@@ -176,7 +168,23 @@ impl CircuitBuilderFromAcirToPlonky2 {
     }
 
     fn zeroes(&mut self, digits: usize) -> Vec<BoolTarget> {
-        vec![BoolTarget::new_unsafe(self.builder.zero()); digits]
+        vec![self._bool_target_zero(); digits]
+    }
+
+    fn _constant_bool_target_for_bit(&mut self, n: usize, i: usize) -> BoolTarget {
+        if (n & (1 << i)) == 0 {
+            self._bool_target_zero()
+        } else {
+            self._bool_target_one()
+        }
+    }
+
+    fn _bool_target_zero(&mut self) -> BoolTarget {
+        BoolTarget::new_unsafe(self.builder.zero())
+    }
+
+    fn _bool_target_one(&mut self) -> BoolTarget {
+        BoolTarget::new_unsafe(self.builder.one())
     }
 
     fn _register_public_parameters_from_acir_circuit(self: &mut Self, circuit: &Circuit) {
@@ -213,22 +221,44 @@ impl CircuitBuilderFromAcirToPlonky2 {
     }
 
     fn xor(&mut self, b1: BinaryDigitsTarget, b2: BinaryDigitsTarget) -> BinaryDigitsTarget {
-        self.apply_bitwise(b1, b2, Self::bit_xor)
+        self.apply_bitwise_to_binary_digits_target(b1, b2, Self::bit_xor)
     }
 
     fn and(&mut self, b1: BinaryDigitsTarget, b2: BinaryDigitsTarget) -> BinaryDigitsTarget {
-        self.apply_bitwise(b1, b2, Self::bit_and)
+        self.apply_bitwise_to_binary_digits_target(b1, b2, Self::bit_and)
     }
 
-    fn apply_bitwise(&mut self, b1: BinaryDigitsTarget, b2: BinaryDigitsTarget,
-                     op: fn(&mut CircuitBuilderFromAcirToPlonky2, BoolTarget, BoolTarget) -> BoolTarget) -> BinaryDigitsTarget {
-        BinaryDigitsTarget {
-            bits: b1.bits
-                .iter()
-                .zip(b2.bits.iter())
-                .map(|(bit1, bit2)| op(self, *bit1, *bit2))
-                .collect()
-        }
+    fn add(&mut self, b1: BinaryDigitsTarget, b2: BinaryDigitsTarget) -> BinaryDigitsTarget {
+        let partial_sum = self.apply_bitwise_and_output_bool_targets(&b1, &b2, Self::bit_xor);
+        let partial_carries = self.apply_bitwise_and_output_bool_targets(&b1, &b2, Self::bit_and);
+
+        let mut carry_in = self._bool_target_zero();
+
+        let sum = (0..b1.number_of_digits()).map(|idx_bit| {
+            let sum_with_carry_in = self.bit_xor(partial_sum[idx_bit], carry_in);
+            let carry_out = self.bit_or(partial_carries[idx_bit], carry_in);
+
+            carry_in = carry_out; // The new carry_in is the current carry_out
+            sum_with_carry_in
+        }).collect();
+
+        BinaryDigitsTarget { bits: sum }
+    }
+
+    fn apply_bitwise_to_binary_digits_target(&mut self, b1: BinaryDigitsTarget, b2: BinaryDigitsTarget,
+                                             op: fn(&mut CircuitBuilderFromAcirToPlonky2, BoolTarget, BoolTarget) -> BoolTarget) -> BinaryDigitsTarget {
+        BinaryDigitsTarget { bits: self.apply_bitwise_and_output_bool_targets(&b1, &b2, op) }
+    }
+
+    fn apply_bitwise_and_output_bool_targets(
+        &mut self, b1: &BinaryDigitsTarget, b2: &BinaryDigitsTarget,
+        op: fn(&mut CircuitBuilderFromAcirToPlonky2, BoolTarget, BoolTarget) -> BoolTarget
+    ) -> Vec<BoolTarget> {
+        b1.bits
+            .iter()
+            .zip(b2.bits.iter())
+            .map(|(bit1, bit2)| op(self, *bit1, *bit2))
+            .collect()
     }
 
     fn bit_and(&mut self, b1: BoolTarget, b2: BoolTarget) -> BoolTarget {

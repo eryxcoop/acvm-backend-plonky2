@@ -168,23 +168,16 @@ impl CircuitBuilderFromAcirToPlonky2 {
     }
 
     fn zeroes(&mut self, digits: usize) -> Vec<BoolTarget> {
-        vec![self._bool_target_zero(); digits]
+        vec![self._bool_target_false(); digits]
     }
 
     fn _constant_bool_target_for_bit(&mut self, n: usize, i: usize) -> BoolTarget {
-        if (n & (1 << i)) == 0 {
-            self._bool_target_zero()
-        } else {
-            self._bool_target_one()
-        }
+        let cond = (n & (1 << i)) == 0;
+        self.builder.constant_bool(cond)
     }
 
-    fn _bool_target_zero(&mut self) -> BoolTarget {
-        BoolTarget::new_unsafe(self.builder.zero())
-    }
-
-    fn _bool_target_one(&mut self) -> BoolTarget {
-        BoolTarget::new_unsafe(self.builder.one())
+    fn _bool_target_false(&mut self) -> BoolTarget {
+        self.builder._false()
     }
 
     fn _register_public_parameters_from_acir_circuit(self: &mut Self, circuit: &Circuit) {
@@ -224,15 +217,19 @@ impl CircuitBuilderFromAcirToPlonky2 {
         self.apply_bitwise_to_binary_digits_target(b1, b2, Self::bit_xor)
     }
 
+    fn or(&mut self, b1: BinaryDigitsTarget, b2: BinaryDigitsTarget) -> BinaryDigitsTarget {
+        self.apply_bitwise_to_binary_digits_target(b1, b2, Self::bit_or)
+    }
+
     fn and(&mut self, b1: BinaryDigitsTarget, b2: BinaryDigitsTarget) -> BinaryDigitsTarget {
         self.apply_bitwise_to_binary_digits_target(b1, b2, Self::bit_and)
     }
 
-    fn add(&mut self, b1: BinaryDigitsTarget, b2: BinaryDigitsTarget) -> BinaryDigitsTarget {
+    fn add(&mut self, b1: &BinaryDigitsTarget, b2: &BinaryDigitsTarget) -> BinaryDigitsTarget {
         let partial_sum = self.apply_bitwise_and_output_bool_targets(&b1, &b2, Self::bit_xor);
         let partial_carries = self.apply_bitwise_and_output_bool_targets(&b1, &b2, Self::bit_and);
 
-        let mut carry_in = self._bool_target_zero();
+        let mut carry_in = self._bool_target_false();
 
         let sum = (0..b1.number_of_digits()).map(|idx_bit| {
             let sum_with_carry_in = self.bit_xor(partial_sum[idx_bit], carry_in);
@@ -264,6 +261,8 @@ impl CircuitBuilderFromAcirToPlonky2 {
     fn bit_and(&mut self, b1: BoolTarget, b2: BoolTarget) -> BoolTarget {
         self.builder.and(b1, b2)
     }
+
+    fn bit_or(&mut self, b1: BoolTarget, b2: BoolTarget) -> BoolTarget { self.builder.or(b1, b2) }
 
     fn bit_xor(&mut self, b1: BoolTarget, b2: BoolTarget) -> BoolTarget {
         // a xor b = (a or b) and (not (a and b))

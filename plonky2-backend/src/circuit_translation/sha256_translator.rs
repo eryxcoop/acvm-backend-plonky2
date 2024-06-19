@@ -178,4 +178,22 @@ impl<'a> Sha256Translator<'a> {
             self.circuit_builder.binary_number_target_for_witness(Witness(*n), 32)
         ).collect()
     }
+
+    fn calculate_w_t (&mut self,
+                      w_t_2: &BinaryDigitsTarget,
+                      w_t_7: &BinaryDigitsTarget,
+                      w_t_15: &BinaryDigitsTarget,
+                      w_t_16: &BinaryDigitsTarget,
+    ) -> BinaryDigitsTarget {
+        self.circuit_builder.add(
+            &self.circuit_builder.add(
+                &self.sigma_1(w_t_2),
+                w_t_7
+            ),
+            &self.circuit_builder.add(
+                &self.sigma_0(w_t_15),
+                w_t_16
+            )
+        )
+    }
 }

@@ -6,6 +6,17 @@ pub struct Sha256Translator<'a> {
     outputs: &'a Box<[Witness; 32]>
 }
 
+struct CompressionIterationState {
+    a: BinaryDigitsTarget,
+    b: BinaryDigitsTarget,
+    c: BinaryDigitsTarget,
+    d: BinaryDigitsTarget,
+    e: BinaryDigitsTarget,
+    f: BinaryDigitsTarget,
+    g: BinaryDigitsTarget,
+    h: BinaryDigitsTarget,
+}
+
 impl<'a> Sha256Translator<'a> {
     pub fn new_for(circuit_builder: &'a mut CircuitBuilderFromAcirToPlonky2,
                    inputs: &'a Vec<FunctionInput>,
@@ -195,5 +206,37 @@ impl<'a> Sha256Translator<'a> {
                 w_t_16
             )
         )
+    }
+
+    fn compression_function_iteration(&mut self,
+                                      s: &CompressionIterationState,
+                                      w_t: &BinaryDigitsTarget,
+                                      k_t: &BinaryDigitsTarget,
+    ) -> CompressionIterationState {
+        let (a,b,c,d,e,f,g,h) = s.unpack();
+        let t_1 = self.circuit_builder.add(
+            &self.circuit_builder.add(
+                &h,
+                &self.sigma_1(&e)
+            ),
+            &self.circuit_builder.add(
+                &self.majority(&e,&f,&g),
+                &self.circuit_builder.add(k_t,w_t)
+            ),
+        );
+        let t_2 = self.circuit_builder.add(
+            &self.sigma_0(&a),
+            &self.majority(&a,&b,&c)
+        );
+        CompressionIterationState {
+            a: self.circuit_builder.add(&t_1,&t_2),
+            b: a,
+            c: b,
+            d: c,
+            e: self.circuit_builder.add(&d,&t_1),
+            f: e,
+            g: f,
+            h: g,
+        }
     }
 }

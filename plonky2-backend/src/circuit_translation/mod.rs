@@ -2,13 +2,10 @@ mod tests;
 pub mod assert_zero_translator;
 mod targets;
 
-use std::cmp::max;
 use std::collections::{HashMap};
 use std::error::Error;
-use acir::circuit::{Circuit};
 use acir::circuit::{ExpressionWidth, PublicInputs};
-use acir::FieldElement;
-use acir::native_types::{Expression, Witness};
+pub use acir::native_types::Witness;
 use plonky2::field::goldilocks_field::GoldilocksField;
 use plonky2::field::types::{Field, Field64};
 use plonky2::iop::target::{BoolTarget, Target};
@@ -21,17 +18,32 @@ use plonky2::iop::witness::PartialWitness;
 use plonky2::iop::witness::WitnessWrite;
 use plonky2::plonk::proof::ProofWithPublicInputs;
 use std::collections::BTreeSet;
-use acir::circuit::Opcode;
 use acir::circuit::opcodes;
-use acir::circuit::opcodes::{FunctionInput, MemOp};
+use acir::circuit::opcodes::{FunctionInput};
 use crate::circuit_translation::targets::BinaryDigitsTarget;
-
+// Generics
+use acir_field::field_element::FieldElement as GenericFieldElement;
+use acir::native_types::WitnessStack as GenericWitnessStack;
+use acir_field::fr::GoldilocksFr;
+use acir::circuit::opcodes::MemOp as GenericMemOp;
+use acir::circuit::Opcode as GenericOpcode;
+use acir::circuit::Circuit as GenericCircuit;
+use acir::circuit::Program as GenericProgram;
+use acir::native_types::Expression as GenericExpression;
 
 const D: usize = 2;
 
 type C = KeccakGoldilocksConfig;
 type F = <C as GenericConfig<D>>::F;
 type CB = CircuitBuilder::<F, D>;
+
+pub type FieldElement = GenericFieldElement<GoldilocksFr>;
+pub type Opcode = GenericOpcode<FieldElement>;
+pub type Circuit = GenericCircuit<FieldElement>;
+pub type Program = GenericProgram<FieldElement>;
+pub type Expression = GenericExpression<FieldElement>;
+pub type MemOp = GenericMemOp<FieldElement>;
+pub type WitnessStack = GenericWitnessStack<FieldElement>;
 
 pub struct CircuitBuilderFromAcirToPlonky2 {
     pub builder: CB,

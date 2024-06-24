@@ -1,4 +1,5 @@
 use super::*;
+use crate::circuit_translation::*;
 
 pub fn deserialize_verifying_key_within_file_path(verifying_key_path: &String) -> VerifierCircuitData<F,C,D> {
     let buffer = read_file_to_bytes(verifying_key_path);

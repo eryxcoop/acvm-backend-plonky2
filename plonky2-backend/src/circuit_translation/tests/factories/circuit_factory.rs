@@ -1,5 +1,4 @@
 use super::*;
-use acir::circuit::Opcode;
 use acir::circuit::opcodes;
 use acir::circuit::opcodes::FunctionInput;
 

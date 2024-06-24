@@ -1,29 +1,24 @@
 extern crate core;
 
-#[cfg(test)]
-mod integration_tests;
-
-use std::collections::HashMap;
-use std::{env, io};
+use std::env;
 use std::fs::File;
 use std::io::{Read, Write};
 use std::vec::Vec;
 
 use jemallocator::Jemalloc;
-use num_bigint::BigUint;
+use circuit_translation::*;
 
-use acir::circuit::{Circuit, Program};
-use acir::FieldElement;
-use acir::native_types::{Witness, WitnessMap, WitnessStack};
-use plonky2::field::goldilocks_field::GoldilocksField;
+use noir_and_plonky2_serialization::*;
 use plonky2::plonk::circuit_builder::CircuitBuilder;
-use plonky2::plonk::circuit_data::{VerifierCircuitData, VerifierOnlyCircuitData};
+use plonky2::plonk::circuit_data::VerifierCircuitData;
 use plonky2::plonk::config::{GenericConfig, KeccakGoldilocksConfig};
 use plonky2::plonk::proof::CompressedProofWithPublicInputs;
 use plonky2::util::serialization::DefaultGateSerializer;
 
 use crate::circuit_translation::CircuitBuilderFromAcirToPlonky2;
-use noir_and_plonky2_serialization::*;
+
+#[cfg(test)]
+mod integration_tests;
 
 const D: usize = 2;
 

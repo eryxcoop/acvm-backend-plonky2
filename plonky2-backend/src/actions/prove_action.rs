@@ -1,17 +1,18 @@
 use std::collections::HashMap;
 use std::io;
 use std::io::Write;
-use acir::circuit::{Circuit, Program};
-use acir::FieldElement;
-use acir::native_types::{Witness, WitnessStack};
+
 use num_bigint::BigUint;
+
 use plonky2::field::goldilocks_field::GoldilocksField;
 use plonky2::field::types::Field;
 use plonky2::iop::target::Target;
 use plonky2::iop::witness::{PartialWitness, WitnessWrite};
 use plonky2::plonk::circuit_data::CircuitData;
 use plonky2::plonk::config::{GenericConfig, KeccakGoldilocksConfig};
-use plonky2::plonk::proof::{CompressedProofWithPublicInputs, ProofWithPublicInputs};
+use plonky2::plonk::proof::ProofWithPublicInputs;
+
+use crate::circuit_translation::*;
 use crate::circuit_translation;
 use crate::noir_and_plonky2_serialization::*;
 

@@ -72,25 +72,18 @@ impl CircuitBuilderFromAcirToPlonky2 {
                     translator.translate();
                 }
                 Opcode::BrilligCall { id, inputs, outputs, predicate } => {
-                    eprintln!("----------Brillig--------");
-                    eprintln!("id: {:?}", id);
-                    eprintln!("inputs: {:?}", inputs);
-                    eprintln!("outputs: {:?}", outputs);
-                    eprintln!("predicate: {:?}", predicate);
+
                 }
                 Opcode::MemoryInit { block_id, init } => {
-                    eprintln!("outputs: {:?}", block_id);
-                    eprintln!("predicate: {:?}", init);
+
                 }
                 Opcode::MemoryOp { block_id, op, predicate } => {
                     // TODO: check whether we should register if the predicate is false
                     self._register_intermediate_witnesses_for_memory_op(&op);
                 }
                 Opcode::BlackBoxFuncCall(func_call) => {
-                    eprintln!("{:?}", func_call);
                     match func_call {
                         opcodes::BlackBoxFuncCall::RANGE { input } => {
-                            eprintln!("{:?}", input);
                             let long_max_bits = input.num_bits.clone() as usize;
                             assert!(long_max_bits <= 32,
                                     "Range checks with more than 32 bits are not allowed yet while using Plonky2 prover");

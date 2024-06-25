@@ -39,7 +39,6 @@ impl ProveAction {
     }
 
     fn _execute_prove_action(&self, mut witness_stack: WitnessStack, circuit: &Circuit) {
-        eprintln!("Witness stack{:?}", witness_stack);
         let (circuit_data, witness_target_map) =
             self.generate_plonky2_circuit_from_acir_circuit(circuit);
         let proof = self.generate_serialized_plonky2_proof(witness_stack, &witness_target_map, &circuit_data);

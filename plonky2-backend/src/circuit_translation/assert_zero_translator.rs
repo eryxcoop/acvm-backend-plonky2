@@ -14,8 +14,6 @@ impl<'a> AssertZeroTranslator<'a> {
     }
 
     pub fn translate(&mut self) {
-        eprintln!("----------ASSERT ZERO--------");
-        eprintln!("EXPR: {:?}", self.expression);
         self._register_intermediate_witnesses_for_assert_zero();
         self._translate_assert_zero();
     }

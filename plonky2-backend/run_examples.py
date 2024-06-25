@@ -1,31 +1,5 @@
 import os
 import sys
-#
-# def generate_proof():
-#     os.chdir("./noir_example")
-#     os.system("./prove_with_plonky2_backend_and_custom_nargo.sh")
-#     os.chdir("..")
-#
-#
-
-#
-#
-# def verify_proof():
-#     os.chdir("./noir_example")
-#     # os.system("cargo build --manifest-path ../noir/Cargo.toml")
-#     # os.system("../noir/target/debug/nargo check")
-#     os.system("NARGO_BACKEND_PATH=~/.nargo/backends/acvm-backend-plonky2/backend_binary ../noir/target/debug/nargo verify")
-#     os.chdir("..")
-
-# def read_and_print_proof():
-#     path_to_proof = "./noir_example/proofs/noir_example.proof"
-#     with open(path_to_proof, 'r') as f:
-#         return f.read()
-
-def hex_to_string(hex_values):
-    byte_values = bytes.fromhex(hex_values)
-    return byte_values.decode('utf-8')
-
 
 def main(argc, argv):
     example_name = argv[1]

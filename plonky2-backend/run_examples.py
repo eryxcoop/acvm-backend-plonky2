@@ -28,7 +28,7 @@ def hex_to_string(hex_values):
 
 
 def main(argc, argv):
-    example_name = "basic_if"
+    example_name = argv[1]
     os.system("./build_and_deploy_backend.sh")
     os.chdir(f"example_programs/{example_name}")
 

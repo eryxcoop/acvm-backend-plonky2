@@ -1,4 +1,5 @@
 use acir::circuit::opcodes::BlockId;
+use acir::circuit::opcodes::BlockType::Memory;
 use crate::circuit_translation::tests::factories::circuit_factory;
 use crate::circuit_translation::tests::factories::utils::*;
 use super::*;
@@ -43,7 +44,8 @@ fn _memory_opcodes_circuit(array_only_position_input_witness: Witness, index_inp
         opcodes: vec![
             Opcode::MemoryInit {
                 block_id: BlockId(0),
-                init: vec![array_only_position_input_witness]
+                init: vec![array_only_position_input_witness],
+                block_type: Memory
             },
             Opcode::AssertZero(Expression {
                 mul_terms: Vec::new(),

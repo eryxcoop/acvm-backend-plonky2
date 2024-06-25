@@ -22,9 +22,9 @@ use acir::circuit::opcodes;
 use acir::circuit::opcodes::{FunctionInput};
 use crate::circuit_translation::targets::BinaryDigitsTarget;
 // Generics
-use acir_field::field_element::FieldElement as GenericFieldElement;
+pub use acir_field::AcirField;
+pub use acir_field::FieldElement;
 use acir::native_types::WitnessStack as GenericWitnessStack;
-use acir_field::fr::GoldilocksFr;
 use acir::circuit::opcodes::MemOp as GenericMemOp;
 use acir::circuit::Opcode as GenericOpcode;
 use acir::circuit::Circuit as GenericCircuit;
@@ -37,7 +37,7 @@ type C = KeccakGoldilocksConfig;
 type F = <C as GenericConfig<D>>::F;
 type CB = CircuitBuilder::<F, D>;
 
-pub type FieldElement = GenericFieldElement<GoldilocksFr>;
+// pub type FieldElement = GenericFieldElement<GoldilocksFr>;
 pub type Opcode = GenericOpcode<FieldElement>;
 pub type Circuit = GenericCircuit<FieldElement>;
 pub type Program = GenericProgram<FieldElement>;
@@ -74,7 +74,7 @@ impl CircuitBuilderFromAcirToPlonky2 {
                 Opcode::BrilligCall { id, inputs, outputs, predicate } => {
 
                 }
-                Opcode::MemoryInit { block_id, init } => {
+                Opcode::MemoryInit { block_id, init, block_type } => {
 
                 }
                 Opcode::MemoryOp { block_id, op, predicate } => {

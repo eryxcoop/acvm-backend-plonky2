@@ -1,7 +1,7 @@
 # acvm-backend-plonky2
 This is an open source backend for the ACIR standard as implemented in the Noir programming languaje, written in Rust.
 
-For now, untill the corresponding PRs are made in the Plonky2 and the Noir repositories, you have to clone this repositories inside the project root.
+For now, until the corresponding PRs are made in the Plonky2 and the Noir repositories, you have to clone this repositories inside the project root.
 * https://github.com/brweisz/noir 
 * https://github.com/brweisz/plonky2
 
@@ -30,6 +30,7 @@ For some manual testing, the workflow is as follows:
 The stdout in the custom plonky2 backend is used in the noir workflow as the return value, but in our custom noir project it is also printed by stdout for debugging.
 
 ## Running some examples
-If you want to try out some Noir examples, execute the python script ```run_examples``` with the name of the example as the only parameter:
+If you want to try out some Noir examples, execute the python script ```run_examples.py``` with the name of the example as the only parameter from the ```plonky2-backend``` directory:
 * ```basic_if```
 * ```fibonacci```
+* ```basic_div```

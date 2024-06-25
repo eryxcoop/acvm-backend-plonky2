@@ -28,3 +28,8 @@ For some manual testing, the workflow is as follows:
   * ```verify``` uses the 'customized' Noir project to run the ```vrite_vk``` and ```verify``` command on the corresponding backend. 
 
 The stdout in the custom plonky2 backend is used in the noir workflow as the return value, but in our custom noir project it is also printed by stdout for debugging.
+
+## Running some examples
+If you want to try out some Noir examples, execute the python script ```run_examples``` with the name of the example as the only parameter:
+* ```basic_if```
+* ```fibonacci```

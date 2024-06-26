@@ -21,28 +21,39 @@ type C = KeccakGoldilocksConfig;
 type F = <C as GenericConfig<D>>::F;
 
 pub struct ProveAction {
-    pub acir_program_path: String,
-    pub witness_stack_path: String,
+    pub acir_program_json_path: String,
+    pub witness_stack_zip_path: String,
+    pub resulting_proof_file_path: String,
 }
 
 impl ProveAction {
     pub fn initialize_empty() -> Self{
-        Self {acir_program_path: String::from(""), witness_stack_path: String::from("")}
+        Self {
+            acir_program_json_path: String::from(""),
+            witness_stack_zip_path: String::from(""),
+            resulting_proof_file_path: String::from("")}
     }
 
     pub fn run(&self) {
-        let acir_program: Program = deserialize_program_within_file_path(&self.acir_program_path);
-        let mut witness_stack: WitnessStack = deserialize_witnesses_within_file_path(&self.witness_stack_path);
-        let circuit = &acir_program.functions[0];
+        let acir_program: Program = deserialize_program_within_file_path(&self.acir_program_json_path);
+        let mut witness_stack: WitnessStack = deserialize_witnesses_within_file_path(&self.witness_stack_zip_path);
 
-        self._execute_prove_action(witness_stack, circuit);
+        let circuit = &acir_program.functions[0];
+        let proof = self._execute_prove_action(witness_stack, circuit);
+
+
+        self._write_proof_into_file(proof, self.resulting_proof_file_path.clone());
+        // self.expose_response_through_stdout(proof); // This has changed
     }
 
-    fn _execute_prove_action(&self, mut witness_stack: WitnessStack, circuit: &Circuit) {
+    fn _write_proof_into_file(&self, proof: Vec<u8>, proof_path: String) {
+
+    }
+
+    fn _execute_prove_action(&self, mut witness_stack: WitnessStack, circuit: &Circuit) -> Vec<u8>{
         let (circuit_data, witness_target_map) =
             self.generate_plonky2_circuit_from_acir_circuit(circuit);
-        let proof = self.generate_serialized_plonky2_proof(witness_stack, &witness_target_map, &circuit_data);
-        self.expose_response_through_stdout(proof);
+        self.generate_serialized_plonky2_proof(witness_stack, &witness_target_map, &circuit_data)
     }
 
     fn expose_response_through_stdout(&self, proof: Vec<u8>) {

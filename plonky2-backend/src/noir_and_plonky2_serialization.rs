@@ -1,5 +1,7 @@
 use super::*;
 use crate::circuit_translation::*;
+use serde_json;
+use base64;
 
 pub fn deserialize_verifying_key_within_file_path(verifying_key_path: &String) -> VerifierCircuitData<F,C,D> {
     let buffer = read_file_to_bytes(verifying_key_path);
@@ -23,9 +25,14 @@ pub fn read_file_to_bytes(file_path: &String) -> Vec<u8> {
 }
 
 pub fn deserialize_program_within_file_path(acir_program_path: &String) -> Program {
-    let buffer = read_file_to_bytes(acir_program_path);
-    let file_contents_slice: &[u8] = &buffer;
-    let program = Program::deserialize_program(file_contents_slice);
+    let mut file = File::open(acir_program_path).expect("There was a problem opening the file");
+    let mut json_string = String::new();
+    file.read_to_string(&mut json_string).expect("There was a problem reading the file content");
+    let json_str: &str = &json_string;
+    let json: serde_json::Value = serde_json::from_str(json_str).expect("There was a problem parsing the json program");
+    let Some(bytecode_str) = json["bytecode"].as_str() else { todo!() };
+    let bytecode: &[u8] = &base64::decode(bytecode_str).expect("There was a problem decoding the program from base 64");
+    let program = Program::deserialize_program(bytecode);
     program.unwrap()
 }
 

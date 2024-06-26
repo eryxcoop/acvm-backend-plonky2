@@ -7,7 +7,7 @@ name = "acir"
 version = "0.47.0"
 dependencies = [
  "acir_field",
- "base64",
+ "base64 0.21.7",
  "bincode",
  "brillig",
  "flate2",
@@ -181,6 +181,12 @@ name = "base64"
 version = "0.21.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9d297deb1925b89f2ccc13d7635fa0714f12c87adce1c75356b39ca9b7178567"
+
+[[package]]
+name = "base64"
+version = "0.22.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "72b3254f16251a8381aa12e40e3c4d2f0199f8c6508fbecb9d91f575e0fbb8c6"
 
 [[package]]
 name = "bincode"
@@ -604,6 +610,7 @@ version = "0.1.0"
 dependencies = [
  "acir",
  "acir_field",
+ "base64 0.22.1",
  "jemallocator",
  "num-bigint",
  "plonky2",

@@ -1,6 +1,4 @@
 use std::collections::HashMap;
-use std::io;
-use std::io::Write;
 
 use num_bigint::BigUint;
 
@@ -41,25 +39,17 @@ impl ProveAction {
         let circuit = &acir_program.functions[0];
         let proof = self._execute_prove_action(witness_stack, circuit);
 
-
-        self._write_proof_into_file(proof, self.resulting_proof_file_path.clone());
-        // self.expose_response_through_stdout(proof); // This has changed
+        self._write_proof_into_file(proof, &self.resulting_proof_file_path);
     }
 
-    fn _write_proof_into_file(&self, proof: Vec<u8>, proof_path: String) {
-
+    fn _write_proof_into_file(&self, proof: Vec<u8>, proof_path: &String) {
+        write_bytes_to_file_path(proof, proof_path)
     }
 
     fn _execute_prove_action(&self, mut witness_stack: WitnessStack, circuit: &Circuit) -> Vec<u8>{
         let (circuit_data, witness_target_map) =
             self.generate_plonky2_circuit_from_acir_circuit(circuit);
         self.generate_serialized_plonky2_proof(witness_stack, &witness_target_map, &circuit_data)
-    }
-
-    fn expose_response_through_stdout(&self, proof: Vec<u8>) {
-        let mut stdout = io::stdout();
-        stdout.write_all(&proof).expect("Failed to write in stdout");
-        stdout.flush().expect("Failed to flush");
     }
 
     pub fn generate_plonky2_circuit_from_acir_circuit(&self, circuit: &Circuit) -> (CircuitData<F, C, 2>, HashMap<Witness, Target>) {

@@ -4,35 +4,42 @@ import subprocess
 
 def main(argc, argv):
     example_name = argv[1]
-    try:
-        command = "./build_and_deploy_backend.sh"
-        result = subprocess.check_output(command, shell=True, text=True)
-        print(result)
-    except Exception as e:
-        print(f"An error has occurred while trying to compile backend: {e}")
-        return
-
     os.chdir(f"example_programs/{example_name}")
-
-    env_set = "NARGO_BACKEND_PATH=~/.nargo/backends/acvm-backend-plonky2/backend_binary"
     custom_nargo_path = "../../../noir/target/debug/nargo"
+    custom_backend_path = "../../../plonky2-backend/target/debug/plonky2-backend"
 
     try:
-        command = f"{env_set} {custom_nargo_path} prove"
+        command = f"{custom_nargo_path} execute witness"
         result = subprocess.check_output(command, shell=True, text=True)
         print(result)
     except Exception as e:
-        print(f"An error has occurred while trying to generate prove: {e}")
+        print(f"An error has occurred while trying to execute the Noir program: {e}")
         return
 
     try:
-        with open(f"proofs/{example_name}.proof", 'r') as f:
+        command = f"{custom_backend_path} -c ./target/noir_example.json -w  ./target/witness -o proof"
+        result = subprocess.check_output(command, shell=True, text=True)
+        print(result)
+    except Exception as e:
+        print(f"An error has occurred while trying to generate the plonky2 proof: {e}")
+        return
+
+    try:
+        with open(f"./proof", 'r') as f:
             print(f.read())
     except Exception as e:
         print(f"An error has occurred while trying to read the proof: {e}")
 
     try:
-        command = f"{env_set} {custom_nargo_path} verify"
+        command = f"{custom_backend_path} write_vk -b ./target/{example_name}.json -o ./target/vk"
+        result = subprocess.check_output(command, shell=True, text=True)
+        print(result)
+    except Exception as e:
+        print(f"An error has occurred while trying to generate verification key: {e}")
+        return
+
+    try:
+        command = f"{custom_backend_path} verify -k ./target/vk -p ./proof"
         result = subprocess.check_output(command, shell=True, text=True)
         print(result)
     except Exception as e:

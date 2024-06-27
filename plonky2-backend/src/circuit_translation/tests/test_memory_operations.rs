@@ -1,12 +1,12 @@
-use std::collections::BTreeSet;
-use acir::circuit::{ExpressionWidth, PublicInputs};
+use super::*;
+use crate::circuit_translation::tests::factories::utils::*;
 use acir::circuit::opcodes::BlockId;
 use acir::circuit::opcodes::BlockType::Memory;
-use crate::circuit_translation::tests::factories::utils::*;
-use super::*;
+use acir::circuit::{ExpressionWidth, PublicInputs};
+use std::collections::BTreeSet;
 
 #[test]
-fn test_plonky2_backend_can_translate_a_program_with_basic_memory_operations(){
+fn test_plonky2_backend_can_translate_a_program_with_basic_memory_operations() {
     /*fn main(mut pub x: [Field; 1], mut y: Field){
         x[y] = 1;
         assert(x[0] == 1);
@@ -24,13 +24,23 @@ fn test_plonky2_backend_can_translate_a_program_with_basic_memory_operations(){
     let zero = F::from_canonical_u64(0);
     let one = F::from_canonical_u64(1);
     let proof = generate_plonky2_proof_using_witness_values(
-        vec![(array_only_position_input_witness, zero),
-             (index_input_witness, zero), (Witness(2), one), (Witness(3), zero), (Witness(4), one)],
-        &witness_target_map, &circuit_data);
+        vec![
+            (array_only_position_input_witness, zero),
+            (index_input_witness, zero),
+            (Witness(2), one),
+            (Witness(3), zero),
+            (Witness(4), one),
+        ],
+        &witness_target_map,
+        &circuit_data,
+    );
     assert!(circuit_data.verify(proof).is_ok());
 }
 
-fn _memory_opcodes_circuit(array_only_position_input_witness: Witness, index_input_witness: Witness) -> Circuit {
+fn _memory_opcodes_circuit(
+    array_only_position_input_witness: Witness,
+    index_input_witness: Witness,
+) -> Circuit {
     /*
     INIT (id: 0, len: 1)
     EXPR [ (-1, _2) 1 ]
@@ -46,7 +56,7 @@ fn _memory_opcodes_circuit(array_only_position_input_witness: Witness, index_inp
             Opcode::MemoryInit {
                 block_id: BlockId(0),
                 init: vec![array_only_position_input_witness],
-                block_type: Memory
+                block_type: Memory,
             },
             Opcode::AssertZero(Expression {
                 mul_terms: Vec::new(),
@@ -58,9 +68,9 @@ fn _memory_opcodes_circuit(array_only_position_input_witness: Witness, index_inp
                 op: MemOp {
                     operation: expression_one(),
                     index: expression_witness(index_input_witness),
-                    value: expression_witness(Witness(2))
+                    value: expression_witness(Witness(2)),
                 },
-                predicate: None
+                predicate: None,
             },
             Opcode::AssertZero(Expression {
                 mul_terms: Vec::new(),
@@ -72,9 +82,9 @@ fn _memory_opcodes_circuit(array_only_position_input_witness: Witness, index_inp
                 op: MemOp {
                     operation: expression_zero(),
                     index: expression_witness(Witness(3)),
-                    value: expression_witness(Witness(4))
+                    value: expression_witness(Witness(4)),
                 },
-                predicate: None
+                predicate: None,
             },
             Opcode::AssertZero(Expression {
                 mul_terms: Vec::new(),
@@ -83,15 +93,17 @@ fn _memory_opcodes_circuit(array_only_position_input_witness: Witness, index_inp
             }),
         ],
         private_parameters: BTreeSet::new(),
-        public_parameters: PublicInputs(BTreeSet::from_iter(
-            vec![array_only_position_input_witness, index_input_witness])),
+        public_parameters: PublicInputs(BTreeSet::from_iter(vec![
+            array_only_position_input_witness,
+            index_input_witness,
+        ])),
         return_values: PublicInputs(BTreeSet::new()),
         assert_messages: Default::default(),
         recursive: false,
     }
 }
 
-fn expression_one() -> Expression{
+fn expression_one() -> Expression {
     Expression {
         mul_terms: Vec::new(),
         linear_combinations: Vec::new(),
@@ -99,7 +111,7 @@ fn expression_one() -> Expression{
     }
 }
 
-fn expression_zero() -> Expression{
+fn expression_zero() -> Expression {
     Expression {
         mul_terms: Vec::new(),
         linear_combinations: Vec::new(),

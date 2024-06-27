@@ -1,18 +1,18 @@
-use std::collections::HashMap;
-use num_bigint::BigUint;
-use acir::circuit::Circuit as GenericCircuit;
-use acir::circuit::Opcode as GenericOpcode;
 use acir::circuit::opcodes;
 use acir::circuit::opcodes::FunctionInput;
 use acir::circuit::opcodes::MemOp as GenericMemOp;
+use acir::circuit::Circuit as GenericCircuit;
+use acir::circuit::Opcode as GenericOpcode;
 use acir::circuit::Program as GenericProgram;
 use acir::native_types::Expression as GenericExpression;
 pub use acir::native_types::Witness;
 use acir::native_types::WitnessStack as GenericWitnessStack;
+use num_bigint::BigUint;
+use std::collections::HashMap;
 // Generics
 pub use acir_field::AcirField;
 pub use acir_field::FieldElement;
-use plonky2::field::types::{Field};
+use plonky2::field::types::Field;
 use plonky2::iop::target::{BoolTarget, Target};
 use plonky2::plonk::circuit_builder::CircuitBuilder;
 use plonky2::plonk::circuit_data::CircuitConfig;
@@ -31,7 +31,7 @@ const D: usize = 2;
 
 type C = KeccakGoldilocksConfig;
 type F = <C as GenericConfig<D>>::F;
-type CB = CircuitBuilder::<F, D>;
+type CB = CircuitBuilder<F, D>;
 
 // pub type FieldElement = GenericFieldElement<GoldilocksFr>;
 pub type Opcode = GenericOpcode<FieldElement>;
@@ -51,10 +51,13 @@ impl CircuitBuilderFromAcirToPlonky2 {
         let config = CircuitConfig::standard_recursion_config();
         let builder = CB::new(config);
         let witness_target_map: HashMap<Witness, Target> = HashMap::new();
-        Self { builder, witness_target_map }
+        Self {
+            builder,
+            witness_target_map,
+        }
     }
 
-    pub fn unpack(self) -> (CircuitData<F, C, 2>, HashMap<Witness, Target>){
+    pub fn unpack(self) -> (CircuitData<F, C, 2>, HashMap<Witness, Target>) {
         (self.builder.build::<C>(), self.witness_target_map)
     }
 
@@ -64,16 +67,28 @@ impl CircuitBuilderFromAcirToPlonky2 {
             match opcode {
                 Opcode::AssertZero(expr) => {
                     let mut translator = assert_zero_translator::AssertZeroTranslator::new_for(
-                        &mut self.builder, &mut self.witness_target_map, &expr);
+                        &mut self.builder,
+                        &mut self.witness_target_map,
+                        &expr,
+                    );
                     translator.translate();
                 }
-                Opcode::BrilligCall { id: _, inputs: _, outputs: _, predicate: _ } => {
-
-                }
-                Opcode::MemoryInit { block_id: _, init: _, block_type: _ } => {
-
-                }
-                Opcode::MemoryOp { block_id: _, op, predicate: _ } => {
+                Opcode::BrilligCall {
+                    id: _,
+                    inputs: _,
+                    outputs: _,
+                    predicate: _,
+                } => {}
+                Opcode::MemoryInit {
+                    block_id: _,
+                    init: _,
+                    block_type: _,
+                } => {}
+                Opcode::MemoryOp {
+                    block_id: _,
+                    op,
+                    predicate: _,
+                } => {
                     // TODO: check whether we should register if the predicate is false
                     self._register_intermediate_witnesses_for_memory_op(&op);
                 }
@@ -88,10 +103,20 @@ impl CircuitBuilderFromAcirToPlonky2 {
                             self.builder.range_check(target, long_max_bits)
                         }
                         opcodes::BlackBoxFuncCall::AND { lhs, rhs, output } => {
-                            self._extend_circuit_with_bitwise_operation(lhs, rhs, output, Self::and);
+                            self._extend_circuit_with_bitwise_operation(
+                                lhs,
+                                rhs,
+                                output,
+                                Self::and,
+                            );
                         }
                         opcodes::BlackBoxFuncCall::XOR { lhs, rhs, output } => {
-                            self._extend_circuit_with_bitwise_operation(lhs, rhs, output, Self::xor);
+                            self._extend_circuit_with_bitwise_operation(
+                                lhs,
+                                rhs,
+                                output,
+                                Self::xor,
+                            );
                         }
                         opcodes::BlackBoxFuncCall::SHA256 { inputs, outputs } => {
                             self._extend_circuit_with_sha256_operation(inputs, outputs);
@@ -109,26 +134,39 @@ impl CircuitBuilderFromAcirToPlonky2 {
         }
     }
 
-   fn _extend_circuit_with_sha256_operation(&self, _inputs: &Vec<FunctionInput>, _outputs: &Box<[Witness; 32]>) {
-//         h = ['0x6a09e667', '0xbb67ae85', '0x3c6ef372', '0xa54ff53a', '0x510e527f', '0x9b05688c', '0x1f83d9ab', '0x5be0cd19']
-//         k = ['0x428a2f98', '0x71374491', '0xb5c0fbcf', '0xe9b5dba5', '0x3956c25b', '0x59f111f1', '0x923f82a4','0xab1c5ed5', '0xd807aa98', '0x12835b01', '0x243185be', '0x550c7dc3', '0x72be5d74', '0x80deb1fe','0x9bdc06a7', '0xc19bf174', '0xe49b69c1', '0xefbe4786', '0x0fc19dc6', '0x240ca1cc', '0x2de92c6f','0x4a7484aa', '0x5cb0a9dc', '0x76f988da', '0x983e5152', '0xa831c66d', '0xb00327c8', '0xbf597fc7','0xc6e00bf3', '0xd5a79147', '0x06ca6351', '0x14292967', '0x27b70a85', '0x2e1b2138', '0x4d2c6dfc','0x53380d13', '0x650a7354', '0x766a0abb', '0x81c2c92e', '0x92722c85', '0xa2bfe8a1', '0xa81a664b','0xc24b8b70', '0xc76c51a3', '0xd192e819', '0xd6990624', '0xf40e3585', '0x106aa070', '0x19a4c116','0x1e376c08', '0x2748774c', '0x34b0bcb5', '0x391c0cb3', '0x4ed8aa4a', '0x5b9cca4f', '0x682e6ff3','0x748f82ee', '0x78a5636f', '0x84c87814', '0x8cc70208', '0x90befffa', '0xa4506ceb', '0xbef9a3f7','0xc67178f2']
+    fn _extend_circuit_with_sha256_operation(
+        &self,
+        _inputs: &Vec<FunctionInput>,
+        _outputs: &Box<[Witness; 32]>,
+    ) {
+        //         h = ['0x6a09e667', '0xbb67ae85', '0x3c6ef372', '0xa54ff53a', '0x510e527f', '0x9b05688c', '0x1f83d9ab', '0x5be0cd19']
+        //         k = ['0x428a2f98', '0x71374491', '0xb5c0fbcf', '0xe9b5dba5', '0x3956c25b', '0x59f111f1', '0x923f82a4','0xab1c5ed5', '0xd807aa98', '0x12835b01', '0x243185be', '0x550c7dc3', '0x72be5d74', '0x80deb1fe','0x9bdc06a7', '0xc19bf174', '0xe49b69c1', '0xefbe4786', '0x0fc19dc6', '0x240ca1cc', '0x2de92c6f','0x4a7484aa', '0x5cb0a9dc', '0x76f988da', '0x983e5152', '0xa831c66d', '0xb00327c8', '0xbf597fc7','0xc6e00bf3', '0xd5a79147', '0x06ca6351', '0x14292967', '0x27b70a85', '0x2e1b2138', '0x4d2c6dfc','0x53380d13', '0x650a7354', '0x766a0abb', '0x81c2c92e', '0x92722c85', '0xa2bfe8a1', '0xa81a664b','0xc24b8b70', '0xc76c51a3', '0xd192e819', '0xd6990624', '0xf40e3585', '0x106aa070', '0x19a4c116','0x1e376c08', '0x2748774c', '0x34b0bcb5', '0x391c0cb3', '0x4ed8aa4a', '0x5b9cca4f', '0x682e6ff3','0x748f82ee', '0x78a5636f', '0x84c87814', '0x8cc70208', '0x90befffa', '0xa4506ceb', '0xbef9a3f7','0xc67178f2']
     }
 
-    fn _extend_circuit_with_bitwise_operation(self: &mut Self, lhs: &FunctionInput, rhs: &FunctionInput,
-                                              output: &Witness, operation: fn(&mut Self, BoolTarget, BoolTarget) -> BoolTarget) {
+    fn _extend_circuit_with_bitwise_operation(
+        self: &mut Self,
+        lhs: &FunctionInput,
+        rhs: &FunctionInput,
+        output: &Witness,
+        operation: fn(&mut Self, BoolTarget, BoolTarget) -> BoolTarget,
+    ) {
         assert_eq!(lhs.num_bits, rhs.num_bits);
         let binary_digits = lhs.num_bits as usize;
         let lhs_binary_target = self._binary_number_target_for_witness(lhs.witness, binary_digits);
         let rhs_binary_target = self._binary_number_target_for_witness(rhs.witness, binary_digits);
 
-        let output_binary_target = self._translate_bitwise_operation(
-            lhs_binary_target, rhs_binary_target, operation);
+        let output_binary_target =
+            self._translate_bitwise_operation(lhs_binary_target, rhs_binary_target, operation);
 
         let output_target = self.convert_binary_number_to_number(output_binary_target);
         self.witness_target_map.insert(*output, output_target);
     }
 
-    fn _binary_number_target_for_witness(self: &mut Self, w: Witness, digits: usize) -> BinaryDigitsTarget {
+    fn _binary_number_target_for_witness(
+        self: &mut Self,
+        w: Witness,
+        digits: usize,
+    ) -> BinaryDigitsTarget {
         let target = self._get_or_create_target_for_witness(w);
         self.convert_number_to_binary_number(target, digits)
     }
@@ -143,26 +181,38 @@ impl CircuitBuilderFromAcirToPlonky2 {
         self.builder.le_sum(a.bits.into_iter().rev())
     }
 
-    fn _translate_bitwise_operation(self: &mut Self, lhs: BinaryDigitsTarget, rhs: BinaryDigitsTarget,
-                                    operation: fn(&mut Self, BoolTarget, BoolTarget) -> BoolTarget) -> BinaryDigitsTarget {
+    fn _translate_bitwise_operation(
+        self: &mut Self,
+        lhs: BinaryDigitsTarget,
+        rhs: BinaryDigitsTarget,
+        operation: fn(&mut Self, BoolTarget, BoolTarget) -> BoolTarget,
+    ) -> BinaryDigitsTarget {
         BinaryDigitsTarget {
             bits: lhs
-                .bits.iter().zip(rhs.bits.iter())
-                .map(|(x, y)| operation(self, *x, *y)).collect(),
+                .bits
+                .iter()
+                .zip(rhs.bits.iter())
+                .map(|(x, y)| operation(self, *x, *y))
+                .collect(),
         }
     }
 
     fn _register_public_parameters_from_acir_circuit(self: &mut Self, circuit: &Circuit) {
-        let public_parameters_as_list: Vec<Witness> = circuit.public_parameters.0.iter().cloned().collect();
+        let public_parameters_as_list: Vec<Witness> =
+            circuit.public_parameters.0.iter().cloned().collect();
         for public_parameter_witness in public_parameters_as_list {
             self._register_new_public_input_from_witness(public_parameter_witness);
         }
     }
 
-    fn _register_new_public_input_from_witness(self: &mut Self, public_input_witness: Witness) -> Target {
+    fn _register_new_public_input_from_witness(
+        self: &mut Self,
+        public_input_witness: Witness,
+    ) -> Target {
         let public_input_target = self.builder.add_virtual_target();
         self.builder.register_public_input(public_input_target);
-        self.witness_target_map.insert(public_input_witness, public_input_target);
+        self.witness_target_map
+            .insert(public_input_witness, public_input_target);
         public_input_target
     }
 
@@ -197,4 +247,3 @@ impl CircuitBuilderFromAcirToPlonky2 {
         self.builder.and(b1_or_b2, not_b1_and_b2)
     }
 }
-

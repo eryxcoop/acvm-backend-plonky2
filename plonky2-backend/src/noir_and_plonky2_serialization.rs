@@ -2,6 +2,8 @@ use super::*;
 use crate::circuit_translation::*;
 use serde_json;
 use base64;
+use flate2::read::GzDecoder;
+use tar;
 
 pub fn deserialize_verifying_key_within_file_path(verifying_key_path: &String) -> VerifierCircuitData<F,C,D> {
     let buffer = read_file_to_bytes(verifying_key_path);
@@ -37,9 +39,19 @@ pub fn deserialize_program_within_file_path(acir_program_path: &String) -> Progr
 }
 
 pub fn deserialize_witnesses_within_file_path(witnesses_path: &String) -> WitnessStack {
-    let buffer = read_file_to_bytes(witnesses_path);
-    let file_contents_slice: &[u8] = &buffer;
-    let witness_stack = WitnessStack::try_from(file_contents_slice);
+    // let buffer = read_file_to_bytes(witnesses_path);
+    // let file_contents_slice: &[u8] = &buffer;
+    // let witness_stack = WitnessStack::try_from(file_contents_slice);
+    // witness_stack.unwrap()
+
+    let file = File::open(witnesses_path + ".gz")?;
+    let decoder = GzDecoder::new(file)?;
+    let mut archive = tar::Archive::new(decoder);
+    let Some(entry) = archive.entries().expect("dsa").next(); // The only file in the .gz
+    let mut buffer = Vec::new();
+    entry.read_to_end(&mut buffer)?;
+    let file_content: &[u8] = &buffer;
+    let witness_stack = WitnessStack::try_from(file_content);
     witness_stack.unwrap()
 }
 

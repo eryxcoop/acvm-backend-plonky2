@@ -56,6 +56,15 @@ fn _execute_prove_command(args: &Vec<String>) {
     prove_action.run();
 }
 
+fn _execute_write_vk_command(args: &Vec<String>) {
+    let acir_program_json_path = &args[3];
+    let vk_path_output = &args[5];
+    let write_vk_action = actions::write_vk_action::WriteVKAction{
+        acir_program_json_path: acir_program_json_path.clone(),
+        vk_path_output: vk_path_output.clone()};
+    write_vk_action.run()
+}
+
 fn _execute_verify_command(args: &Vec<String>) {
     let proof_path = &args[5];
     let vk_path = &args[7];
@@ -63,15 +72,6 @@ fn _execute_verify_command(args: &Vec<String>) {
         proof_path: proof_path.clone(),
         vk_path: vk_path.clone()};
     verify_action.run()
-}
-
-fn _execute_write_vk_command(args: &Vec<String>) {
-    let bytecode_path = &args[5];
-    let vk_path_output = &args[7];
-    let write_vk_action = actions::write_vk_action::WriteVKAction{
-        bytecode_path: bytecode_path.clone(),
-        vk_path_output: vk_path_output.clone()};
-    write_vk_action.run()
 }
 
 fn _print_info_string() {

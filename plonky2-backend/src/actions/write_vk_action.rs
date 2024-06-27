@@ -1,13 +1,13 @@
 use super::*;
 
 pub struct WriteVKAction {
-    pub bytecode_path: String,
+    pub acir_program_json_path: String,
     pub vk_path_output: String
 }
 
 impl WriteVKAction {
     pub fn run(&self) {
-        let acir_program: Program = deserialize_program_within_file_path(&self.bytecode_path);
+        let acir_program: Program = deserialize_program_within_file_path(&self.acir_program_json_path);
         let acir_circuit = &acir_program.functions[0];
         let mut translator = CircuitBuilderFromAcirToPlonky2::new();
         translator.translate_circuit(acir_circuit);

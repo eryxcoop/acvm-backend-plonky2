@@ -1,6 +1,6 @@
 use super::*;
 use super::factories::circuit_factory::*;
-use super::factories::utils::*;
+use super::factories::utils;
 
 #[test]
 fn test_plonky2_vm_can_traslate_the_assert_x_equals_zero_program() {
@@ -10,11 +10,11 @@ fn test_plonky2_vm_can_traslate_the_assert_x_equals_zero_program() {
     let circuit = circuit_with_single_opcode(only_opcode, vec![public_input_witness]);
 
     // When
-    let (circuit_data, witness_target_map) = generate_plonky2_circuit_from_acir_circuit(&circuit);
+    let (circuit_data, witness_target_map) = utils::generate_plonky2_circuit_from_acir_circuit(&circuit);
 
     // Then
     let g_zero = F::default();
-    let proof = generate_plonky2_proof_using_witness_values(
+    let proof = utils::generate_plonky2_proof_using_witness_values(
         vec![(public_input_witness, g_zero)], &witness_target_map, &circuit_data);
     assert_eq!(g_zero, proof.public_inputs[0]);
     assert!(circuit_data.verify(proof).is_ok());
@@ -28,11 +28,11 @@ fn test_plonky2_vm_can_traslate_the_assert_x_equals_constant_program() {
     let circuit = circuit_with_single_opcode(only_opcode, vec![public_input_witness]);
 
     // When
-    let (circuit_data, witness_target_map) = generate_plonky2_circuit_from_acir_circuit(&circuit);
+    let (circuit_data, witness_target_map) = utils::generate_plonky2_circuit_from_acir_circuit(&circuit);
 
     // Then
     let four = F::from_canonical_u64(4);
-    let proof = generate_plonky2_proof_using_witness_values(
+    let proof = utils::generate_plonky2_proof_using_witness_values(
         vec![(public_input_witness, four)], &witness_target_map, &circuit_data);
     assert_eq!(four, proof.public_inputs[0]);
     assert!(circuit_data.verify(proof).is_ok());
@@ -46,11 +46,11 @@ fn test_plonky2_vm_can_traslate_the_assert_c_times_x_equals_constant_program() {
     let circuit = circuit_with_single_opcode(only_opcode, vec![public_input_witness]);
 
     // When
-    let (circuit_data, witness_target_map) = generate_plonky2_circuit_from_acir_circuit(&circuit);
+    let (circuit_data, witness_target_map) = utils::generate_plonky2_circuit_from_acir_circuit(&circuit);
 
     // Then
     let four = F::from_canonical_u64(4);
-    let proof = generate_plonky2_proof_using_witness_values(
+    let proof = utils::generate_plonky2_proof_using_witness_values(
         vec![(public_input_witness, four)], &witness_target_map, &circuit_data);
     assert_eq!(four, proof.public_inputs[0]);
     assert!(circuit_data.verify(proof).is_ok());
@@ -66,11 +66,11 @@ fn test_plonky2_vm_can_traslate_the_x_times_3_plus_y_times_4_equals_constant_pro
         only_opcode, vec![first_public_input_witness, second_public_input_witness]);
 
     // When
-    let (circuit_data, witness_target_map) = generate_plonky2_circuit_from_acir_circuit(&circuit);
+    let (circuit_data, witness_target_map) = utils::generate_plonky2_circuit_from_acir_circuit(&circuit);
 
     // Then
     let one = F::from_canonical_u64(1);
-    let proof = generate_plonky2_proof_using_witness_values(
+    let proof = utils::generate_plonky2_proof_using_witness_values(
         vec![(first_public_input_witness, one), (second_public_input_witness, one)],
         &witness_target_map, &circuit_data);
 
@@ -87,11 +87,11 @@ fn test_plonky2_vm_can_traslate_multiple_linear_combinations() {
     let circuit = circuit_with_single_opcode(only_opcode, public_inputs.clone());
 
     // When
-    let (circuit_data, witness_target_map) = generate_plonky2_circuit_from_acir_circuit(&circuit);
+    let (circuit_data, witness_target_map) = utils::generate_plonky2_circuit_from_acir_circuit(&circuit);
 
     // Then
     let one = F::from_canonical_u64(1);
-    let proof = generate_plonky2_proof_using_witness_values(
+    let proof = utils::generate_plonky2_proof_using_witness_values(
         vec![(public_inputs[0], one), (public_inputs[1], one),
              (public_inputs[2], one), (public_inputs[3], one)],
         &witness_target_map, &circuit_data);
@@ -111,11 +111,11 @@ fn test_plonky2_vm_can_traslate_the_x_times_x_program_equals_constant() {
     let circuit = circuit_with_single_opcode(only_opcode, vec![public_input]);
 
     // When
-    let (circuit_data, witness_target_map) = generate_plonky2_circuit_from_acir_circuit(&circuit);
+    let (circuit_data, witness_target_map) = utils::generate_plonky2_circuit_from_acir_circuit(&circuit);
 
     // Then
     let four = F::from_canonical_u64(4);
-    let proof = generate_plonky2_proof_using_witness_values(
+    let proof = utils::generate_plonky2_proof_using_witness_values(
         vec![(public_input, four)], &witness_target_map, &circuit_data);
 
     assert_eq!(four, proof.public_inputs[0]);
@@ -131,12 +131,12 @@ fn test_plonky2_vm_can_traslate_the_c_times_x_times_y_program_equals_constant() 
     let circuit = circuit_with_single_opcode(only_opcode, vec![public_input_1, public_input_2]);
 
     // When
-    let (circuit_data, witness_target_map) = generate_plonky2_circuit_from_acir_circuit(&circuit);
+    let (circuit_data, witness_target_map) = utils::generate_plonky2_circuit_from_acir_circuit(&circuit);
 
     // Then
     let four = F::from_canonical_u64(4);
     let five = F::from_canonical_u64(5);
-    let proof = generate_plonky2_proof_using_witness_values(
+    let proof = utils::generate_plonky2_proof_using_witness_values(
         vec![(public_input_1, four), (public_input_2, five)],
         &witness_target_map, &circuit_data);
 
@@ -153,11 +153,11 @@ fn test_plonky2_vm_can_traslate_multiple_cuadratic_terms() {
     let circuit = circuit_with_single_opcode(only_opcode, public_inputs.clone());
 
     // When
-    let (circuit_data, witness_target_map) = generate_plonky2_circuit_from_acir_circuit(&circuit);
+    let (circuit_data, witness_target_map) = utils::generate_plonky2_circuit_from_acir_circuit(&circuit);
 
     // Then
     let two = F::from_canonical_u64(2);
-    let proof = generate_plonky2_proof_using_witness_values(
+    let proof = utils::generate_plonky2_proof_using_witness_values(
         vec![(public_inputs[0], two), (public_inputs[1], two),
              (public_inputs[2], two), (public_inputs[3], two)],
         &witness_target_map, &circuit_data);
@@ -177,11 +177,11 @@ fn test_plonky2_vm_can_traslate_multiple_cuadratic_terms_and_linear_combinations
     let circuit = circuit_with_single_opcode(only_opcode, public_inputs.clone());
 
     // When
-    let (circuit_data, witness_target_map) = generate_plonky2_circuit_from_acir_circuit(&circuit);
+    let (circuit_data, witness_target_map) = utils::generate_plonky2_circuit_from_acir_circuit(&circuit);
 
     // Then
     let two = F::from_canonical_u64(2);
-    let proof = generate_plonky2_proof_using_witness_values(
+    let proof = utils::generate_plonky2_proof_using_witness_values(
         vec![(public_inputs[0], two), (public_inputs[1], two),
              (public_inputs[2], two), (public_inputs[3], two)],
         &witness_target_map, &circuit_data);
@@ -202,12 +202,12 @@ fn test_plonky2_vm_can_translate_circuits_with_2_assert_zero_opcodes() {
                                                                            intermediate_witness);
 
     // When
-    let (circuit_data, witness_target_map) = generate_plonky2_circuit_from_acir_circuit(&circuit);
+    let (circuit_data, witness_target_map) = utils::generate_plonky2_circuit_from_acir_circuit(&circuit);
 
     // Then
     let one = F::from_canonical_u64(1);
     let five = F::from_canonical_u64(5);
-    let proof = generate_plonky2_proof_using_witness_values(
+    let proof = utils::generate_plonky2_proof_using_witness_values(
         vec![(public_input_witness, one), (intermediate_witness, five)],
         &witness_target_map, &circuit_data);
 

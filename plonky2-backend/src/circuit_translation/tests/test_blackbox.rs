@@ -1,6 +1,7 @@
 use crate::circuit_translation::tests::factories::circuit_factory;
 use crate::circuit_translation::tests::factories::utils::*;
 use sha2::{Sha256, Digest};
+use plonky2::field::goldilocks_field::GoldilocksField;
 use super::*;
 
 #[test]

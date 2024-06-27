@@ -1,5 +1,4 @@
 use super::*;
-use noir_and_plonky2_serialization::*;
 
 pub struct WriteVKAction {
     pub bytecode_path: String,
@@ -12,7 +11,7 @@ impl WriteVKAction {
         let acir_circuit = &acir_program.functions[0];
         let mut translator = CircuitBuilderFromAcirToPlonky2::new();
         translator.translate_circuit(acir_circuit);
-        let CircuitBuilderFromAcirToPlonky2 { builder, witness_target_map } = translator;
+        let CircuitBuilderFromAcirToPlonky2 { builder, witness_target_map: _ } = translator;
         let plonky2_circuit = builder.build::<C>();
         let verifier_data = plonky2_circuit.verifier_data();
         let gate_serializer = DefaultGateSerializer;

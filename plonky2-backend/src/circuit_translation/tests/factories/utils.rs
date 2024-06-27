@@ -1,3 +1,7 @@
+use plonky2::field::goldilocks_field::GoldilocksField;
+use plonky2::iop::witness::PartialWitness;
+use plonky2::plonk::proof::ProofWithPublicInputs;
+use plonky2::iop::witness::WitnessWrite;
 use crate::circuit_translation;
 use super::*;
 
@@ -6,6 +10,7 @@ pub fn generate_plonky2_circuit_from_acir_circuit(circuit: &Circuit) -> (Circuit
     translator.translate_circuit(circuit);
     translator.unpack()
 }
+
 
 pub fn generate_plonky2_proof_using_witness_values(witness_assignment: Vec<(Witness, F)>,
                                                witness_target_map: &HashMap<Witness, Target>,

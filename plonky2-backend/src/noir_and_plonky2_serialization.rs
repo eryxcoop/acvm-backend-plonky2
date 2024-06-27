@@ -1,9 +1,9 @@
 use super::*;
-use crate::circuit_translation::*;
 use serde_json;
 use base64;
 use flate2::read::GzDecoder;
 use tar;
+use base64::Engine;
 
 pub fn deserialize_verifying_key_within_file_path(verifying_key_path: &String) -> VerifierCircuitData<F,C,D> {
     let buffer = read_file_to_bytes(verifying_key_path);
@@ -32,8 +32,8 @@ pub fn deserialize_program_within_file_path(acir_program_path: &String) -> Progr
     file.read_to_string(&mut json_string).expect("There was a problem reading the file content");
     let json_str: &str = &json_string;
     let json: serde_json::Value = serde_json::from_str(json_str).expect("There was a problem parsing the json program");
-    let Some(bytecode_str) = json["bytecode"].as_str() else { todo!() };
-    let bytecode: &[u8] = &base64::decode(bytecode_str).expect("There was a problem decoding the program from base 64");
+    let Some(bytecode_str) = json["bytecode"].as_str() else { panic!("Expected a different circuit format") };
+    let bytecode: &[u8] = &base64::prelude::BASE64_STANDARD.decode(bytecode_str).expect("There was a problem decoding the program from base 64");
     let program = Program::deserialize_program(bytecode);
     program.unwrap()
 }

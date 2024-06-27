@@ -44,13 +44,13 @@ impl<'a> AssertZeroTranslator<'a> {
 
         let constant_target = self.builder.constant(g_constant);
         let mut current_acc_target = constant_target;
-        current_acc_target = self._add_linear_combinations(self.expression, current_acc_target);
-        current_acc_target = self._add_cuadratic_combinations(self.expression, current_acc_target);
+        current_acc_target = self._add_linear_combinations(current_acc_target);
+        current_acc_target = self._add_cuadratic_combinations(current_acc_target);
         self.builder.assert_zero(current_acc_target);
     }
 
-    fn _add_cuadratic_combinations(self: &mut Self, expression: &Expression, mut current_acc_target: Target) -> Target {
-        let mul_terms = &expression.mul_terms;
+    fn _add_cuadratic_combinations(self: &mut Self, mut current_acc_target: Target) -> Target {
+        let mul_terms = &self.expression.mul_terms;
         for mul_term in mul_terms {
             let (f_cuadratic_factor, public_input_witness_1, public_input_witness_2) = mul_term;
             let cuadratic_target = self._compute_cuadratic_term_target(f_cuadratic_factor, public_input_witness_1, public_input_witness_2);
@@ -60,7 +60,7 @@ impl<'a> AssertZeroTranslator<'a> {
         current_acc_target
     }
 
-    fn _add_linear_combinations(self: &mut Self, expression: &Expression, mut current_acc_target: Target) -> Target {
+    fn _add_linear_combinations(self: &mut Self, mut current_acc_target: Target) -> Target {
         let linear_combinations = &self.expression.linear_combinations;
         for (f_multiply_factor, public_input_witness) in linear_combinations {
             let linear_combination_target = self._compute_linear_combination_target(f_multiply_factor, public_input_witness);

@@ -34,7 +34,7 @@ impl ProveAction {
 
     pub fn run(&self) {
         let acir_program: Program = deserialize_program_within_file_path(&self.acir_program_json_path);
-        let mut witness_stack: WitnessStack = deserialize_witnesses_within_file_path(self.witness_stack_zip_path.clone());
+        let witness_stack: WitnessStack = deserialize_witnesses_within_file_path(self.witness_stack_zip_path.clone());
 
         let circuit = &acir_program.functions[0];
         let proof = self._execute_prove_action(witness_stack, circuit);
@@ -46,7 +46,7 @@ impl ProveAction {
         write_bytes_to_file_path(proof, proof_path)
     }
 
-    fn _execute_prove_action(&self, mut witness_stack: WitnessStack, circuit: &Circuit) -> Vec<u8>{
+    fn _execute_prove_action(&self, witness_stack: WitnessStack, circuit: &Circuit) -> Vec<u8>{
         let (circuit_data, witness_target_map) =
             self.generate_plonky2_circuit_from_acir_circuit(circuit);
         self.generate_serialized_plonky2_proof(witness_stack, &witness_target_map, &circuit_data)
@@ -86,7 +86,7 @@ impl ProveAction {
     fn _extract_witnesses(&self, witness_stack: &mut WitnessStack,
                           witness_target_map: &HashMap<Witness, Target>) -> PartialWitness<GoldilocksField> {
         let mut witnesses = PartialWitness::<F>::new();
-        let mut witness_map = witness_stack.pop().unwrap().witness;
+        let witness_map = witness_stack.pop().unwrap().witness;
         for (witness, value) in witness_map.into_iter() {
             let plonky2_target = witness_target_map.get(&witness).unwrap();
             witnesses.set_target(*plonky2_target, self._field_element_to_goldilocks_field(&value));

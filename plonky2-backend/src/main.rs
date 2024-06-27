@@ -9,7 +9,6 @@ use jemallocator::Jemalloc;
 use circuit_translation::*;
 
 use noir_and_plonky2_serialization::*;
-use plonky2::plonk::circuit_builder::CircuitBuilder;
 use plonky2::plonk::circuit_data::VerifierCircuitData;
 use plonky2::plonk::config::{GenericConfig, KeccakGoldilocksConfig};
 use plonky2::plonk::proof::CompressedProofWithPublicInputs;
@@ -24,7 +23,6 @@ const D: usize = 2;
 
 type C = KeccakGoldilocksConfig;
 type F = <C as GenericConfig<D>>::F;
-type CB = CircuitBuilder::<F, D>;
 
 pub mod circuit_translation;
 pub mod actions;

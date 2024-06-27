@@ -1,6 +1,7 @@
+use std::collections::BTreeSet;
+use acir::circuit::{ExpressionWidth, PublicInputs};
 use acir::circuit::opcodes::BlockId;
 use acir::circuit::opcodes::BlockType::Memory;
-use crate::circuit_translation::tests::factories::circuit_factory;
 use crate::circuit_translation::tests::factories::utils::*;
 use super::*;
 

@@ -1,5 +1,6 @@
+use std::collections::BTreeSet;
 use super::*;
-use acir::circuit::opcodes;
+use acir::circuit::{ExpressionWidth, opcodes, PublicInputs};
 use acir::circuit::opcodes::FunctionInput;
 
 pub fn x_equals_0_opcode(public_input_witness: Witness) -> Opcode {
@@ -108,6 +109,7 @@ pub fn multiple_cuadratic_terms_and_linear_combinations_opcode(public_inputs: &V
         q_c: -FieldElement::from_hex("0x80").unwrap(),
     })
 }
+
 
 pub fn black_box_range_opcode(public_input: Witness, max_bits: u32) -> Opcode {
     let input = FunctionInput { witness: public_input, num_bits: max_bits };

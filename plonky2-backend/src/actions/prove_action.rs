@@ -36,6 +36,8 @@ impl ProveAction {
         let acir_program: Program = deserialize_program_within_file_path(&self.acir_program_json_path);
         let witness_stack: WitnessStack = deserialize_witnesses_within_file_path(self.witness_stack_zip_path.clone());
 
+        println!("Program: {:?}. Witness: {:?}", acir_program, witness_stack);
+
         let circuit = &acir_program.functions[0];
         let proof = self._execute_prove_action(witness_stack, circuit);
 

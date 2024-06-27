@@ -1,7 +1,9 @@
 # acvm-backend-plonky2
 This is an open source backend for the ACIR standard as implemented in the Noir programming languaje, written in Rust.
 
-For now, until the corresponding PRs are made in the Plonky2 and the Noir repositories, you have to clone this repositories inside the project root.
+For the setup, run ```make``` on the root directory. This will do the following:
+
+For now, until the corresponding PRs are made in the Plonky2 and the Noir repositories, the command will clone these repositories inside the project root.
 * https://github.com/brweisz/noir 
 * https://github.com/brweisz/plonky2
 
@@ -14,10 +16,10 @@ plonky-2-backend-for-acir
 |_ noir_example
 |_ plonky2
 |_ plonky2-backend
-|_ run-commands.py
+|_ Makefile
 ```
 
-Then you'll have to build noir and plonky2. To do so, step into ```noir```/```plonky2``` and run ```cargo build```. Optionally (for example, for performance evaluation) you can use the release build. Also, Plonky2 requires you to use the nightly version of cargo. Lastly, you'll need to build the plonky2 backend. 
+Then it'll build noir and plonky2. The latter with the nightly toolchain. Lastly, it'll build the custom plonky2 backend. 
 
 ## Manual testing
 

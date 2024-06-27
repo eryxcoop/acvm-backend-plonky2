@@ -12,7 +12,10 @@ clone_plonky2:
 	cd plonky2 && make build_plonky2
 
 build_plonky2:
-	cd plonky2 && cargo build
+	cd plonky2
+	rustup override set nightly
+	cargo build
+	rustup override unset
 
 build_backend:
 	cd plonky2-backend && cargo build

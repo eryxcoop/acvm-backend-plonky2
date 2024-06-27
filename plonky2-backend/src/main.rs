@@ -66,8 +66,8 @@ fn _execute_write_vk_command(args: &Vec<String>) {
 }
 
 fn _execute_verify_command(args: &Vec<String>) {
+    let vk_path = &args[3];
     let proof_path = &args[5];
-    let vk_path = &args[7];
     let verify_action = actions::verify_action::VerifyAction{
         proof_path: proof_path.clone(),
         vk_path: vk_path.clone()};

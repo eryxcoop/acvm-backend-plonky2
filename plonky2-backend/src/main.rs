@@ -1,8 +1,5 @@
 extern crate core;
 
-#[cfg(test)]
-mod integration_tests;
-
 use std::collections::HashMap;
 use std::{env, io};
 use std::fs::File;

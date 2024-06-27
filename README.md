@@ -17,7 +17,7 @@ plonky-2-backend-for-acir
 |_ run-commands.py
 ```
 
-Then you'll have to build noir and plonky2. To do so, step into ```noir```/```plonky2``` and run ```cargo build```. Optionally (for example, for performance evaluation) you can use the release build. 
+Then you'll have to build noir and plonky2. To do so, step into ```noir```/```plonky2``` and run ```cargo build```. Optionally (for example, for performance evaluation) you can use the release build. Also, Plonky2 requires you to use the nightly version of cargo. 
 
 ## Manual testing (up to acvm version 0.45.0)
 _The Noir workflow regarding proof generation and verification has changed recently, so the following instructions are deprecated in the latest Noir version. However, for now you should be using the fork of Noir referenced earlier, which has a previous version of the code and therefore it's compatible with what follows:_

@@ -32,19 +32,15 @@ impl ProveAction {
         println!("Program: {:?}. Witness: {:?}", acir_program, witness_stack);
 
         let circuit = &acir_program.functions[0];
-        let proof = self._execute_prove_action(witness_stack, circuit);
+        let (circuit_data, witness_target_map) =
+            self.generate_plonky2_circuit_from_acir_circuit(circuit);
+        let proof = self.generate_serialized_plonky2_proof(witness_stack, &witness_target_map, &circuit_data);
 
         self._write_proof_into_file(proof, &self.resulting_proof_file_path);
     }
 
     fn _write_proof_into_file(&self, proof: Vec<u8>, proof_path: &String) {
         write_bytes_to_file_path(proof, proof_path)
-    }
-
-    fn _execute_prove_action(&self, witness_stack: WitnessStack, circuit: &Circuit) -> Vec<u8>{
-        let (circuit_data, witness_target_map) =
-            self.generate_plonky2_circuit_from_acir_circuit(circuit);
-        self.generate_serialized_plonky2_proof(witness_stack, &witness_target_map, &circuit_data)
     }
 
     pub fn generate_plonky2_circuit_from_acir_circuit(&self, circuit: &Circuit) -> (CircuitData<F, C, 2>, HashMap<Witness, Target>) {

@@ -25,13 +25,6 @@ pub struct ProveAction {
 }
 
 impl ProveAction {
-    pub fn initialize_empty() -> Self{
-        Self {
-            acir_program_json_path: String::from(""),
-            witness_stack_zip_path: String::from(""),
-            resulting_proof_file_path: String::from("")}
-    }
-
     pub fn run(&self) {
         let acir_program: Program = deserialize_program_within_file_path(&self.acir_program_json_path);
         let witness_stack: WitnessStack = deserialize_witnesses_within_file_path(self.witness_stack_zip_path.clone());

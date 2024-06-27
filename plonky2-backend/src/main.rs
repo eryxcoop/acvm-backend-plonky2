@@ -36,7 +36,6 @@ fn main() {
 
     let command: &str = &args.get(1).expect("Must specify a command");
     match command {
-        "info" => _print_info_string(),
         "prove" =>  _execute_prove_command(&args),
         "write_vk" => _execute_write_vk_command(&args),
         "verify" => _execute_verify_command(&args),
@@ -72,17 +71,4 @@ fn _execute_verify_command(args: &Vec<String>) {
         proof_path: proof_path.clone(),
         vk_path: vk_path.clone()};
     verify_action.run()
-}
-
-fn _print_info_string() {
-    println!(r#"{{
-            "opcodes_supported": [],
-            "black_box_functions_supported": [],
-            "status": "ok",
-            "message": "This is a dummy JSON response.",
-            "language": {{
-                "name": "PLONK-CSAT",
-                "width": 3
-            }}
-        }}"#);
 }

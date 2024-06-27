@@ -1,35 +1,38 @@
-mod tests;
-pub mod assert_zero_translator;
-mod targets;
-
-use std::collections::{HashMap};
+use std::collections::BTreeSet;
+use std::collections::HashMap;
 use std::error::Error;
+
+use num_bigint::BigUint;
+
 use acir::circuit::{ExpressionWidth, PublicInputs};
+use acir::circuit::Circuit as GenericCircuit;
+use acir::circuit::Opcode as GenericOpcode;
+use acir::circuit::opcodes;
+use acir::circuit::opcodes::FunctionInput;
+use acir::circuit::opcodes::MemOp as GenericMemOp;
+use acir::circuit::Program as GenericProgram;
+use acir::native_types::Expression as GenericExpression;
 pub use acir::native_types::Witness;
+use acir::native_types::WitnessStack as GenericWitnessStack;
+// Generics
+pub use acir_field::AcirField;
+pub use acir_field::FieldElement;
 use plonky2::field::goldilocks_field::GoldilocksField;
 use plonky2::field::types::{Field, Field64};
 use plonky2::iop::target::{BoolTarget, Target};
+use plonky2::iop::witness::PartialWitness;
+use plonky2::iop::witness::WitnessWrite;
 use plonky2::plonk::circuit_builder::CircuitBuilder;
 use plonky2::plonk::circuit_data::CircuitConfig;
 use plonky2::plonk::circuit_data::CircuitData;
 use plonky2::plonk::config::{GenericConfig, KeccakGoldilocksConfig};
-use num_bigint::BigUint;
-use plonky2::iop::witness::PartialWitness;
-use plonky2::iop::witness::WitnessWrite;
 use plonky2::plonk::proof::ProofWithPublicInputs;
-use std::collections::BTreeSet;
-use acir::circuit::opcodes;
-use acir::circuit::opcodes::{FunctionInput};
+
 use crate::circuit_translation::targets::BinaryDigitsTarget;
-// Generics
-pub use acir_field::AcirField;
-pub use acir_field::FieldElement;
-use acir::native_types::WitnessStack as GenericWitnessStack;
-use acir::circuit::opcodes::MemOp as GenericMemOp;
-use acir::circuit::Opcode as GenericOpcode;
-use acir::circuit::Circuit as GenericCircuit;
-use acir::circuit::Program as GenericProgram;
-use acir::native_types::Expression as GenericExpression;
+
+mod tests;
+pub mod assert_zero_translator;
+mod targets;
 
 const D: usize = 2;
 

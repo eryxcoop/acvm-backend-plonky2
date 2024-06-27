@@ -1,4 +1,3 @@
-use crate::actions::prove_action::ProveAction;
 use crate::circuit_translation;
 use super::*;
 

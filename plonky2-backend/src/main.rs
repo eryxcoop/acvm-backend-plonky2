@@ -16,9 +16,6 @@ use plonky2::util::serialization::DefaultGateSerializer;
 
 use crate::circuit_translation::CircuitBuilderFromAcirToPlonky2;
 
-#[cfg(test)]
-mod integration_tests;
-
 const D: usize = 2;
 
 type C = KeccakGoldilocksConfig;

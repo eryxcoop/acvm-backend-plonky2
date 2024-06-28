@@ -16,7 +16,7 @@ def main(argc, argv):
         return
 
     try:
-        command = f"{custom_backend_path} prove -c ./target/{example_name}.json -w  ./target/witness -o proof"
+        command = f"{custom_backend_path} prove -c ./target/{example_name}.json -w ./target/witness -o ./proof"
         result = subprocess.check_output(command, shell=True, text=True)
         print("Proof generated successfully")
     except Exception as e:
@@ -24,8 +24,12 @@ def main(argc, argv):
         return
 
     # try:
-    #     with open(f"./proof", 'rt') as f:
-    #         print(f.read())
+    #     with open("proof", 'rt') as f:
+    #         hex_str = f.read()
+    #         hex_str = ''.join(hex_str.split())
+    #         bytes_data = bytes.fromhex(hex_str)
+    #         print(bytes_data)
+    #
     # except Exception as e:
     #     print(f"An error has occurred while trying to read the proof: {e}")
 

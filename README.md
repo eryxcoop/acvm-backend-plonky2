@@ -25,7 +25,7 @@ Then it'll build noir and plonky2. The latter with the nightly toolchain. Lastly
 
 For some manual testing, the workflow is as follows: in the ```noir_example``` folder there's a Noir project. In the ```noir_example/src/main.nr``` file you can write the main function of any noir program you want to prove. The following explanation is similar to the official [Noir docs](https://noir-lang.org/docs/dev/getting_started/hello_noir/#execute-our-noir-program), but using the custom plonky2 backend instead of barretenberg. 
 
-1) From the ```noir_example``` directory run: ```../noir/target/debug/nargo execute witness-name```. This will execute the noir program through the nargo acvm, generating:
+1) From the ```noir_example``` directory run: ```../noir/target/debug/nargo execute witness```. This will execute the noir program through the nargo acvm, generating:
    * The ACIR circuit in ```target/noir_example.json```
    * The witness in ```target/witness-name.gz```
 2) From the ```plonky2-backend``` directory run: 

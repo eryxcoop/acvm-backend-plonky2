@@ -51,18 +51,7 @@ pub fn deserialize_program_within_file_path(acir_program_path: &String) -> Progr
 
 pub fn deserialize_witnesses_within_file_path(mut witnesses_path: String) -> WitnessStack {
     witnesses_path.push_str(".gz");
-    let file = File::open(witnesses_path).expect("Failed to open witness gz file");
-    let decoder = GzDecoder::new(file);
-    let mut archive = tar::Archive::new(decoder);
-    let Some(entry) = archive.entries().expect("dsa").next() else {
-        todo!()
-    }; // The only file in the .gz
-    let mut buffer = Vec::new();
-    entry
-        .unwrap()
-        .read_to_end(&mut buffer)
-        .expect("Failed to read contents of witness file");
-    let file_content: &[u8] = &buffer;
+    let file_content: &[u8] = &read_file_to_bytes(&witnesses_path);
     let witness_stack = WitnessStack::try_from(file_content);
     witness_stack.unwrap()
 }

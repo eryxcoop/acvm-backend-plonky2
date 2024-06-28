@@ -10,9 +10,9 @@ clone_custom_plonky2:
 	git clone https://github.com/brweisz/plonky2
 
 build_plonky2:
-	cd plonky2
-	rustup override set nightly
-	cargo build
+	rustup override set nightly &&
+	cd plonky2  &&
+	cargo build &&
 	rustup override unset
 
 build_backend:

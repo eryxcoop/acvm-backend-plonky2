@@ -31,8 +31,6 @@ impl ProveAction {
         let witness_stack: WitnessStack =
             deserialize_witnesses_within_file_path(self.witness_stack_zip_path.clone());
 
-        println!("Program: {:?}. Witness: {:?}", acir_program, witness_stack);
-
         let circuit = &acir_program.functions[0];
         let (circuit_data, witness_target_map) =
             self.generate_plonky2_circuit_from_acir_circuit(circuit);

@@ -57,7 +57,7 @@ pub fn deserialize_witnesses_within_file_path(mut witnesses_path: String) -> Wit
 }
 
 pub fn write_bytes_to_file_path(bytes: Vec<u8>, path: &String) {
-    let mut file = File::create(path).expect("Failed to create file for vk");
+    let mut file = File::create(path).expect("Failed to create file");
     file.write_all(&bytes)
-        .expect("Failed to write vk into file");
+        .expect("Failed to write file");
 }

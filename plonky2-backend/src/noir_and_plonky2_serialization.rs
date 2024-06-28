@@ -1,9 +1,8 @@
-use super::*;
 use base64;
 use base64::Engine;
-use flate2::read::GzDecoder;
 use serde_json;
-use tar;
+
+use super::*;
 
 pub fn deserialize_verifying_key_within_file_path(
     verifying_key_path: &String,

@@ -271,29 +271,3 @@ fn test_plonky2_vm_can_translate_circuits_with_2_assert_zero_opcodes() {
     assert!(circuit_data.verify(proof).is_ok());
 }
 
-// #[test]
-// fn test_solo_plonky2() {
-//     let config = CircuitConfig::standard_recursion_config();
-//     let mut builder = CB::new(config);
-//
-//     let tar1 = builder.add_virtual_target();
-//     builder.register_public_input(tar1);
-//     let tar2 = builder.add_virtual_target();
-//
-//     let tar3 = builder.mul_const(F::from_canonical_u64(18446744069414584320), tar2);
-//     let tar4 = builder.add(tar1, tar3);
-//     let tar5 = builder.add_const(tar4, F::from_canonical_u64(4));
-//     builder.assert_zero(tar5);
-//     let tar6 = builder.mul(tar2, tar2);
-//     let tar7 = builder.add_const(tar6, F::from_canonical_u64(18446744069414584296));
-//     builder.assert_zero(tar7);
-//
-//     let circuit_data: CircuitData<F, C, 2> = builder.build();
-//
-//     let mut witnesses = PartialWitness::<F>::new();
-//     witnesses.set_target(tar1, GoldilocksField::from_canonical_u64(1));
-//     witnesses.set_target(tar2, GoldilocksField::from_canonical_u64(5));
-//
-//     let proof = circuit_data.prove(witnesses).unwrap();
-//     circuit_data.verify(proof).expect("as");
-// }

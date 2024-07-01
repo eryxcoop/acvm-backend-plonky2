@@ -1,7 +1,9 @@
 # acvm-backend-plonky2
 This is an open source backend for the ACIR standard as implemented in the Noir programming languaje, written in Rust.
 
-For now, untill the corresponding PRs are made in the Plonky2 and the Noir repositories, you have to clone this repositories inside the project root.
+For the setup, run ```make``` on the root directory. This will do the following:
+
+For now, until the corresponding PRs are made in the Plonky2 and the Noir repositories, the command will clone these repositories inside the project root.
 * https://github.com/brweisz/noir 
 * https://github.com/brweisz/plonky2
 
@@ -14,17 +16,32 @@ plonky-2-backend-for-acir
 |_ noir_example
 |_ plonky2
 |_ plonky2-backend
-|_ run-commands.py
+|_ Makefile
 ```
 
-## Manual testing (up to acvm version 0.45.0)
-_The Noir workflow regarding proof generation and verification has changed recently, so the following instructions are deprecated in the latest Noir version. However, for now you should be using the fork of Noir referenced earlier, which has a previous version of the code and therefore it's compatible with what follows:_
+Then it'll build noir and plonky2. The latter with the nightly toolchain. Lastly, it'll build the custom plonky2 backend. 
 
-For some manual testing, the workflow is as follows:
-* In the ```noir_example``` folder there's a Noir project. In the ```noir_example/src/main.nr``` file you can write the main function of any noir program you want to prove.
-* Back in the root directory, you can run ```python run-commands.py build prove verify``` to generate a custom plonky2 proof
-  * ```build``` builds the backend and copies the executable in the folder Noir expects it to be
-  * ```prove``` uses the 'customized' Noir project to run the ```prove``` command on the corresponding backend
-  * ```verify``` uses the 'customized' Noir project to run the ```vrite_vk``` and ```verify``` command on the corresponding backend. 
+## Manual testing
 
-The stdout in the custom plonky2 backend is used in the noir workflow as the return value, but in our custom noir project it is also printed by stdout for debugging.
+For some manual testing, the workflow is as follows: in the ```noir_example``` folder there's a Noir project. In the ```noir_example/src/main.nr``` file you can write the main function of any noir program you want to prove.  
+Run ```make run_noir_example``` from the root directory. The following explanation is similar to the official [Noir docs](https://noir-lang.org/docs/dev/getting_started/hello_noir/#execute-our-noir-program), but using the custom plonky2 backend instead of barretenberg, and it's what the command will execute.
+
+1) From the ```noir_example``` directory run:
+* ```../noir/target/debug/nargo execute witness```. This will execute the noir program through the nargo acvm, generating:
+   * The ACIR circuit in ```target/noir_example.json```
+   * The witness in ```target/witness-name.gz```
+2) From the ```plonky2-backend``` directory run: 
+* ```./target/debug/plonky2-backend prove -c ../noir_example/target/noir_example.json -w  ../noir_example/target/witness -o ../noir_example/proof```. This will create a Plonky2 proof in ```../noir_example/proof```.
+* ```./target/debug/plonky2-backend write_vk -b ../noir_example/target/noir_example.json -o ../noir_example/target/vk```. This will create the verification key in ```../noir_example/target/vk```
+* ```./target/debug/plonky2-backend verify -k ../noir_example/target/vk -p ../noir_example/proof```. This will verify the Plonky2 proof. An empty output is sign of verification success. 
+
+    
+## Running some predefined examples
+If you want to try out some Noir examples, execute the python script ```run_examples.py``` with the name of the example as the only parameter from the ```plonky2-backend``` directory:
+* ```basic_if```
+* ```fibonacci```
+* ```basic_div```
+
+## Contact Us
+Feel free to join our telegram group for suggestions, report bugs or any question you might have!
+https://t.me/+2sYwLSy1SEVhYjlh

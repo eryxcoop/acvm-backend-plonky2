@@ -1,21 +1,25 @@
 use super::*;
 
 pub struct AssertZeroTranslator<'a> {
-    builder: &'a mut CircuitBuilder::<F, D>,
+    builder: &'a mut CircuitBuilder<F, D>,
     witness_target_map: &'a mut HashMap<Witness, Target>,
     expression: &'a Expression,
 }
 
 impl<'a> AssertZeroTranslator<'a> {
-    pub fn new_for(builder: &'a mut CircuitBuilder::<F, D>,
-                   witness_target_map: &'a mut HashMap<Witness, Target>,
-                   expression: &'a Expression) -> AssertZeroTranslator<'a> {
-        Self { builder, witness_target_map, expression }
+    pub fn new_for(
+        builder: &'a mut CircuitBuilder<F, D>,
+        witness_target_map: &'a mut HashMap<Witness, Target>,
+        expression: &'a Expression,
+    ) -> AssertZeroTranslator<'a> {
+        Self {
+            builder,
+            witness_target_map,
+            expression,
+        }
     }
 
     pub fn translate(&mut self) {
-        eprintln!("----------ASSERT ZERO--------");
-        eprintln!("EXPR: {:?}", self.expression);
         self._register_intermediate_witnesses_for_assert_zero();
         self._translate_assert_zero();
     }
@@ -46,49 +50,64 @@ impl<'a> AssertZeroTranslator<'a> {
 
         let constant_target = self.builder.constant(g_constant);
         let mut current_acc_target = constant_target;
-        current_acc_target = self._add_linear_combinations(self.expression, current_acc_target);
-        current_acc_target = self._add_cuadratic_combinations(self.expression, current_acc_target);
+        current_acc_target = self._add_linear_combinations(current_acc_target);
+        current_acc_target = self._add_cuadratic_combinations(current_acc_target);
         self.builder.assert_zero(current_acc_target);
     }
 
-    fn _add_cuadratic_combinations(self: &mut Self, expression: &Expression, mut current_acc_target: Target) -> Target {
-        let mul_terms = &expression.mul_terms;
+    fn _add_cuadratic_combinations(self: &mut Self, mut current_acc_target: Target) -> Target {
+        let mul_terms = &self.expression.mul_terms;
         for mul_term in mul_terms {
             let (f_cuadratic_factor, public_input_witness_1, public_input_witness_2) = mul_term;
-            let cuadratic_target = self._compute_cuadratic_term_target(f_cuadratic_factor, public_input_witness_1, public_input_witness_2);
+            let cuadratic_target = self._compute_cuadratic_term_target(
+                f_cuadratic_factor,
+                public_input_witness_1,
+                public_input_witness_2,
+            );
             let new_target = self.builder.add(cuadratic_target, current_acc_target);
             current_acc_target = new_target;
         }
         current_acc_target
     }
 
-    fn _add_linear_combinations(self: &mut Self, expression: &Expression, mut current_acc_target: Target) -> Target {
+    fn _add_linear_combinations(self: &mut Self, mut current_acc_target: Target) -> Target {
         let linear_combinations = &self.expression.linear_combinations;
         for (f_multiply_factor, public_input_witness) in linear_combinations {
-            let linear_combination_target = self._compute_linear_combination_target(f_multiply_factor, public_input_witness);
-            let new_target = self.builder.add(linear_combination_target, current_acc_target);
+            let linear_combination_target =
+                self._compute_linear_combination_target(f_multiply_factor, public_input_witness);
+            let new_target = self
+                .builder
+                .add(linear_combination_target, current_acc_target);
             current_acc_target = new_target;
         }
         current_acc_target
     }
 
-    fn _compute_linear_combination_target(self: &mut Self,
-                                          f_multiply_constant_factor: &FieldElement,
-                                          public_input_witness: &Witness) -> Target {
+    fn _compute_linear_combination_target(
+        self: &mut Self,
+        f_multiply_constant_factor: &FieldElement,
+        public_input_witness: &Witness,
+    ) -> Target {
         let factor_target = *self.witness_target_map.get(public_input_witness).unwrap();
         let g_first_pi_factor = self._field_element_to_goldilocks_field(f_multiply_constant_factor);
         self.builder.mul_const(g_first_pi_factor, factor_target)
     }
 
-    fn _compute_cuadratic_term_target(self: &mut Self,
-                                      f_cuadratic_factor: &FieldElement,
-                                      public_input_witness_1: &Witness,
-                                      public_input_witness_2: &Witness) -> Target {
+    fn _compute_cuadratic_term_target(
+        self: &mut Self,
+        f_cuadratic_factor: &FieldElement,
+        public_input_witness_1: &Witness,
+        public_input_witness_2: &Witness,
+    ) -> Target {
         let g_cuadratic_factor = self._field_element_to_goldilocks_field(f_cuadratic_factor);
-        let first_public_input_target = *self.witness_target_map.get(public_input_witness_1).unwrap();
-        let second_public_input_target = *self.witness_target_map.get(public_input_witness_2).unwrap();
+        let first_public_input_target =
+            *self.witness_target_map.get(public_input_witness_1).unwrap();
+        let second_public_input_target =
+            *self.witness_target_map.get(public_input_witness_2).unwrap();
 
-        let cuadratic_target = self.builder.mul(first_public_input_target, second_public_input_target);
+        let cuadratic_target = self
+            .builder
+            .mul(first_public_input_target, second_public_input_target);
         self.builder.mul_const(g_cuadratic_factor, cuadratic_target)
     }
 

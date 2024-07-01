@@ -7,11 +7,15 @@ edition = "2021"
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-acir = "0.46.0"
+acir = "0.47.0"
+acir_field = "0.47.0"
 plonky2 = { version = "0.2", default-features = false, features = ["std", "parallel"]}
 num-bigint = "0.4"
 jemallocator = "0.5.0"
 sha2 = "0.10.8"
+base64 = "0.22.1"
+flate2 = "1.0.30"
+tar = "0.4.41"
 
 [patch.crates-io]
 acir = { path = "../noir/acvm-repo/acir"}

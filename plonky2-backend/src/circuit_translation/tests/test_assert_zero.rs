@@ -270,4 +270,3 @@ fn test_plonky2_vm_can_translate_circuits_with_2_assert_zero_opcodes() {
     assert_eq!(one, proof.public_inputs[0]);
     assert!(circuit_data.verify(proof).is_ok());
 }
-

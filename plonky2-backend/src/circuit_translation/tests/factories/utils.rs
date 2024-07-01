@@ -26,19 +26,22 @@ pub fn generate_plonky2_proof_using_witness_values(
     circuit_data.prove(witnesses).unwrap()
 }
 
-pub fn check_linked_output_targets_property(circuit: &Circuit, witness_target_map: &HashMap<Witness, Target>){
+pub fn check_linked_output_targets_property(
+    circuit: &Circuit,
+    witness_target_map: &HashMap<Witness, Target>,
+) {
     // We must make sure that all targets linked to output witness exist and are actual Wires
     // (instead of VirtualTargets). Otherwise it means that te circuit is not doing what we
     // expect and might fall into false positive tests.
     for witness_index in circuit.return_values.indices() {
         match witness_target_map.get(&Witness(witness_index)) {
-            Some(target) => {
-                match target {
-                    Target::VirtualTarget { index } => panic!("An output target is not linked to the circuit"),
-                    Target::Wire(_wire) => {}
+            Some(target) => match target {
+                Target::VirtualTarget { index: _ } => {
+                    panic!("An output target is not linked to the circuit")
                 }
+                Target::Wire(_wire) => {}
             },
-            None => panic!("An output witness has not an associated target")
+            None => panic!("An output witness has not an associated target"),
         }
     }
 }

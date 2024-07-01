@@ -23,7 +23,8 @@ Then it'll build noir and plonky2. The latter with the nightly toolchain. Lastly
 
 ## Manual testing
 
-For some manual testing, the workflow is as follows: in the ```noir_example``` folder there's a Noir project. In the ```noir_example/src/main.nr``` file you can write the main function of any noir program you want to prove. The following explanation is similar to the official [Noir docs](https://noir-lang.org/docs/dev/getting_started/hello_noir/#execute-our-noir-program), but using the custom plonky2 backend instead of barretenberg. 
+For some manual testing, the workflow is as follows: in the ```noir_example``` folder there's a Noir project. In the ```noir_example/src/main.nr``` file you can write the main function of any noir program you want to prove.  
+Run ```make run_noir_example``` from the root directory. The following explanation is similar to the official [Noir docs](https://noir-lang.org/docs/dev/getting_started/hello_noir/#execute-our-noir-program), but using the custom plonky2 backend instead of barretenberg, and it's what the command will execute.
 
 1) From the ```noir_example``` directory run:
 * ```../noir/target/debug/nargo execute witness```. This will execute the noir program through the nargo acvm, generating:
@@ -35,8 +36,12 @@ For some manual testing, the workflow is as follows: in the ```noir_example``` f
 * ```./target/debug/plonky2-backend verify -k ../noir_example/target/vk -p ../noir_example/proof```. This will verify the Plonky2 proof. An empty output is sign of verification success. 
 
     
-## Running some examples
+## Running some predefined examples
 If you want to try out some Noir examples, execute the python script ```run_examples.py``` with the name of the example as the only parameter from the ```plonky2-backend``` directory:
 * ```basic_if```
 * ```fibonacci```
 * ```basic_div```
+
+## Contact Us
+Feel free to join our telegram group for suggestions, report bugs or any question you might have!
+https://t.me/+2sYwLSy1SEVhYjlh

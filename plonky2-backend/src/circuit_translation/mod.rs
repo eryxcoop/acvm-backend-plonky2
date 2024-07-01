@@ -83,6 +83,7 @@ impl CircuitBuilderFromAcirToPlonky2 {
                     outputs: _,
                     predicate: _,
                 } => {}
+                Opcode::Directive (directive) => {}
                 Opcode::MemoryInit {
                     block_id: _,
                     init: _,

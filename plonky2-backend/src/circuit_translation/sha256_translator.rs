@@ -96,9 +96,6 @@ impl<'a> Sha256CompressionTranslator<'a> {
     }
 
     fn _register_targets_for_input_witnesses(&mut self) {
-        for input in self.inputs.iter() {
-            self._get_or_create_target_for_witness(input.witness);
-        }
         for hash_value in self.hash_values.iter() {
             self._get_or_create_target_for_witness(hash_value.witness);
         }
@@ -243,7 +240,7 @@ impl<'a> Sha256CompressionTranslator<'a> {
             .iter()
             .map(|n| {
                 self.circuit_builder
-                    .binary_number_target_for_witness(Witness(*n), 32)
+                    .binary_number_target_for_constant(*n as usize, 32)
             })
             .collect()
     }
@@ -265,7 +262,7 @@ impl<'a> Sha256CompressionTranslator<'a> {
             .iter()
             .map(|n| {
                 self.circuit_builder
-                    .binary_number_target_for_witness(Witness(*n), 32)
+                    .binary_number_target_for_constant(*n as usize, 32)
             })
             .collect()
     }

@@ -102,7 +102,7 @@ impl CircuitBuilderFromAcirToPlonky2 {
                         opcodes::BlackBoxFuncCall::RANGE { input } => {
                             let long_max_bits = input.num_bits.clone() as usize;
                             assert!(long_max_bits <= 33,
-                                    "Range checks with more than 32 bits are not allowed yet while using Plonky2 prover");
+                                    "Range checks with more than 33 bits are not allowed yet while using Plonky2 prover");
                             let witness = input.witness;
                             let target = self._get_or_create_target_for_witness(witness);
                             self.builder.range_check(target, long_max_bits)

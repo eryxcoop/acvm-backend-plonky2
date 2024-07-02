@@ -269,6 +269,8 @@ fn test_backend_can_translate_sha256_acir_opcode_with_short_input_precompiled() 
     let return_witnesses = circuit.return_values.clone();
     let witness_mapping = witnesses.pop().unwrap().witness;
 
+    print!("{:?}", circuit);
+
     // When
     let (circuit_data, witness_target_map) =
         utils::generate_plonky2_circuit_from_acir_circuit(&circuit);

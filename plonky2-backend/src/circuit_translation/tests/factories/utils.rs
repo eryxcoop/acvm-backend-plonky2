@@ -31,13 +31,13 @@ pub fn check_linked_output_targets_property(
     witness_target_map: &HashMap<Witness, Target>,
 ) {
     // We must make sure that all targets linked to output witness exist and are actual Wires
-    // (instead of VirtualTargets). Otherwise it means that te circuit is not doing what we
+    // (instead of VirtualTargets). Otherwise, it means that te circuit is not doing what we
     // expect and might fall into false positive tests.
     for witness_index in circuit.return_values.indices() {
         match witness_target_map.get(&Witness(witness_index)) {
             Some(target) => match target {
                 Target::VirtualTarget { index: _ } => {
-                    panic!("An output target is not linked to the circuit")
+                    panic!("{}", format!("Target corresponding to witness {} is not linked to the circuit", witness_index))
                 }
                 Target::Wire(_wire) => {}
             },

@@ -334,37 +334,3 @@ fn _bitwise_xor_acir_opcode(
         output,
     })
 }
-
-pub fn sha256_circuit_with_inputs(
-    public_input_witnesses: Vec<Witness>,
-    output_witnesses: [Witness; 32],
-) -> Circuit {
-    let function_inputs = public_input_witnesses
-        .clone()
-        .into_iter()
-        .map(|w| FunctionInput {
-            witness: w,
-            num_bits: 8,
-        })
-        .collect();
-
-    Circuit {
-        current_witness_index: 0,
-        expression_width: ExpressionWidth::Unbounded,
-        opcodes: vec![
-            black_box_range_opcode(public_input_witnesses[0], 8u32),
-            black_box_range_opcode(public_input_witnesses[1], 8u32),
-            black_box_range_opcode(public_input_witnesses[2], 8u32),
-            black_box_range_opcode(public_input_witnesses[3], 8u32),
-            Opcode::BlackBoxFuncCall(opcodes::BlackBoxFuncCall::SHA256 {
-                inputs: function_inputs,
-                outputs: Box::new(output_witnesses),
-            }),
-        ],
-        private_parameters: BTreeSet::new(),
-        public_parameters: PublicInputs(BTreeSet::from_iter(public_input_witnesses)),
-        return_values: PublicInputs(BTreeSet::from_iter(output_witnesses)),
-        assert_messages: Default::default(),
-        recursive: false,
-    }
-}

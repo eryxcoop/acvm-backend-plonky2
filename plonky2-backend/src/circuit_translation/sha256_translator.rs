@@ -1,11 +1,5 @@
 use super::*;
 
-pub struct Sha256Translator<'a> {
-    circuit_builder: &'a mut CircuitBuilderFromAcirToPlonky2,
-    inputs: &'a Vec<FunctionInput>,
-    outputs: &'a Box<[Witness; 32]>,
-}
-
 struct CompressionIterationState {
     a: BinaryDigitsTarget,
     b: BinaryDigitsTarget,
@@ -18,67 +12,95 @@ struct CompressionIterationState {
 }
 
 impl CompressionIterationState {
+    pub fn from_vec(vec: Vec<BinaryDigitsTarget>) -> Self {
+        Self {
+            a: vec[0].clone(),
+            b: vec[1].clone(),
+            c: vec[2].clone(),
+            d: vec[3].clone(),
+            e: vec[4].clone(),
+            f: vec[5].clone(),
+            g: vec[6].clone(),
+            h: vec[7].clone(),
+        }
+    }
+
     pub fn unpack(self) -> [BinaryDigitsTarget; 8] {
-        [self.a, self.b, self.c, self.d, self.e, self.f, self.g, self.h]
+        [
+            self.a, self.b, self.c, self.d, self.e, self.f, self.g, self.h,
+        ]
     }
 }
 
-impl<'a> Sha256Translator<'a> {
+pub struct Sha256CompressionTranslator<'a> {
+    circuit_builder: &'a mut CircuitBuilderFromAcirToPlonky2,
+    inputs: &'a Box<[FunctionInput; 16]>,
+    hash_values: &'a Box<[FunctionInput; 8]>,
+    outputs: &'a Box<[Witness; 8]>,
+}
+
+impl<'a> Sha256CompressionTranslator<'a> {
     pub fn new_for(
         circuit_builder: &'a mut CircuitBuilderFromAcirToPlonky2,
-        inputs: &'a Vec<FunctionInput>,
-        outputs: &'a Box<[Witness; 32]>,
-    ) -> Sha256Translator<'a> {
+        inputs: &'a Box<[FunctionInput; 16]>,
+        hash_values: &'a Box<[FunctionInput; 8]>,
+        outputs: &'a Box<[Witness; 8]>,
+    ) -> Sha256CompressionTranslator<'a> {
         Self {
             circuit_builder,
             inputs,
+            hash_values,
             outputs,
         }
     }
 
     pub fn translate(&mut self) {
-        eprintln!("----------SHA256--------");
-        let mut M: Vec<BinaryDigitsTarget> = vec![];
-
-        let input_bytes_0 = vec![
-            self.inputs[0],
-            self.inputs[1],
-            self.inputs[2],
-            self.inputs[3],
-        ];
-        let m_0 =
-            self.binary_digit_of_32_bits_from_witnesses(self._extract_witnesses(input_bytes_0));
-        M.push(m_0);
-        for _ in 0..14 {
-            // Fill with zeroes
-            M.push(
+        self._register_targets_for_input_witnesses();
+        let mut binary_inputs: Vec<BinaryDigitsTarget> = self
+            .inputs
+            .into_iter()
+            .map(|input| {
                 self.circuit_builder
-                    .binary_number_target_for_constant(0, 32),
-            );
-        }
-        // Size is 4
-        let binary_digits_target = self
-            .circuit_builder
-            .binary_number_target_for_constant(4, 32);
-        M.push(binary_digits_target);
+                    .binary_number_target_for_witness(input.witness, 32)
+            })
+            .collect();
 
-        /*let mut h = self.initial_h();
         let mut k = self.initial_k();
-        for i in 0..64 {
-            let t1 = h[0]; // Placeholder value
-            let t2 = h[0]; // Placeholder value
-            h = vec![
-                self.circuit_builder.add(t1, t2), h[0], h[1], h[2],
-                self.circuit_builder.add(h[3], t1), h[4], h[5], h[6]
-            ];
+        let mut current_state = CompressionIterationState::from_vec(self.initial_h());
+        for t in 16..64 {
+            let current_k = k[t].clone();
+            let current_w = self.calculate_w_t(
+                &binary_inputs[t - 2],
+                &binary_inputs[t - 7],
+                &binary_inputs[t - 15],
+                &binary_inputs[t - 16],
+            );
+            binary_inputs.push(current_w.clone());
+            let next_state =
+                self.compression_function_iteration(current_state, &current_w, &current_k);
+            current_state = next_state;
+        }
 
-        }*/
-        self._register_targets_for_output_witnesses();
+        // Link all the binary digits target outputs into the corresponding output targets
+        let output_binary_targets = current_state.unpack();
+        for (output_witness, output_binary_target) in
+            self.outputs.iter().zip(output_binary_targets.iter())
+        {
+            let new_output_target = self
+                .circuit_builder
+                .convert_binary_number_to_number(output_binary_target.clone());
+            self.circuit_builder
+                .witness_target_map
+                .insert(*output_witness, new_output_target);
+        }
     }
 
-    fn _register_targets_for_output_witnesses(&mut self) {
-        for output in self.outputs.iter() {
-            self._get_or_create_target_for_witness(*output);
+    fn _register_targets_for_input_witnesses(&mut self) {
+        for input in self.inputs.iter() {
+            self._get_or_create_target_for_witness(input.witness);
+        }
+        for hash_value in self.hash_values.iter() {
+            self._get_or_create_target_for_witness(hash_value.witness);
         }
     }
 
@@ -259,7 +281,8 @@ impl<'a> Sha256Translator<'a> {
         let sumand_1 = self.circuit_builder.add_module_32_bits(&sigma_1, w_t_7);
         let sigma_0 = self.sigma_0(w_t_15);
         let sumand_2 = self.circuit_builder.add_module_32_bits(&sigma_0, w_t_16);
-        self.circuit_builder.add_module_32_bits(&sumand_1, &sumand_2)
+        self.circuit_builder
+            .add_module_32_bits(&sumand_1, &sumand_2)
     }
 
     fn compression_function_iteration(
@@ -273,12 +296,18 @@ impl<'a> Sha256Translator<'a> {
         let majority = self.majority(&e, &f, &g);
         let sumand_aux = self.circuit_builder.add_module_32_bits(k_t, w_t);
         let sumand_1 = self.circuit_builder.add_module_32_bits(&h, &sigma_1);
-        let sumand_2 = self.circuit_builder.add_module_32_bits(&majority, &sumand_aux);
-        let t_1 = self.circuit_builder.add_module_32_bits(&sumand_1, &sumand_2);
+        let sumand_2 = self
+            .circuit_builder
+            .add_module_32_bits(&majority, &sumand_aux);
+        let t_1 = self
+            .circuit_builder
+            .add_module_32_bits(&sumand_1, &sumand_2);
 
         let sigma_0 = self.sigma_0(&a);
         let majority_2 = self.majority(&a, &b, &c);
-        let t_2 = self.circuit_builder.add_module_32_bits(&sigma_0, &majority_2);
+        let t_2 = self
+            .circuit_builder
+            .add_module_32_bits(&sigma_0, &majority_2);
         CompressionIterationState {
             a: self.circuit_builder.add_module_32_bits(&t_1, &t_2),
             b: a,

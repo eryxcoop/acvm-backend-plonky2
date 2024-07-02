@@ -23,7 +23,7 @@ mod binary_digits_target;
 mod sha256_translator;
 
 use binary_digits_target::BinaryDigitsTarget;
-use sha256_translator::Sha256Translator;
+use sha256_translator::Sha256CompressionTranslator;
 
 #[cfg(test)]
 mod tests;
@@ -83,7 +83,7 @@ impl CircuitBuilderFromAcirToPlonky2 {
                     outputs: _,
                     predicate: _,
                 } => {}
-                Opcode::Directive (directive) => {}
+                Opcode::Directive(_directive) => {}
                 Opcode::MemoryInit {
                     block_id: _,
                     init: _,
@@ -101,7 +101,7 @@ impl CircuitBuilderFromAcirToPlonky2 {
                     match func_call {
                         opcodes::BlackBoxFuncCall::RANGE { input } => {
                             let long_max_bits = input.num_bits.clone() as usize;
-                            assert!(long_max_bits <= 32,
+                            assert!(long_max_bits <= 33,
                                     "Range checks with more than 32 bits are not allowed yet while using Plonky2 prover");
                             let witness = input.witness;
                             let target = self._get_or_create_target_for_witness(witness);
@@ -113,8 +113,16 @@ impl CircuitBuilderFromAcirToPlonky2 {
                         opcodes::BlackBoxFuncCall::XOR { lhs, rhs, output } => {
                             self._extend_circuit_with_operation(lhs, rhs, output, Self::xor);
                         }
-                        opcodes::BlackBoxFuncCall::SHA256 { inputs, outputs } => {
-                            self._extend_circuit_with_sha256_operation(inputs, outputs);
+                        opcodes::BlackBoxFuncCall::Sha256Compression {
+                            inputs,
+                            hash_values,
+                            outputs,
+                        } => {
+                            self._extend_circuit_with_sha256_compression_operation(
+                                inputs,
+                                hash_values,
+                                outputs,
+                            );
                         }
                         blackbox_func => {
                             panic!("Blackbox func not supported yet: {:?}", blackbox_func);
@@ -129,13 +137,15 @@ impl CircuitBuilderFromAcirToPlonky2 {
         }
     }
 
-    fn _extend_circuit_with_sha256_operation(
+    fn _extend_circuit_with_sha256_compression_operation(
         &mut self,
-        inputs: &Vec<FunctionInput>,
-        outputs: &Box<[Witness; 32]>,
+        inputs: &Box<[FunctionInput; 16]>,
+        hash_values: &Box<[FunctionInput; 8]>,
+        outputs: &Box<[Witness; 8]>,
     ) {
-        let mut translator = Sha256Translator::new_for(self, inputs, outputs);
-        translator.translate();
+        let mut sha256_compression_translator =
+            Sha256CompressionTranslator::new_for(self, inputs, hash_values, outputs);
+        sha256_compression_translator.translate();
     }
 
     fn _extend_circuit_with_operation(
@@ -265,7 +275,11 @@ impl CircuitBuilderFromAcirToPlonky2 {
         self.apply_bitwise_to_binary_digits_target(b1, b2, Self::bit_and)
     }
 
-    fn add_module_32_bits(&mut self, b1: &BinaryDigitsTarget, b2: &BinaryDigitsTarget) -> BinaryDigitsTarget {
+    fn add_module_32_bits(
+        &mut self,
+        b1: &BinaryDigitsTarget,
+        b2: &BinaryDigitsTarget,
+    ) -> BinaryDigitsTarget {
         let partial_sum = self.apply_bitwise_and_output_bool_targets(&b1, &b2, Self::bit_xor);
         let partial_carries = self.apply_bitwise_and_output_bool_targets(&b1, &b2, Self::bit_and);
 
@@ -333,7 +347,7 @@ impl CircuitBuilderFromAcirToPlonky2 {
             ));
         }
 
-        for i in times..8 {
+        for i in times..target.number_of_digits() {
             let new_bool_target = self.builder.add_virtual_bool_target_safe();
             self.builder
                 .connect(target.bits[i - times].target, new_bool_target.target);
@@ -358,7 +372,7 @@ impl CircuitBuilderFromAcirToPlonky2 {
             new_bits.push(new_bool_target);
         }
 
-        for i in times..8 {
+        for i in times..target.number_of_digits() {
             let new_bool_target = self.builder.add_virtual_bool_target_safe();
             self.builder
                 .connect(target.bits[i - times].target, new_bool_target.target);

@@ -29,7 +29,6 @@ use sha256_translator::Sha256CompressionTranslator;
 mod tests;
 
 pub mod assert_zero_translator;
-// mod targets;
 
 const D: usize = 2;
 
@@ -37,7 +36,6 @@ type C = KeccakGoldilocksConfig;
 type F = <C as GenericConfig<D>>::F;
 type CB = CircuitBuilder<F, D>;
 
-// pub type FieldElement = GenericFieldElement<GoldilocksFr>;
 pub type Opcode = GenericOpcode<FieldElement>;
 pub type Circuit = GenericCircuit<FieldElement>;
 pub type Program = GenericProgram<FieldElement>;
@@ -201,7 +199,7 @@ impl CircuitBuilderFromAcirToPlonky2 {
     }
 
     fn _constant_bool_target_for_bit(&mut self, n: usize, i: usize) -> BoolTarget {
-        let cond = (n & (1 << i)) == 0;
+        let cond = (n & (1 << i)) == 1;
         self.builder.constant_bool(cond)
     }
 

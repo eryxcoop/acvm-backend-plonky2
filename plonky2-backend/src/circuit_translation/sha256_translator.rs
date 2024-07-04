@@ -55,7 +55,6 @@ impl<'a> Sha256CompressionTranslator<'a> {
     }
 
     pub fn translate(&mut self) {
-        self._register_targets_for_input_witnesses();
         let mut binary_inputs: Vec<BinaryDigitsTarget> = self
             .inputs
             .into_iter()

@@ -37,7 +37,13 @@ pub fn check_linked_output_targets_property(
         match witness_target_map.get(&Witness(witness_index)) {
             Some(target) => match target {
                 Target::VirtualTarget { index: _ } => {
-                    panic!("{}", format!("Target corresponding to witness {} is not linked to the circuit", witness_index))
+                    panic!(
+                        "{}",
+                        format!(
+                            "Target corresponding to witness {} is not linked to the circuit",
+                            witness_index
+                        )
+                    )
                 }
                 Target::Wire(_wire) => {}
             },

@@ -1,5 +1,6 @@
 use super::*;
 
+#[derive(Clone)]
 struct CompressionIterationState {
     a: BinaryDigitsTarget,
     b: BinaryDigitsTarget,
@@ -64,24 +65,30 @@ impl<'a> Sha256CompressionTranslator<'a> {
             })
             .collect();
 
-        let mut k = self.initial_k();
-        let mut current_state = CompressionIterationState::from_vec(self.initial_h());
         for t in 16..64 {
-            let current_k = k[t].clone();
-            let current_w = self.calculate_w_t(
+            let new_w_t = self.calculate_w_t(
                 &binary_inputs[t - 2],
                 &binary_inputs[t - 7],
                 &binary_inputs[t - 15],
                 &binary_inputs[t - 16],
             );
-            binary_inputs.push(current_w.clone());
+            binary_inputs.push(new_w_t);
+        }
+
+        let mut initial_k = self.initial_k();
+        let initial_h = self.initial_h();
+        let mut iteration_states: Vec<CompressionIterationState> =
+            vec![CompressionIterationState::from_vec(initial_h)];
+        for t in 0..64 {
+            let prev_iteration_state = iteration_states[t].clone();
             let next_state =
-                self.compression_function_iteration(current_state, &current_w, &current_k);
-            current_state = next_state;
+                self.compression_function_iteration(prev_iteration_state, &binary_inputs[t], &initial_k[t]);
+            iteration_states.push(next_state);
         }
 
         // Link all the binary digits target outputs into the corresponding output targets
-        let output_binary_targets = current_state.unpack();
+        let last_iteration_state = iteration_states.last().unwrap().clone();
+        let output_binary_targets = last_iteration_state.unpack();
         for (output_witness, output_binary_target) in
             self.outputs.iter().zip(output_binary_targets.iter())
         {
@@ -231,21 +238,19 @@ impl<'a> Sha256CompressionTranslator<'a> {
     }
 
     fn initial_h(&mut self) -> Vec<BinaryDigitsTarget> {
-        let numbers: Vec<u32> = vec![
-            0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab,
-            0x5be0cd19,
-        ];
-        numbers
-            .iter()
-            .map(|n| {
+        let mut binary_inputs: Vec<BinaryDigitsTarget> = self
+            .inputs
+            .into_iter()
+            .map(|input| {
                 self.circuit_builder
-                    .binary_number_target_for_constant(*n as usize, 32)
+                    .binary_number_target_for_witness(input.witness, 32)
             })
-            .collect()
+            .collect();
+        binary_inputs
     }
 
     fn initial_k(&mut self) -> Vec<BinaryDigitsTarget> {
-        let numbers: Vec<u32> = vec![
+        let sha256_k_constants: Vec<u32> = vec![
             0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4,
             0xab1c5ed5, 0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe,
             0x9bdc06a7, 0xc19bf174, 0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f,
@@ -257,13 +262,14 @@ impl<'a> Sha256CompressionTranslator<'a> {
             0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7,
             0xc67178f2,
         ];
-        numbers
+        let binary_constants = sha256_k_constants
             .iter()
             .map(|n| {
                 self.circuit_builder
                     .binary_number_target_for_constant(*n as usize, 32)
             })
-            .collect()
+            .collect();
+        binary_constants
     }
 
     fn calculate_w_t(

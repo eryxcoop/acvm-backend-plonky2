@@ -175,18 +175,27 @@ impl CircuitBuilderFromAcirToPlonky2 {
 
     pub fn binary_number_target_for_constant(
         &mut self,
-        c: usize,
+        constant: usize,
         digits: usize,
     ) -> BinaryDigitsTarget {
-        let bits = (0..digits)
-            .map(|i| self._constant_bool_target_for_bit(c, i))
+        let bit_targets = (0..digits)
+            .map(|bit_position| self._constant_bool_target_for_bit(constant, bit_position))
             .collect();
-        BinaryDigitsTarget { bits }
+        BinaryDigitsTarget { bits: bit_targets }
     }
 
-    fn convert_number_to_binary_number(&mut self, a: Target, digits: usize) -> BinaryDigitsTarget {
+    fn convert_number_to_binary_number(
+        &mut self,
+        number_target: Target,
+        digits: usize,
+    ) -> BinaryDigitsTarget {
         BinaryDigitsTarget {
-            bits: self.builder.split_le(a, digits).into_iter().rev().collect(),
+            bits: self
+                .builder
+                .split_le(number_target, digits)
+                .into_iter()
+                .rev()
+                .collect(),
         }
     }
 
@@ -198,8 +207,12 @@ impl CircuitBuilderFromAcirToPlonky2 {
         vec![self._bool_target_false(); digits]
     }
 
-    fn _constant_bool_target_for_bit(&mut self, n: usize, i: usize) -> BoolTarget {
-        let cond = (n & (1 << i)) == 1;
+    fn _constant_bool_target_for_bit(
+        &mut self,
+        constant_value: usize,
+        bit_position: usize,
+    ) -> BoolTarget {
+        let cond = (constant_value & (1 << bit_position)) == 1;
         self.builder.constant_bool(cond)
     }
 
@@ -356,7 +369,7 @@ impl CircuitBuilderFromAcirToPlonky2 {
 
     pub fn rotate_right(
         &mut self,
-        target: &BinaryDigitsTarget,
+        binary_target: &BinaryDigitsTarget,
         times: usize,
     ) -> BinaryDigitsTarget {
         let mut new_bits = Vec::new();
@@ -364,16 +377,16 @@ impl CircuitBuilderFromAcirToPlonky2 {
         for i in 0..times {
             let new_bool_target = self.builder.add_virtual_bool_target_safe();
             self.builder.connect(
-                target.bits[target.number_of_digits() + i - times].target,
+                binary_target.bits[binary_target.number_of_digits() + i - times].target,
                 new_bool_target.target,
             );
             new_bits.push(new_bool_target);
         }
 
-        for i in times..target.number_of_digits() {
+        for i in times..binary_target.number_of_digits() {
             let new_bool_target = self.builder.add_virtual_bool_target_safe();
             self.builder
-                .connect(target.bits[i - times].target, new_bool_target.target);
+                .connect(binary_target.bits[i - times].target, new_bool_target.target);
             new_bits.push(new_bool_target);
         }
         BinaryDigitsTarget { bits: new_bits }

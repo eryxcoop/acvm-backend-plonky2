@@ -272,7 +272,7 @@ fn test_plonky2_vm_can_translate_circuits_with_2_assert_zero_opcodes() {
 }
 
 #[test]
-fn test_current_noir_is_using_goldilocks_field(){
+fn test_current_noir_is_using_goldilocks_field() {
     use super::FieldElement;
     let goldilocks_prime: u64 = (2u128.pow(64) - 2u128.pow(32) + 1u128) as u64;
     let field_element_one = FieldElement::one();
@@ -281,5 +281,5 @@ fn test_current_noir_is_using_goldilocks_field(){
     let obtained_one = field_element_one.try_to_u64().unwrap();
     let obtained_minus_one = field_element_minus_one.try_to_u64().unwrap();
     assert_eq!(1, obtained_one);
-    assert_eq!(goldilocks_prime-1, obtained_minus_one);
+    assert_eq!(goldilocks_prime - 1, obtained_minus_one);
 }

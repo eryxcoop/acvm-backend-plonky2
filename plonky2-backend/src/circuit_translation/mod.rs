@@ -1,6 +1,6 @@
 use acir::circuit::opcodes;
-use acir::circuit::opcodes::FunctionInput;
 use acir::circuit::opcodes::MemOp as GenericMemOp;
+use acir::circuit::opcodes::{BlockId, FunctionInput};
 use acir::circuit::Circuit as GenericCircuit;
 use acir::circuit::Opcode as GenericOpcode;
 use acir::circuit::Program as GenericProgram;
@@ -9,6 +9,7 @@ pub use acir::native_types::Witness;
 use acir::native_types::WitnessStack as GenericWitnessStack;
 use num_bigint::BigUint;
 use std::collections::HashMap;
+
 // Generics
 pub use acir_field::AcirField;
 pub use acir_field::FieldElement;
@@ -44,6 +45,7 @@ pub type WitnessStack = GenericWitnessStack<FieldElement>;
 pub struct CircuitBuilderFromAcirToPlonky2 {
     pub builder: CB,
     pub witness_target_map: HashMap<Witness, Target>,
+    pub memory_blocks: HashMap<BlockId, Vec<Target>>,
 }
 
 impl CircuitBuilderFromAcirToPlonky2 {
@@ -51,9 +53,11 @@ impl CircuitBuilderFromAcirToPlonky2 {
         let config = CircuitConfig::standard_recursion_config();
         let builder = CB::new(config);
         let witness_target_map: HashMap<Witness, Target> = HashMap::new();
+        let memory_blocks: HashMap<BlockId, Vec<Target>> = HashMap::new();
         Self {
             builder,
             witness_target_map,
+            memory_blocks,
         }
     }
 
@@ -80,17 +84,32 @@ impl CircuitBuilderFromAcirToPlonky2 {
                     predicate: _,
                 } => {}
                 Opcode::MemoryInit {
-                    block_id: _,
-                    init: _,
+                    block_id,
+                    init,
                     block_type: _,
-                } => {}
+                } => {
+                    let vector_targets = init
+                        .into_iter()
+                        .map(|w| self._get_or_create_target_for_witness(*w))
+                        .collect();
+                    self.memory_blocks.insert(*block_id, vector_targets);
+                }
                 Opcode::MemoryOp {
-                    block_id: _,
+                    block_id,
                     op,
                     predicate: _,
                 } => {
                     // TODO: check whether we should register if the predicate is false
                     self._register_intermediate_witnesses_for_memory_op(&op);
+                    let is_memory_read = op.clone().operation.to_const().unwrap().is_zero();
+                    if is_memory_read {
+                        let witness_idx_to_read = op.index.to_witness().unwrap();
+                        let target_idx_to_read = self._get_or_create_target_for_witness(witness_idx_to_read);
+                        let witness_to_save_result = op.value.to_witness().unwrap();
+                        let target_to_save_result = self.builder.random_access(target_idx_to_read, self.memory_blocks[block_id].clone());
+                        self.witness_target_map.insert(witness_to_save_result, target_to_save_result);
+
+                    }
                 }
                 Opcode::BlackBoxFuncCall(func_call) => {
                     match func_call {

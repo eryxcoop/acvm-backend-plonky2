@@ -108,7 +108,8 @@ impl CircuitBuilderFromAcirToPlonky2 {
                         let witness_to_save_result = op.value.to_witness().unwrap();
                         let target_to_save_result = self.builder.random_access(target_idx_to_read, self.memory_blocks[block_id].clone());
                         self.witness_target_map.insert(witness_to_save_result, target_to_save_result);
-
+                    } else {
+                        panic!("Memory write not supported yet");
                     }
                 }
                 Opcode::BlackBoxFuncCall(func_call) => {

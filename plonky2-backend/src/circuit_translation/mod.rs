@@ -291,6 +291,7 @@ impl CircuitBuilderFromAcirToPlonky2 {
         b1: &BinaryDigitsTarget,
         b2: &BinaryDigitsTarget,
     ) -> BinaryDigitsTarget {
+
         let partial_sum = self.apply_bitwise_and_output_bool_targets(&b1, &b2, Self::bit_xor);
         let partial_carries = self.apply_bitwise_and_output_bool_targets(&b1, &b2, Self::bit_and);
 
@@ -367,28 +368,5 @@ impl CircuitBuilderFromAcirToPlonky2 {
         BinaryDigitsTarget { bits: new_bits }
     }
 
-    pub fn rotate_right(
-        &mut self,
-        binary_target: &BinaryDigitsTarget,
-        times: usize,
-    ) -> BinaryDigitsTarget {
-        let mut new_bits = Vec::new();
-        // Wrap bits around
-        for i in 0..times {
-            let new_bool_target = self.builder.add_virtual_bool_target_safe();
-            self.builder.connect(
-                binary_target.bits[binary_target.number_of_digits() + i - times].target,
-                new_bool_target.target,
-            );
-            new_bits.push(new_bool_target);
-        }
 
-        for i in times..binary_target.number_of_digits() {
-            let new_bool_target = self.builder.add_virtual_bool_target_safe();
-            self.builder
-                .connect(binary_target.bits[i - times].target, new_bool_target.target);
-            new_bits.push(new_bool_target);
-        }
-        BinaryDigitsTarget { bits: new_bits }
-    }
 }

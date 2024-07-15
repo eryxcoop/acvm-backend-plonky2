@@ -165,24 +165,6 @@ impl<'a> Sha256CompressionTranslator<'a> {
         y2
     }
 
-    fn choose(
-        &mut self,
-        chooser: &BinaryDigitsTarget,
-        on_true: &BinaryDigitsTarget,
-        on_false: &BinaryDigitsTarget,
-    ) -> BinaryDigitsTarget {
-        let bit_pairs_iter = on_true.bits.iter().zip(on_false.bits.iter());
-
-        let chosen_bits = chooser
-            .bits
-            .iter()
-            .zip(bit_pairs_iter)
-            .map(|(c, (t, f))| self.select_bool_target(c, t, f))
-            .collect();
-
-        BinaryDigitsTarget { bits: chosen_bits }
-    }
-
     fn majority(
         &mut self,
         a: &BinaryDigitsTarget,

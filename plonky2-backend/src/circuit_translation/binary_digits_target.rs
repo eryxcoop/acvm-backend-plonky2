@@ -54,4 +54,32 @@ impl BinaryDigitsTarget {
         }
         BinaryDigitsTarget { bits: new_bits }
     }
+
+    pub fn choose(
+        chooser: &BinaryDigitsTarget,
+        on_true: &BinaryDigitsTarget,
+        on_false: &BinaryDigitsTarget,
+        builder: &mut CB
+    ) -> BinaryDigitsTarget {
+        let bit_pairs_iter = on_true.bits.iter().zip(on_false.bits.iter());
+
+        let chosen_bits = chooser
+            .bits
+            .iter()
+            .zip(bit_pairs_iter)
+            .map(|(c, (t, f))| BinaryDigitsTarget::select_bool_target(c, t, f, builder))
+            .collect();
+
+        BinaryDigitsTarget { bits: chosen_bits }
+    }
+
+    fn select_bool_target(
+        chooser: &BoolTarget,
+        on_true: &BoolTarget,
+        on_false: &BoolTarget,
+        builder: &mut CB
+    ) -> BoolTarget {
+        let target = builder.select(*chooser, on_true.target, on_false.target);
+        BoolTarget::new_unsafe(target)
+    }
 }

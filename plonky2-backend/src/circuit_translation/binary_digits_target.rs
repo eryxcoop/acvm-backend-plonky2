@@ -1,5 +1,6 @@
 use plonky2::field::types::Field;
 use plonky2::iop::target::BoolTarget;
+
 use crate::circuit_translation::{CB, F};
 
 #[derive(Clone, Debug)]
@@ -73,7 +74,30 @@ impl BinaryDigitsTarget {
         BinaryDigitsTarget { bits: chosen_bits }
     }
 
-    fn select_bool_target(
+    pub fn majority(
+        a: &BinaryDigitsTarget,
+        b: &BinaryDigitsTarget,
+        c: &BinaryDigitsTarget,
+        builder: &mut CB
+    ) -> BinaryDigitsTarget {
+        let bit_pairs_iter = a.bits.iter().zip(b.bits.iter());
+
+        let majority_bits = c
+            .bits
+            .iter()
+            .zip(bit_pairs_iter)
+            .map(|(b0, (b1, b2))| {
+                let on_true = BinaryDigitsTarget::bit_or(*b1, *b2, builder);
+                let on_false = BinaryDigitsTarget::bit_and(*b1, *b2, builder);
+                BinaryDigitsTarget::select_bool_target(b0, &on_true, &on_false, builder)
+            })
+            .collect();
+        BinaryDigitsTarget {
+            bits: majority_bits,
+        }
+    }
+
+    pub fn select_bool_target(
         chooser: &BoolTarget,
         on_true: &BoolTarget,
         on_false: &BoolTarget,
@@ -81,5 +105,53 @@ impl BinaryDigitsTarget {
     ) -> BoolTarget {
         let target = builder.select(*chooser, on_true.target, on_false.target);
         BoolTarget::new_unsafe(target)
+    }
+
+    pub fn xor(b1: BinaryDigitsTarget, b2: BinaryDigitsTarget, builder: &mut CB) -> BinaryDigitsTarget {
+        BinaryDigitsTarget::apply_bitwise_to_binary_digits_target(b1, b2, builder, BinaryDigitsTarget::bit_xor)
+    }
+
+    pub fn and(b1: BinaryDigitsTarget, b2: BinaryDigitsTarget, builder: &mut CB) -> BinaryDigitsTarget {
+        BinaryDigitsTarget::apply_bitwise_to_binary_digits_target(b1, b2, builder, BinaryDigitsTarget::bit_and)
+    }
+
+    pub fn apply_bitwise_to_binary_digits_target(
+        b1: BinaryDigitsTarget,
+        b2: BinaryDigitsTarget,
+        builder: &mut CB,
+        op: fn(BoolTarget, BoolTarget, &mut CB) -> BoolTarget,
+    ) -> BinaryDigitsTarget {
+        BinaryDigitsTarget {
+            bits: BinaryDigitsTarget::apply_bitwise_and_output_bool_targets(&b1, &b2, builder, op),
+        }
+    }
+
+    pub fn apply_bitwise_and_output_bool_targets(
+        b1: &BinaryDigitsTarget,
+        b2: &BinaryDigitsTarget,
+        builder: &mut CB,
+        op: fn(BoolTarget, BoolTarget, &mut CB) -> BoolTarget,
+    ) -> Vec<BoolTarget> {
+        b1.bits
+            .iter()
+            .zip(b2.bits.iter())
+            .map(|(bit1, bit2)| op(*bit1, *bit2, builder))
+            .collect()
+    }
+
+    pub fn bit_and(b1: BoolTarget, b2: BoolTarget, builder: &mut CB) -> BoolTarget {
+        builder.and(b1, b2)
+    }
+
+    pub fn bit_or(b1: BoolTarget, b2: BoolTarget, builder: &mut CB) -> BoolTarget {
+        builder.or(b1, b2)
+    }
+
+    pub fn bit_xor(b1: BoolTarget, b2: BoolTarget, builder: &mut CB) -> BoolTarget {
+        // a xor b = (a or b) and (not (a and b))
+        let b1_or_b2 = builder.or(b1, b2);
+        let b1_and_b2 = builder.and(b1, b2);
+        let not_b1_and_b2 = builder.not(b1_and_b2);
+        builder.and(b1_or_b2, not_b1_and_b2)
     }
 }

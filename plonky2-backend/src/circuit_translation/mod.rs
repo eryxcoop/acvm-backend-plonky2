@@ -278,10 +278,6 @@ impl CircuitBuilderFromAcirToPlonky2 {
         self.apply_bitwise_to_binary_digits_target(b1, b2, Self::bit_xor)
     }
 
-    fn or(&mut self, b1: BinaryDigitsTarget, b2: BinaryDigitsTarget) -> BinaryDigitsTarget {
-        self.apply_bitwise_to_binary_digits_target(b1, b2, Self::bit_or)
-    }
-
     fn and(&mut self, b1: BinaryDigitsTarget, b2: BinaryDigitsTarget) -> BinaryDigitsTarget {
         self.apply_bitwise_to_binary_digits_target(b1, b2, Self::bit_and)
     }

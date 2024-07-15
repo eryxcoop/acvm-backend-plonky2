@@ -148,8 +148,8 @@ impl<'a> Sha256CompressionTranslator<'a> {
         let x2 = BinaryDigitsTarget::rotate_right(target, 18, &mut self.circuit_builder.builder);
         let x3 = BinaryDigitsTarget::shift_right(target, 3, &mut self.circuit_builder.builder);
 
-        let y1 = self.circuit_builder.xor(x1, x2);
-        let y2 = self.circuit_builder.xor(y1, x3);
+        let y1 = BinaryDigitsTarget::xor(x1, x2, &mut self.circuit_builder.builder);
+        let y2 = BinaryDigitsTarget::xor(y1, x3, &mut self.circuit_builder.builder);
 
         y2
     }
@@ -159,46 +159,10 @@ impl<'a> Sha256CompressionTranslator<'a> {
         let x2 = BinaryDigitsTarget::rotate_right(target, 19, &mut self.circuit_builder.builder);
         let x3 = BinaryDigitsTarget::shift_right(target, 10, &mut self.circuit_builder.builder);
 
-        let y1 = self.circuit_builder.xor(x1, x2);
-        let y2 = self.circuit_builder.xor(y1, x3);
+        let y1 = BinaryDigitsTarget::xor(x1, x2, &mut self.circuit_builder.builder);
+        let y2 = BinaryDigitsTarget::xor(y1, x3, &mut self.circuit_builder.builder);
 
         y2
-    }
-
-    fn majority(
-        &mut self,
-        a: &BinaryDigitsTarget,
-        b: &BinaryDigitsTarget,
-        c: &BinaryDigitsTarget,
-    ) -> BinaryDigitsTarget {
-        let bit_pairs_iter = a.bits.iter().zip(b.bits.iter());
-
-        let majority_bits = c
-            .bits
-            .iter()
-            .zip(bit_pairs_iter)
-            .map(|(b0, (b1, b2))| {
-                let on_true = self.circuit_builder.bit_or(*b1, *b2);
-                let on_false = self.circuit_builder.bit_and(*b1, *b2);
-                self.select_bool_target(b0, &on_true, &on_false)
-            })
-            .collect();
-        BinaryDigitsTarget {
-            bits: majority_bits,
-        }
-    }
-
-    fn select_bool_target(
-        &mut self,
-        chooser: &BoolTarget,
-        on_true: &BoolTarget,
-        on_false: &BoolTarget,
-    ) -> BoolTarget {
-        let target = self
-            .circuit_builder
-            .builder
-            .select(*chooser, on_true.target, on_false.target);
-        BoolTarget::new_unsafe(target)
     }
 
     fn _extract_witnesses(&self, inputs: Vec<FunctionInput>) -> Vec<Witness> {
@@ -277,7 +241,7 @@ impl<'a> Sha256CompressionTranslator<'a> {
     ) -> CompressionIterationState {
         let [a, b, c, d, e, f, g, h] = s.unpack();
         let sigma_1 = self.sigma_1(&e);
-        let majority = self.majority(&e, &f, &g);
+        let majority = BinaryDigitsTarget::majority(&e, &f, &g, &mut self.circuit_builder.builder);
         let sumand_aux = self.circuit_builder.add_module_32_bits(k_t, w_t);
         let sumand_1 = self.circuit_builder.add_module_32_bits(&h, &sigma_1);
         let sumand_2 = self
@@ -288,7 +252,7 @@ impl<'a> Sha256CompressionTranslator<'a> {
             .add_module_32_bits(&sumand_1, &sumand_2);
 
         let sigma_0 = self.sigma_0(&a);
-        let majority_2 = self.majority(&a, &b, &c);
+        let majority_2 = BinaryDigitsTarget::majority(&a, &b, &c, &mut self.circuit_builder.builder);
         let t_2 = self
             .circuit_builder
             .add_module_32_bits(&sigma_0, &majority_2);

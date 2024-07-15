@@ -265,8 +265,6 @@ fn test_backend_can_translate_sha256_acir_opcode_with_short_input_precompiled() 
     //     std::sha256::sha256_var(hash_input, 4)
     // }
     let (circuit, mut witnesses) = circuit_parser::precompiled_sha256_circuit_and_witnesses();
-    let private_input_witnesses = circuit.private_parameters.clone();
-    let return_witnesses = circuit.return_values.clone();
     let witness_mapping = witnesses.pop().unwrap().witness;
 
     print!("{:?}", circuit);
@@ -277,20 +275,8 @@ fn test_backend_can_translate_sha256_acir_opcode_with_short_input_precompiled() 
 
     //Then
     let mut witness_assignment: Vec<(Witness, F)> = vec![];
-    for private_input_witness in private_input_witnesses {
-        let assignement_value = witness_mapping.get(&private_input_witness);
-        let assignement_value_as_gf =
-            F::from_canonical_u32(assignement_value.unwrap().try_to_u32().unwrap());
-        let new_assignement = (private_input_witness, assignement_value_as_gf);
-        witness_assignment.push(new_assignement)
-    }
-    for return_witness_index in return_witnesses.indices() {
-        let return_witness = Witness(return_witness_index);
-        let assignement_value = witness_mapping.get(&return_witness);
-        let assignement_value_as_gf =
-            F::from_canonical_u32(assignement_value.unwrap().try_to_u32().unwrap());
-        let new_assignement = (return_witness, assignement_value_as_gf);
-        witness_assignment.push(new_assignement)
+    for (witness, value) in witness_mapping {
+        witness_assignment.push((witness, F::from_canonical_u64(value.try_to_u64().unwrap())));
     }
 
     // utils::check_linked_output_targets_property(&circuit, &witness_target_map);

@@ -56,7 +56,7 @@ impl<'a> Sha256CompressionTranslator<'a> {
     }
 
     pub fn translate(&mut self) {
-        let mut binary_inputs: Vec<BinaryDigitsTarget> = self
+        let mut binary_input_targets: Vec<BinaryDigitsTarget> = self
             .inputs
             .into_iter()
             .map(|input| {
@@ -67,12 +67,12 @@ impl<'a> Sha256CompressionTranslator<'a> {
 
         for t in 16..64 {
             let new_w_t = self.calculate_w_t(
-                &binary_inputs[t - 2],
-                &binary_inputs[t - 7],
-                &binary_inputs[t - 15],
-                &binary_inputs[t - 16],
+                &binary_input_targets[t - 2],
+                &binary_input_targets[t - 7],
+                &binary_input_targets[t - 15],
+                &binary_input_targets[t - 16],
             );
-            binary_inputs.push(new_w_t);
+            binary_input_targets.push(new_w_t);
         }
 
         let mut initial_k = self.initial_k();
@@ -83,7 +83,7 @@ impl<'a> Sha256CompressionTranslator<'a> {
             let prev_iteration_state = iteration_states[t].clone();
             let next_state = self.compression_function_iteration(
                 prev_iteration_state,
-                &binary_inputs[t],
+                &binary_input_targets[t],
                 &initial_k[t],
             );
             iteration_states.push(next_state);

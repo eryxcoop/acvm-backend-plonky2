@@ -75,7 +75,7 @@ impl<'a> Sha256CompressionTranslator<'a> {
             binary_input_targets.push(new_w_t);
         }
 
-        let mut initial_k = self.initial_k();
+        let mut constant_k_digit_target_values = self.initial_k();
         let initial_h = self.initial_h();
         let mut iteration_states: Vec<CompressionIterationState> =
             vec![CompressionIterationState::from_vec(initial_h)];
@@ -84,7 +84,7 @@ impl<'a> Sha256CompressionTranslator<'a> {
             let next_state = self.compression_function_iteration(
                 prev_iteration_state,
                 &binary_input_targets[t],
-                &initial_k[t],
+                &constant_k_digit_target_values[t],
             );
             iteration_states.push(next_state);
         }
@@ -129,6 +129,26 @@ impl<'a> Sha256CompressionTranslator<'a> {
         let y1 = BinaryDigitsTarget::xor(x1, x2, &mut self.circuit_builder.builder);
         let y2 = BinaryDigitsTarget::xor(y1, x3, &mut self.circuit_builder.builder);
 
+        y2
+    }
+
+    fn big_sigma_0(&mut self, target: &BinaryDigitsTarget) -> BinaryDigitsTarget {
+        let x1 = BinaryDigitsTarget::rotate_right(target, 2, &mut self.circuit_builder.builder);
+        let x2 = BinaryDigitsTarget::rotate_right(target, 13, &mut self.circuit_builder.builder);
+        let x3 = BinaryDigitsTarget::rotate_right(target, 22, &mut self.circuit_builder.builder);
+
+        let y1 = BinaryDigitsTarget::xor(x1, x2, &mut self.circuit_builder.builder);
+        let y2 = BinaryDigitsTarget::xor(y1, x3, &mut self.circuit_builder.builder);
+        y2
+    }
+
+    fn big_sigma_1(&mut self, target: &BinaryDigitsTarget) -> BinaryDigitsTarget {
+        let x1 = BinaryDigitsTarget::rotate_right(target, 6, &mut self.circuit_builder.builder);
+        let x2 = BinaryDigitsTarget::rotate_right(target, 11, &mut self.circuit_builder.builder);
+        let x3 = BinaryDigitsTarget::rotate_right(target, 25, &mut self.circuit_builder.builder);
+
+        let y1 = BinaryDigitsTarget::xor(x1, x2, &mut self.circuit_builder.builder);
+        let y2 = BinaryDigitsTarget::xor(y1, x3, &mut self.circuit_builder.builder);
         y2
     }
 
@@ -217,15 +237,15 @@ impl<'a> Sha256CompressionTranslator<'a> {
         k_t: &BinaryDigitsTarget,
     ) -> CompressionIterationState {
         let [a, b, c, d, e, f, g, h] = s.unpack();
-        let sigma_1 = self.sigma_1(&e);
-        let majority = BinaryDigitsTarget::majority(&e, &f, &g, &mut self.circuit_builder.builder);
-        let sumand_aux =
+        let big_sigma_1 = self.big_sigma_1(&e);
+        let choose_e_f_g = BinaryDigitsTarget::choose(&e, &f, &g, &mut self.circuit_builder.builder);
+        let sumand_0 =
             BinaryDigitsTarget::add_module_32_bits(k_t, w_t, &mut self.circuit_builder.builder);
         let sumand_1 =
-            BinaryDigitsTarget::add_module_32_bits(&h, &sigma_1, &mut self.circuit_builder.builder);
+            BinaryDigitsTarget::add_module_32_bits(&h, &big_sigma_1, &mut self.circuit_builder.builder);
         let sumand_2 = BinaryDigitsTarget::add_module_32_bits(
-            &majority,
-            &sumand_aux,
+            &choose_e_f_g,
+            &sumand_0,
             &mut self.circuit_builder.builder,
         );
         let t_1 = BinaryDigitsTarget::add_module_32_bits(
@@ -234,12 +254,12 @@ impl<'a> Sha256CompressionTranslator<'a> {
             &mut self.circuit_builder.builder,
         );
 
-        let sigma_0 = self.sigma_0(&a);
-        let majority_2 =
+        let big_sigma_0 = self.big_sigma_0(&a);
+        let majority_a_b_c =
             BinaryDigitsTarget::majority(&a, &b, &c, &mut self.circuit_builder.builder);
         let t_2 = BinaryDigitsTarget::add_module_32_bits(
-            &sigma_0,
-            &majority_2,
+            &big_sigma_0,
+            &majority_a_b_c,
             &mut self.circuit_builder.builder,
         );
         CompressionIterationState {

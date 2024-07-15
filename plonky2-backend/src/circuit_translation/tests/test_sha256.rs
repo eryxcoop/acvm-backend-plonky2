@@ -148,13 +148,27 @@ fn test_choose_4_failed(){
 fn test_choose_32(){
     let g_zero = F::default();
     let g_one = F::from_canonical_u32(1);
-    let chooser = vec![g_zero, g_zero, g_zero, g_zero];
-    let inputs_1 = vec![g_one, g_one, g_zero, g_zero];
-    let inputs_2 = vec![g_zero, g_zero, g_one, g_one];
-    let outputs = vec![g_zero, g_one, g_one, g_zero];
+    let chooser = vec![
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+    ];
+    let inputs_1 = vec![
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+    ];
+    let inputs_2 = vec![
+        g_zero, g_one, g_zero, g_zero, g_zero, g_zero, g_zero, g_one,
+        g_zero, g_zero, g_zero, g_one, g_zero, g_one, g_zero, g_zero,
+        g_zero, g_zero, g_one, g_zero, g_zero, g_zero, g_one, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_one, g_zero, g_zero,
+    ];
+    let outputs = inputs_2.clone();
     test_choose(32, chooser, inputs_1, inputs_2, outputs);
 }
-
 
 
 fn test_choose(size: usize, chooser_values: Vec<F>, input_values_1: Vec<F>, input_values_2: Vec<F>, output_values: Vec<F>){

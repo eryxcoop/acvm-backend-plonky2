@@ -146,7 +146,7 @@ impl<'a> Sha256CompressionTranslator<'a> {
     fn sigma_0(&mut self, target: &BinaryDigitsTarget) -> BinaryDigitsTarget {
         let x1 = BinaryDigitsTarget::rotate_right(target, 7, &mut self.circuit_builder.builder);
         let x2 = BinaryDigitsTarget::rotate_right(target, 18, &mut self.circuit_builder.builder);
-        let x3 = self.circuit_builder.shift_right(target, 3);
+        let x3 = BinaryDigitsTarget::shift_right(target, 3, &mut self.circuit_builder.builder);
 
         let y1 = self.circuit_builder.xor(x1, x2);
         let y2 = self.circuit_builder.xor(y1, x3);
@@ -157,7 +157,7 @@ impl<'a> Sha256CompressionTranslator<'a> {
     fn sigma_1(&mut self, target: &BinaryDigitsTarget) -> BinaryDigitsTarget {
         let x1 = BinaryDigitsTarget::rotate_right(target, 17, &mut self.circuit_builder.builder);
         let x2 = BinaryDigitsTarget::rotate_right(target, 19, &mut self.circuit_builder.builder);
-        let x3 = self.circuit_builder.shift_right(target, 10);
+        let x3 = BinaryDigitsTarget::shift_right(target, 10, &mut self.circuit_builder.builder);
 
         let y1 = self.circuit_builder.xor(x1, x2);
         let y2 = self.circuit_builder.xor(y1, x3);

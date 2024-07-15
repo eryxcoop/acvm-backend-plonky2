@@ -350,23 +350,4 @@ impl CircuitBuilderFromAcirToPlonky2 {
         self.builder.and(b1_or_b2, not_b1_and_b2)
     }
 
-    pub fn shift_right(&mut self, target: &BinaryDigitsTarget, times: usize) -> BinaryDigitsTarget {
-        let mut new_bits = Vec::new();
-        // Fill zero bits
-        for _ in 0..times {
-            new_bits.push(BoolTarget::new_unsafe(
-                self.builder.constant(F::from_canonical_u8(0)),
-            ));
-        }
-
-        for i in times..target.number_of_digits() {
-            let new_bool_target = self.builder.add_virtual_bool_target_safe();
-            self.builder
-                .connect(target.bits[i - times].target, new_bool_target.target);
-            new_bits.push(new_bool_target);
-        }
-        BinaryDigitsTarget { bits: new_bits }
-    }
-
-
 }

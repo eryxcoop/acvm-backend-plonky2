@@ -110,42 +110,6 @@ impl<'a> Sha256CompressionTranslator<'a> {
         }
     }
 
-    fn binary_digit_of_32_bits_from_witnesses(
-        &mut self,
-        witness_bytes: Vec<Witness>,
-    ) -> BinaryDigitsTarget {
-        let targets: Vec<Target> = witness_bytes
-            .into_iter()
-            .map(|witness| {
-                self.circuit_builder
-                    ._get_or_create_target_for_witness(witness)
-            })
-            .collect();
-        let byte_targets: Vec<BinaryDigitsTarget> = targets
-            .iter()
-            .map(|target| {
-                self.circuit_builder
-                    .convert_number_to_binary_number(*target, 8)
-            })
-            .collect();
-
-        let mut bits = vec![];
-        for idx_byte in 0..4 {
-            if idx_byte < byte_targets.len() {
-                for idx_bit in 0..8 {
-                    bits.push(byte_targets[idx_byte].bits[idx_bit]);
-                }
-            } else {
-                for _ in 0..8 {
-                    let zeroes: &mut Vec<BoolTarget> = &mut self.circuit_builder.zeroes(8);
-                    bits.append(zeroes);
-                }
-            }
-        }
-
-        BinaryDigitsTarget { bits }
-    }
-
     fn sigma_0(&mut self, target: &BinaryDigitsTarget) -> BinaryDigitsTarget {
         let x1 = BinaryDigitsTarget::rotate_right(target, 7, &mut self.circuit_builder.builder);
         let x2 = BinaryDigitsTarget::rotate_right(target, 18, &mut self.circuit_builder.builder);
@@ -176,7 +140,6 @@ impl<'a> Sha256CompressionTranslator<'a> {
         match self.circuit_builder.witness_target_map.get(&witness) {
             Some(target) => *target,
             _ => {
-                // None
                 let target = self.circuit_builder.builder.add_virtual_target();
                 self.circuit_builder
                     .witness_target_map

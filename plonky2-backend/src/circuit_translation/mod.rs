@@ -227,22 +227,6 @@ impl CircuitBuilderFromAcirToPlonky2 {
         self.builder.constant_bool(cond)
     }
 
-    fn _translate_bitwise_operation(
-        self: &mut Self,
-        lhs: BinaryDigitsTarget,
-        rhs: BinaryDigitsTarget,
-        operation: fn(&mut Self, BoolTarget, BoolTarget) -> BoolTarget,
-    ) -> BinaryDigitsTarget {
-        BinaryDigitsTarget {
-            bits: lhs
-                .bits
-                .iter()
-                .zip(rhs.bits.iter())
-                .map(|(x, y)| operation(self, *x, *y))
-                .collect(),
-        }
-    }
-
     fn _bool_target_false(&mut self) -> BoolTarget {
         self.builder._false()
     }

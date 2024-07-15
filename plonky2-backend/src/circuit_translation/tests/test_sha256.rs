@@ -432,7 +432,7 @@ fn test_choose(
     assert!(circuit_data.verify(proof).is_ok());
 }
 
-fn test_rotate_right(n: usize, size: usize, input_values: Vec<F>, output_values: Vec<F>) {
+fn test_rotate_right(n: usize, size: usize, mut input_values: Vec<F>, mut output_values: Vec<F>) {
     let config = CircuitConfig::standard_recursion_config();
     let mut circuit_builder = CB::new(config);
 
@@ -445,6 +445,8 @@ fn test_rotate_right(n: usize, size: usize, input_values: Vec<F>, output_values:
     let rotated_bits = BinaryDigitsTarget::rotate_right(&binary_input, n, &mut circuit_builder);
 
     let mut partial_witnesses = PartialWitness::<F>::new();
+    // input_values.reverse();
+    // output_values.reverse();
     for i in 0..size {
         partial_witnesses.set_target(binary_input.bits[i].target, input_values[i]);
         partial_witnesses.set_target(rotated_bits.bits[i].target, output_values[i]);
@@ -455,7 +457,7 @@ fn test_rotate_right(n: usize, size: usize, input_values: Vec<F>, output_values:
     assert!(circuit_data.verify(proof).is_ok());
 }
 
-fn test_shift_right(n: usize, size: usize, input_values: Vec<F>, output_values: Vec<F>) {
+fn test_shift_right(n: usize, size: usize, mut input_values: Vec<F>, mut output_values: Vec<F>) {
     let config = CircuitConfig::standard_recursion_config();
     let mut circuit_builder = CB::new(config);
 
@@ -468,6 +470,8 @@ fn test_shift_right(n: usize, size: usize, input_values: Vec<F>, output_values: 
     let rotated_bits = BinaryDigitsTarget::shift_right(&binary_input, n, &mut circuit_builder);
 
     let mut partial_witnesses = PartialWitness::<F>::new();
+    input_values.reverse();
+    output_values.reverse();
     for i in 0..size {
         partial_witnesses.set_target(binary_input.bits[i].target, input_values[i]);
         partial_witnesses.set_target(rotated_bits.bits[i].target, output_values[i]);

@@ -15,6 +15,15 @@ fn test_rotate_right_4_1(){
     let outputs = vec![g_zero, g_zero, g_zero, g_one];
     test_rotate_right(1, 4, inputs, outputs);
 }
+#[test]
+#[should_panic]
+fn test_rotate_right_failed(){
+    let g_zero = F::default();
+    let g_one = F::from_canonical_u32(1);
+    let inputs = vec![g_zero, g_zero, g_one, g_zero];
+    let outputs = vec![g_zero, g_zero, g_zero, g_zero];
+    test_rotate_right(1, 4, inputs, outputs);
+}
 
 #[test]
 fn test_rotate_right_32_1(){
@@ -83,6 +92,17 @@ fn test_shift_right_4_1(){
 }
 
 #[test]
+#[should_panic]
+fn test_shift_right_failed(){
+    let g_zero = F::default();
+    let g_one = F::from_canonical_u32(1);
+    let inputs = vec![g_one, g_one, g_one, g_one];
+    let outputs = vec![g_zero, g_one, g_one, g_zero];
+    test_shift_right(1, 4, inputs, outputs);
+}
+
+
+#[test]
 fn test_shift_right_32_16(){
     let g_zero = F::default();
     let g_one = F::from_canonical_u32(1);
@@ -111,6 +131,31 @@ fn test_choose_4(){
     let outputs = vec![g_zero, g_one, g_one, g_zero];
     test_choose(4, chooser, inputs_1, inputs_2, outputs);
 }
+
+#[test]
+#[should_panic]
+fn test_choose_4_failed(){
+    let g_zero = F::default();
+    let g_one = F::from_canonical_u32(1);
+    let chooser = vec![g_zero, g_one, g_zero, g_one];
+    let inputs_1 = vec![g_one, g_one, g_zero, g_zero];
+    let inputs_2 = vec![g_zero, g_zero, g_one, g_one];
+    let outputs = vec![g_zero, g_one, g_one, g_one];
+    test_choose(4, chooser, inputs_1, inputs_2, outputs);
+}
+
+#[test]
+fn test_choose_32(){
+    let g_zero = F::default();
+    let g_one = F::from_canonical_u32(1);
+    let chooser = vec![g_zero, g_zero, g_zero, g_zero];
+    let inputs_1 = vec![g_one, g_one, g_zero, g_zero];
+    let inputs_2 = vec![g_zero, g_zero, g_one, g_one];
+    let outputs = vec![g_zero, g_one, g_one, g_zero];
+    test_choose(32, chooser, inputs_1, inputs_2, outputs);
+}
+
+
 
 fn test_choose(size: usize, chooser_values: Vec<F>, input_values_1: Vec<F>, input_values_2: Vec<F>, output_values: Vec<F>){
     let config = CircuitConfig::standard_recursion_config();

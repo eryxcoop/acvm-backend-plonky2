@@ -8,14 +8,54 @@ use super::*;
 // They are agnostic to acir code
 
 #[test]
-fn test_rotate_right_1(){
+fn test_rotate_right_4_1(){
     let g_zero = F::default();
     let g_one = F::from_canonical_u32(1);
     let inputs = vec![g_zero, g_zero, g_one, g_zero];
     let outputs = vec![g_zero, g_zero, g_zero, g_one];
     test_rotate_right(1, 4, inputs, outputs);
-
 }
+
+#[test]
+fn test_rotate_right_32_1(){
+    let g_zero = F::default();
+    let g_one = F::from_canonical_u32(1);
+    let inputs = vec![
+        g_zero, g_zero, g_one, g_zero, g_zero, g_zero, g_one, g_zero,
+        g_zero, g_zero, g_one, g_zero, g_zero, g_zero, g_one, g_zero,
+        g_zero, g_zero, g_one, g_zero, g_zero, g_zero, g_one, g_zero,
+        g_zero, g_zero, g_one, g_zero, g_zero, g_zero, g_one, g_zero
+    ];
+    let outputs = vec![
+        g_zero, g_zero, g_zero, g_one, g_zero, g_zero, g_zero, g_one,
+        g_zero, g_zero, g_zero, g_one, g_zero, g_zero, g_zero, g_one,
+        g_zero, g_zero, g_zero, g_one, g_zero, g_zero, g_zero, g_one,
+        g_zero, g_zero, g_zero, g_one, g_zero, g_zero, g_zero, g_one,
+    ];
+    test_rotate_right(1, 32, inputs, outputs);
+}
+
+#[test]
+fn test_rotate_right_32_2(){
+    let g_zero = F::default();
+    let g_one = F::from_canonical_u32(1);
+    let inputs = vec![
+        g_one, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+    ];
+    let outputs = vec![
+        g_zero, g_zero, g_one, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+    ];
+    test_rotate_right(2, 32, inputs, outputs);
+}
+
+
+
 
 fn test_rotate_right(n: usize, size: usize, input_values: Vec<F>, output_values: Vec<F>){
     let config = CircuitConfig::standard_recursion_config();
@@ -25,9 +65,6 @@ fn test_rotate_right(n: usize, size: usize, input_values: Vec<F>, output_values:
 
     let binary_input = BinaryDigitsTarget{bits};
     let rotated_bits = BinaryDigitsTarget::rotate_right(&binary_input, n, &mut circuit_builder);
-
-    let g_zero = F::default();
-    let g_one = F::from_canonical_u32(1);
 
     let mut partial_witnesses = PartialWitness::<F>::new();
     for i in 0..size {

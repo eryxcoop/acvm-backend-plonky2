@@ -106,10 +106,20 @@ impl CircuitBuilderFromAcirToPlonky2 {
                             self.builder.range_check(target, long_max_bits)
                         }
                         opcodes::BlackBoxFuncCall::AND { lhs, rhs, output } => {
-                            self._extend_circuit_with_operation(lhs, rhs, output, BinaryDigitsTarget::and);
+                            self._extend_circuit_with_operation(
+                                lhs,
+                                rhs,
+                                output,
+                                BinaryDigitsTarget::and,
+                            );
                         }
                         opcodes::BlackBoxFuncCall::XOR { lhs, rhs, output } => {
-                            self._extend_circuit_with_operation(lhs, rhs, output, BinaryDigitsTarget::xor);
+                            self._extend_circuit_with_operation(
+                                lhs,
+                                rhs,
+                                output,
+                                BinaryDigitsTarget::xor,
+                            );
                         }
                         opcodes::BlackBoxFuncCall::Sha256Compression {
                             inputs,
@@ -158,7 +168,8 @@ impl CircuitBuilderFromAcirToPlonky2 {
         let lhs_binary_target = self.binary_number_target_for_witness(lhs.witness, binary_digits);
         let rhs_binary_target = self.binary_number_target_for_witness(rhs.witness, binary_digits);
 
-        let output_binary_target = operation(lhs_binary_target, rhs_binary_target, &mut self.builder);
+        let output_binary_target =
+            operation(lhs_binary_target, rhs_binary_target, &mut self.builder);
 
         let output_target = self.convert_binary_number_to_number(output_binary_target);
         self.witness_target_map.insert(*output, output_target);
@@ -279,16 +290,30 @@ impl CircuitBuilderFromAcirToPlonky2 {
         b1: &BinaryDigitsTarget,
         b2: &BinaryDigitsTarget,
     ) -> BinaryDigitsTarget {
-
-        let partial_sum = BinaryDigitsTarget::apply_bitwise_and_output_bool_targets(&b1, &b2, &mut self.builder, BinaryDigitsTarget::bit_xor);
-        let partial_carries = BinaryDigitsTarget::apply_bitwise_and_output_bool_targets(&b1, &b2, &mut self.builder, BinaryDigitsTarget::bit_and);
+        let partial_sum = BinaryDigitsTarget::apply_bitwise_and_output_bool_targets(
+            &b1,
+            &b2,
+            &mut self.builder,
+            BinaryDigitsTarget::bit_xor,
+        );
+        let partial_carries = BinaryDigitsTarget::apply_bitwise_and_output_bool_targets(
+            &b1,
+            &b2,
+            &mut self.builder,
+            BinaryDigitsTarget::bit_and,
+        );
 
         let mut carry_in = self._bool_target_false();
 
         let sum = (0..b1.number_of_digits())
             .map(|idx_bit| {
-                let sum_with_carry_in = BinaryDigitsTarget::bit_xor(partial_sum[idx_bit], carry_in, &mut self.builder);
-                let carry_out = BinaryDigitsTarget::bit_or(partial_carries[idx_bit], carry_in, &mut self.builder);
+                let sum_with_carry_in =
+                    BinaryDigitsTarget::bit_xor(partial_sum[idx_bit], carry_in, &mut self.builder);
+                let carry_out = BinaryDigitsTarget::bit_or(
+                    partial_carries[idx_bit],
+                    carry_in,
+                    &mut self.builder,
+                );
 
                 carry_in = carry_out; // The new carry_in is the current carry_out
                 sum_with_carry_in

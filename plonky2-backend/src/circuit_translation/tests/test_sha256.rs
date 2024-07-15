@@ -8,7 +8,7 @@ use super::*;
 // They are agnostic to acir code
 
 #[test]
-fn test_rotate_right_4_1(){
+fn test_rotate_right_4_1() {
     let g_zero = F::default();
     let g_one = F::from_canonical_u32(1);
     let inputs = vec![g_zero, g_zero, g_one, g_zero];
@@ -17,7 +17,7 @@ fn test_rotate_right_4_1(){
 }
 #[test]
 #[should_panic]
-fn test_rotate_right_failed(){
+fn test_rotate_right_failed() {
     let g_zero = F::default();
     let g_one = F::from_canonical_u32(1);
     let inputs = vec![g_zero, g_zero, g_one, g_zero];
@@ -26,64 +26,58 @@ fn test_rotate_right_failed(){
 }
 
 #[test]
-fn test_rotate_right_32_1(){
+fn test_rotate_right_32_1() {
     let g_zero = F::default();
     let g_one = F::from_canonical_u32(1);
     let inputs = vec![
-        g_zero, g_zero, g_one, g_zero, g_zero, g_zero, g_one, g_zero,
-        g_zero, g_zero, g_one, g_zero, g_zero, g_zero, g_one, g_zero,
-        g_zero, g_zero, g_one, g_zero, g_zero, g_zero, g_one, g_zero,
-        g_zero, g_zero, g_one, g_zero, g_zero, g_zero, g_one, g_zero
+        g_zero, g_zero, g_one, g_zero, g_zero, g_zero, g_one, g_zero, g_zero, g_zero, g_one,
+        g_zero, g_zero, g_zero, g_one, g_zero, g_zero, g_zero, g_one, g_zero, g_zero, g_zero,
+        g_one, g_zero, g_zero, g_zero, g_one, g_zero, g_zero, g_zero, g_one, g_zero,
     ];
     let outputs = vec![
-        g_zero, g_zero, g_zero, g_one, g_zero, g_zero, g_zero, g_one,
-        g_zero, g_zero, g_zero, g_one, g_zero, g_zero, g_zero, g_one,
-        g_zero, g_zero, g_zero, g_one, g_zero, g_zero, g_zero, g_one,
-        g_zero, g_zero, g_zero, g_one, g_zero, g_zero, g_zero, g_one,
+        g_zero, g_zero, g_zero, g_one, g_zero, g_zero, g_zero, g_one, g_zero, g_zero, g_zero,
+        g_one, g_zero, g_zero, g_zero, g_one, g_zero, g_zero, g_zero, g_one, g_zero, g_zero,
+        g_zero, g_one, g_zero, g_zero, g_zero, g_one, g_zero, g_zero, g_zero, g_one,
     ];
     test_rotate_right(1, 32, inputs, outputs);
 }
 
 #[test]
-fn test_rotate_right_32_2(){
+fn test_rotate_right_32_2() {
     let g_zero = F::default();
     let g_one = F::from_canonical_u32(1);
     let inputs = vec![
-        g_one, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
-        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
-        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
-        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_one, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
     ];
     let outputs = vec![
-        g_zero, g_zero, g_one, g_zero, g_zero, g_zero, g_zero, g_zero,
-        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
-        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
-        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_one, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
     ];
     test_rotate_right(2, 32, inputs, outputs);
 }
 
 #[test]
-fn test_rotate_right_32_32(){
+fn test_rotate_right_32_32() {
     let g_zero = F::default();
     let g_one = F::from_canonical_u32(1);
     let inputs = vec![
-        g_one, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
-        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
-        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
-        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_one, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
     ];
     let outputs = vec![
-        g_one, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
-        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
-        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
-        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_one, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
     ];
     test_rotate_right(32, 32, inputs, outputs);
 }
 
 #[test]
-fn test_shift_right_4_1(){
+fn test_shift_right_4_1() {
     let g_zero = F::default();
     let g_one = F::from_canonical_u32(1);
     let inputs = vec![g_one, g_one, g_one, g_one];
@@ -93,7 +87,7 @@ fn test_shift_right_4_1(){
 
 #[test]
 #[should_panic]
-fn test_shift_right_failed(){
+fn test_shift_right_failed() {
     let g_zero = F::default();
     let g_one = F::from_canonical_u32(1);
     let inputs = vec![g_one, g_one, g_one, g_one];
@@ -101,28 +95,25 @@ fn test_shift_right_failed(){
     test_shift_right(1, 4, inputs, outputs);
 }
 
-
 #[test]
-fn test_shift_right_32_16(){
+fn test_shift_right_32_16() {
     let g_zero = F::default();
     let g_one = F::from_canonical_u32(1);
     let inputs = vec![
-        g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one,
-        g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one,
-        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one,
+        g_one, g_one, g_one, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
         g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
     ];
     let outputs = vec![
-        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
-        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
-        g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one,
-        g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_one, g_one, g_one, g_one, g_one, g_one, g_one,
+        g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one,
     ];
     test_shift_right(16, 32, inputs, outputs);
 }
 
 #[test]
-fn test_choose_4(){
+fn test_choose_4() {
     let g_zero = F::default();
     let g_one = F::from_canonical_u32(1);
     let chooser = vec![g_zero, g_one, g_zero, g_one];
@@ -134,7 +125,7 @@ fn test_choose_4(){
 
 #[test]
 #[should_panic]
-fn test_choose_4_failed(){
+fn test_choose_4_failed() {
     let g_zero = F::default();
     let g_one = F::from_canonical_u32(1);
     let chooser = vec![g_zero, g_one, g_zero, g_one];
@@ -145,33 +136,30 @@ fn test_choose_4_failed(){
 }
 
 #[test]
-fn test_choose_32(){
+fn test_choose_32() {
     let g_zero = F::default();
     let g_one = F::from_canonical_u32(1);
     let chooser = vec![
-        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
-        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
-        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
-        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
     ];
     let inputs_1 = vec![
-        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
-        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
-        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
-        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
     ];
     let inputs_2 = vec![
-        g_zero, g_one, g_zero, g_zero, g_zero, g_zero, g_zero, g_one,
-        g_zero, g_zero, g_zero, g_one, g_zero, g_one, g_zero, g_zero,
-        g_zero, g_zero, g_one, g_zero, g_zero, g_zero, g_one, g_zero,
-        g_zero, g_zero, g_zero, g_zero, g_zero, g_one, g_zero, g_zero,
+        g_zero, g_one, g_zero, g_zero, g_zero, g_zero, g_zero, g_one, g_zero, g_zero, g_zero,
+        g_one, g_zero, g_one, g_zero, g_zero, g_zero, g_zero, g_one, g_zero, g_zero, g_zero, g_one,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_one, g_zero, g_zero,
     ];
     let outputs = inputs_2.clone();
     test_choose(32, chooser, inputs_1, inputs_2, outputs);
 }
 
 #[test]
-fn test_majority_4(){
+fn test_majority_4() {
     let g_zero = F::default();
     let g_one = F::from_canonical_u32(1);
     let inputs_0 = vec![g_zero, g_one, g_zero, g_one];
@@ -183,7 +171,7 @@ fn test_majority_4(){
 
 #[test]
 #[should_panic]
-fn test_majority_4_failed(){
+fn test_majority_4_failed() {
     let g_zero = F::default();
     let g_one = F::from_canonical_u32(1);
     let inputs_0 = vec![g_zero, g_one, g_zero, g_one];
@@ -194,39 +182,56 @@ fn test_majority_4_failed(){
 }
 
 #[test]
-fn test_majority_32(){
+fn test_majority_32() {
     let g_zero = F::default();
     let g_one = F::from_canonical_u32(1);
     let inputs_0 = vec![
-        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
-        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
-        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
-        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
     ];
     let inputs_1 = inputs_0.clone();
     let inputs_2 = vec![
-        g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one,
-        g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one,
-        g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one,
-        g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one,
+        g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one,
+        g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one,
+        g_one, g_one, g_one, g_one, g_one, g_one,
     ];
     let outputs = inputs_0.clone();
     test_majority(32, inputs_0, inputs_1, inputs_2, outputs);
 }
 
-
-fn test_majority(size: usize, input_values_0: Vec<F>, input_values_1: Vec<F>, input_values_2: Vec<F>, output_values: Vec<F>){
+fn test_majority(
+    size: usize,
+    input_values_0: Vec<F>,
+    input_values_1: Vec<F>,
+    input_values_2: Vec<F>,
+    output_values: Vec<F>,
+) {
     let config = CircuitConfig::standard_recursion_config();
     let mut circuit_builder = CB::new(config);
 
-    let bits_0 = (0..size).into_iter().map(|_| circuit_builder.add_virtual_bool_target_unsafe()).collect();
-    let bits_1 = (0..size).into_iter().map(|_| circuit_builder.add_virtual_bool_target_unsafe()).collect();
-    let bits_2 = (0..size).into_iter().map(|_| circuit_builder.add_virtual_bool_target_unsafe()).collect();
+    let bits_0 = (0..size)
+        .into_iter()
+        .map(|_| circuit_builder.add_virtual_bool_target_unsafe())
+        .collect();
+    let bits_1 = (0..size)
+        .into_iter()
+        .map(|_| circuit_builder.add_virtual_bool_target_unsafe())
+        .collect();
+    let bits_2 = (0..size)
+        .into_iter()
+        .map(|_| circuit_builder.add_virtual_bool_target_unsafe())
+        .collect();
 
-    let binary_input_0 = BinaryDigitsTarget{bits: bits_0};
-    let binary_input_1 = BinaryDigitsTarget{bits: bits_1};
-    let binary_input_2 = BinaryDigitsTarget{bits: bits_2};
-    let chosen_bits = BinaryDigitsTarget::majority(&binary_input_0, &binary_input_1, &binary_input_2, &mut circuit_builder);
+    let binary_input_0 = BinaryDigitsTarget { bits: bits_0 };
+    let binary_input_1 = BinaryDigitsTarget { bits: bits_1 };
+    let binary_input_2 = BinaryDigitsTarget { bits: bits_2 };
+    let chosen_bits = BinaryDigitsTarget::majority(
+        &binary_input_0,
+        &binary_input_1,
+        &binary_input_2,
+        &mut circuit_builder,
+    );
 
     let mut partial_witnesses = PartialWitness::<F>::new();
     for i in 0..size {
@@ -241,18 +246,38 @@ fn test_majority(size: usize, input_values_0: Vec<F>, input_values_1: Vec<F>, in
     assert!(circuit_data.verify(proof).is_ok());
 }
 
-fn test_choose(size: usize, chooser_values: Vec<F>, input_values_1: Vec<F>, input_values_2: Vec<F>, output_values: Vec<F>){
+fn test_choose(
+    size: usize,
+    chooser_values: Vec<F>,
+    input_values_1: Vec<F>,
+    input_values_2: Vec<F>,
+    output_values: Vec<F>,
+) {
     let config = CircuitConfig::standard_recursion_config();
     let mut circuit_builder = CB::new(config);
 
-    let bits_chooser = (0..size).into_iter().map(|_| circuit_builder.add_virtual_bool_target_unsafe()).collect();
-    let bits_1 = (0..size).into_iter().map(|_| circuit_builder.add_virtual_bool_target_unsafe()).collect();
-    let bits_2 = (0..size).into_iter().map(|_| circuit_builder.add_virtual_bool_target_unsafe()).collect();
+    let bits_chooser = (0..size)
+        .into_iter()
+        .map(|_| circuit_builder.add_virtual_bool_target_unsafe())
+        .collect();
+    let bits_1 = (0..size)
+        .into_iter()
+        .map(|_| circuit_builder.add_virtual_bool_target_unsafe())
+        .collect();
+    let bits_2 = (0..size)
+        .into_iter()
+        .map(|_| circuit_builder.add_virtual_bool_target_unsafe())
+        .collect();
 
-    let binary_chooser = BinaryDigitsTarget{bits: bits_chooser};
-    let binary_input_1 = BinaryDigitsTarget{bits: bits_1};
-    let binary_input_2 = BinaryDigitsTarget{bits: bits_2};
-    let chosen_bits = BinaryDigitsTarget::choose(&binary_chooser, &binary_input_1, &binary_input_2, &mut circuit_builder);
+    let binary_chooser = BinaryDigitsTarget { bits: bits_chooser };
+    let binary_input_1 = BinaryDigitsTarget { bits: bits_1 };
+    let binary_input_2 = BinaryDigitsTarget { bits: bits_2 };
+    let chosen_bits = BinaryDigitsTarget::choose(
+        &binary_chooser,
+        &binary_input_1,
+        &binary_input_2,
+        &mut circuit_builder,
+    );
 
     let mut partial_witnesses = PartialWitness::<F>::new();
     for i in 0..size {
@@ -267,13 +292,16 @@ fn test_choose(size: usize, chooser_values: Vec<F>, input_values_1: Vec<F>, inpu
     assert!(circuit_data.verify(proof).is_ok());
 }
 
-fn test_rotate_right(n: usize, size: usize, input_values: Vec<F>, output_values: Vec<F>){
+fn test_rotate_right(n: usize, size: usize, input_values: Vec<F>, output_values: Vec<F>) {
     let config = CircuitConfig::standard_recursion_config();
     let mut circuit_builder = CB::new(config);
 
-    let bits = (0..size).into_iter().map(|_| circuit_builder.add_virtual_bool_target_unsafe()).collect();
+    let bits = (0..size)
+        .into_iter()
+        .map(|_| circuit_builder.add_virtual_bool_target_unsafe())
+        .collect();
 
-    let binary_input = BinaryDigitsTarget{bits};
+    let binary_input = BinaryDigitsTarget { bits };
     let rotated_bits = BinaryDigitsTarget::rotate_right(&binary_input, n, &mut circuit_builder);
 
     let mut partial_witnesses = PartialWitness::<F>::new();
@@ -282,18 +310,21 @@ fn test_rotate_right(n: usize, size: usize, input_values: Vec<F>, output_values:
         partial_witnesses.set_target(rotated_bits.bits[i].target, output_values[i]);
     }
 
-    let circuit_data =circuit_builder.build::<C>();
+    let circuit_data = circuit_builder.build::<C>();
     let proof = circuit_data.prove(partial_witnesses).unwrap();
     assert!(circuit_data.verify(proof).is_ok());
 }
 
-fn test_shift_right(n: usize, size: usize, input_values: Vec<F>, output_values: Vec<F>){
+fn test_shift_right(n: usize, size: usize, input_values: Vec<F>, output_values: Vec<F>) {
     let config = CircuitConfig::standard_recursion_config();
     let mut circuit_builder = CB::new(config);
 
-    let bits = (0..size).into_iter().map(|_| circuit_builder.add_virtual_bool_target_unsafe()).collect();
+    let bits = (0..size)
+        .into_iter()
+        .map(|_| circuit_builder.add_virtual_bool_target_unsafe())
+        .collect();
 
-    let binary_input = BinaryDigitsTarget{bits};
+    let binary_input = BinaryDigitsTarget { bits };
     let rotated_bits = BinaryDigitsTarget::shift_right(&binary_input, n, &mut circuit_builder);
 
     let mut partial_witnesses = PartialWitness::<F>::new();
@@ -302,7 +333,7 @@ fn test_shift_right(n: usize, size: usize, input_values: Vec<F>, output_values: 
         partial_witnesses.set_target(rotated_bits.bits[i].target, output_values[i]);
     }
 
-    let circuit_data =circuit_builder.build::<C>();
+    let circuit_data = circuit_builder.build::<C>();
     let proof = circuit_data.prove(partial_witnesses).unwrap();
     assert!(circuit_data.verify(proof).is_ok());
 }

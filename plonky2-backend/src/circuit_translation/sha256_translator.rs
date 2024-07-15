@@ -81,8 +81,11 @@ impl<'a> Sha256CompressionTranslator<'a> {
             vec![CompressionIterationState::from_vec(initial_h)];
         for t in 0..64 {
             let prev_iteration_state = iteration_states[t].clone();
-            let next_state =
-                self.compression_function_iteration(prev_iteration_state, &binary_inputs[t], &initial_k[t]);
+            let next_state = self.compression_function_iteration(
+                prev_iteration_state,
+                &binary_inputs[t],
+                &initial_k[t],
+            );
             iteration_states.push(next_state);
         }
 
@@ -252,7 +255,8 @@ impl<'a> Sha256CompressionTranslator<'a> {
             .add_module_32_bits(&sumand_1, &sumand_2);
 
         let sigma_0 = self.sigma_0(&a);
-        let majority_2 = BinaryDigitsTarget::majority(&a, &b, &c, &mut self.circuit_builder.builder);
+        let majority_2 =
+            BinaryDigitsTarget::majority(&a, &b, &c, &mut self.circuit_builder.builder);
         let t_2 = self
             .circuit_builder
             .add_module_32_bits(&sigma_0, &majority_2);
@@ -268,4 +272,3 @@ impl<'a> Sha256CompressionTranslator<'a> {
         }
     }
 }
-

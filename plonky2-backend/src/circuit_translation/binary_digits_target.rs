@@ -16,7 +16,7 @@ impl BinaryDigitsTarget {
     pub fn rotate_right(
         binary_target: &BinaryDigitsTarget,
         times: usize,
-        builder: &mut CB
+        builder: &mut CB,
     ) -> BinaryDigitsTarget {
         let mut new_bits = Vec::new();
         // Wrap bits around
@@ -31,14 +31,17 @@ impl BinaryDigitsTarget {
 
         for i in times..binary_target.number_of_digits() {
             let new_bool_target = builder.add_virtual_bool_target_safe();
-            builder
-                .connect(binary_target.bits[i - times].target, new_bool_target.target);
+            builder.connect(binary_target.bits[i - times].target, new_bool_target.target);
             new_bits.push(new_bool_target);
         }
         BinaryDigitsTarget { bits: new_bits }
     }
 
-    pub fn shift_right(target: &BinaryDigitsTarget, times: usize, builder: &mut CB) -> BinaryDigitsTarget {
+    pub fn shift_right(
+        target: &BinaryDigitsTarget,
+        times: usize,
+        builder: &mut CB,
+    ) -> BinaryDigitsTarget {
         let mut new_bits = Vec::new();
         // Fill zero bits
         for _ in 0..times {
@@ -49,8 +52,7 @@ impl BinaryDigitsTarget {
 
         for i in times..target.number_of_digits() {
             let new_bool_target = builder.add_virtual_bool_target_safe();
-            builder
-                .connect(target.bits[i - times].target, new_bool_target.target);
+            builder.connect(target.bits[i - times].target, new_bool_target.target);
             new_bits.push(new_bool_target);
         }
         BinaryDigitsTarget { bits: new_bits }
@@ -60,7 +62,7 @@ impl BinaryDigitsTarget {
         chooser: &BinaryDigitsTarget,
         on_true: &BinaryDigitsTarget,
         on_false: &BinaryDigitsTarget,
-        builder: &mut CB
+        builder: &mut CB,
     ) -> BinaryDigitsTarget {
         let bit_pairs_iter = on_true.bits.iter().zip(on_false.bits.iter());
 
@@ -78,7 +80,7 @@ impl BinaryDigitsTarget {
         a: &BinaryDigitsTarget,
         b: &BinaryDigitsTarget,
         c: &BinaryDigitsTarget,
-        builder: &mut CB
+        builder: &mut CB,
     ) -> BinaryDigitsTarget {
         let bit_pairs_iter = a.bits.iter().zip(b.bits.iter());
 
@@ -101,18 +103,36 @@ impl BinaryDigitsTarget {
         chooser: &BoolTarget,
         on_true: &BoolTarget,
         on_false: &BoolTarget,
-        builder: &mut CB
+        builder: &mut CB,
     ) -> BoolTarget {
         let target = builder.select(*chooser, on_true.target, on_false.target);
         BoolTarget::new_unsafe(target)
     }
 
-    pub fn xor(b1: BinaryDigitsTarget, b2: BinaryDigitsTarget, builder: &mut CB) -> BinaryDigitsTarget {
-        BinaryDigitsTarget::apply_bitwise_to_binary_digits_target(b1, b2, builder, BinaryDigitsTarget::bit_xor)
+    pub fn xor(
+        b1: BinaryDigitsTarget,
+        b2: BinaryDigitsTarget,
+        builder: &mut CB,
+    ) -> BinaryDigitsTarget {
+        BinaryDigitsTarget::apply_bitwise_to_binary_digits_target(
+            b1,
+            b2,
+            builder,
+            BinaryDigitsTarget::bit_xor,
+        )
     }
 
-    pub fn and(b1: BinaryDigitsTarget, b2: BinaryDigitsTarget, builder: &mut CB) -> BinaryDigitsTarget {
-        BinaryDigitsTarget::apply_bitwise_to_binary_digits_target(b1, b2, builder, BinaryDigitsTarget::bit_and)
+    pub fn and(
+        b1: BinaryDigitsTarget,
+        b2: BinaryDigitsTarget,
+        builder: &mut CB,
+    ) -> BinaryDigitsTarget {
+        BinaryDigitsTarget::apply_bitwise_to_binary_digits_target(
+            b1,
+            b2,
+            builder,
+            BinaryDigitsTarget::bit_and,
+        )
     }
 
     pub fn apply_bitwise_to_binary_digits_target(

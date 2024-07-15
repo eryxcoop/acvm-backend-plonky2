@@ -180,6 +180,7 @@ impl BinaryDigitsTarget {
         b2: &BinaryDigitsTarget,
         builder: &mut CB,
     ) -> BinaryDigitsTarget {
+        assert_eq!(b1.number_of_digits(), b2.number_of_digits());
         let partial_sum = BinaryDigitsTarget::apply_bitwise_and_output_bool_targets(
             &b1,
             &b2,
@@ -194,14 +195,13 @@ impl BinaryDigitsTarget {
         );
 
         let mut carry_in = builder._false();
-
         let sum = (0..b1.number_of_digits())
             .map(|idx_bit| {
                 let sum_with_carry_in =
                     BinaryDigitsTarget::bit_xor(partial_sum[idx_bit], carry_in, builder);
-                let carry_out =
-                    BinaryDigitsTarget::bit_or(partial_carries[idx_bit], carry_in, builder);
-
+                let pair_sum = BinaryDigitsTarget::bit_and(carry_in, partial_sum[idx_bit], builder);
+                let carry_out = BinaryDigitsTarget::bit_or(partial_carries[idx_bit],
+                                                           pair_sum, builder);
                 carry_in = carry_out; // The new carry_in is the current carry_out
                 sum_with_carry_in
             })

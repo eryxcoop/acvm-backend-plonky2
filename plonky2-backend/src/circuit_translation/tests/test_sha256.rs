@@ -194,10 +194,111 @@ fn test_majority_32() {
     let inputs_2 = vec![
         g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one,
         g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one,
-        g_one, g_one, g_one, g_one, g_one, g_one,
+        g_one, g_one, g_one, g_one, g_one, g_one
     ];
     let outputs = inputs_0.clone();
     test_majority(32, inputs_0, inputs_1, inputs_2, outputs);
+}
+
+#[test]
+fn test_add_module_32_bits_without_any_carry(){
+    let g_zero = F::default();
+    let g_one = F::from_canonical_u32(1);
+    let inputs_0 = vec![
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+    ];
+    let inputs_1 = vec![
+        g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one,
+        g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one,
+        g_one, g_one, g_one, g_one, g_one, g_one
+    ];
+    let outputs = inputs_1.clone();
+    test_add_module_32_bits(inputs_0, inputs_1, outputs);
+}
+
+#[test]
+#[should_panic]
+fn test_add_module_32_bits_fail(){
+    let g_zero = F::default();
+    let g_one = F::from_canonical_u32(1);
+    let inputs_0 = vec![
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_one,
+    ];
+    let inputs_1 = vec![
+        g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one,
+        g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one,
+        g_one, g_one, g_one, g_one, g_one, g_zero
+    ];
+    let outputs = inputs_1.clone();
+    test_add_module_32_bits(inputs_0, inputs_1, outputs);
+}
+
+#[test]
+fn test_simple_add_module_32_bits_with_carry(){
+    let g_zero = F::default();
+    let g_one = F::from_canonical_u32(1);
+    let inputs_0 = vec![
+        g_one, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+    ];
+    let inputs_1 = vec![
+        g_one, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+    ];
+    let outputs = vec![
+        g_zero, g_one, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+    ];
+    test_add_module_32_bits(inputs_0, inputs_1, outputs);
+}
+
+#[test]
+fn test_add_module_32_bits_with_overflow(){
+
+}
+
+fn test_add_module_32_bits(
+    input_values_1: Vec<F>,
+    input_values_2: Vec<F>,
+    output_values: Vec<F>,
+) {
+    let config = CircuitConfig::standard_recursion_config();
+    let mut circuit_builder = CB::new(config);
+
+    let bits_1 = (0..32)
+        .into_iter()
+        .map(|_| circuit_builder.add_virtual_bool_target_unsafe())
+        .collect();
+    let bits_2 = (0..32)
+        .into_iter()
+        .map(|_| circuit_builder.add_virtual_bool_target_unsafe())
+        .collect();
+
+    let binary_input_1 = BinaryDigitsTarget { bits: bits_1 };
+    let binary_input_2 = BinaryDigitsTarget { bits: bits_2 };
+    let result_bits = BinaryDigitsTarget::add_module_32_bits(
+        &binary_input_1,
+        &binary_input_2,
+        &mut circuit_builder,
+    );
+
+    let mut partial_witnesses = PartialWitness::<F>::new();
+    for i in 0..32 {
+        partial_witnesses.set_target(binary_input_1.bits[i].target, input_values_1[i]);
+        partial_witnesses.set_target(binary_input_2.bits[i].target, input_values_2[i]);
+        partial_witnesses.set_target(result_bits.bits[i].target, output_values[i]);
+    }
+
+    let circuit_data = circuit_builder.build::<C>();
+    let proof = circuit_data.prove(partial_witnesses).unwrap();
+    assert!(circuit_data.verify(proof).is_ok());
 }
 
 fn test_majority(
@@ -331,44 +432,6 @@ fn test_shift_right(n: usize, size: usize, input_values: Vec<F>, output_values: 
     for i in 0..size {
         partial_witnesses.set_target(binary_input.bits[i].target, input_values[i]);
         partial_witnesses.set_target(rotated_bits.bits[i].target, output_values[i]);
-    }
-
-    let circuit_data = circuit_builder.build::<C>();
-    let proof = circuit_data.prove(partial_witnesses).unwrap();
-    assert!(circuit_data.verify(proof).is_ok());
-}
-
-fn test_add_module_32_bits(
-    size: usize,
-    input_values_1: Vec<F>,
-    input_values_2: Vec<F>,
-    output_values: Vec<F>,
-) {
-    let config = CircuitConfig::standard_recursion_config();
-    let mut circuit_builder = CB::new(config);
-
-    let bits_1 = (0..size)
-        .into_iter()
-        .map(|_| circuit_builder.add_virtual_bool_target_unsafe())
-        .collect();
-    let bits_2 = (0..size)
-        .into_iter()
-        .map(|_| circuit_builder.add_virtual_bool_target_unsafe())
-        .collect();
-
-    let binary_input_1 = BinaryDigitsTarget { bits: bits_1 };
-    let binary_input_2 = BinaryDigitsTarget { bits: bits_2 };
-    let result_bits = BinaryDigitsTarget::add_module_32_bits(
-        &binary_input_1,
-        &binary_input_2,
-        &mut circuit_builder,
-    );
-
-    let mut partial_witnesses = PartialWitness::<F>::new();
-    for i in 0..size {
-        partial_witnesses.set_target(binary_input_1.bits[i].target, input_values_1[i]);
-        partial_witnesses.set_target(binary_input_2.bits[i].target, input_values_2[i]);
-        partial_witnesses.set_target(result_bits.bits[i].target, output_values[i]);
     }
 
     let circuit_data = circuit_builder.build::<C>();

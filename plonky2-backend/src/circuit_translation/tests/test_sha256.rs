@@ -260,8 +260,47 @@ fn test_simple_add_module_32_bits_with_carry(){
 }
 
 #[test]
-fn test_add_module_32_bits_with_overflow(){
+fn test_flooded_add_module_32_bits_with_carry(){
+    let g_zero = F::default();
+    let g_one = F::from_canonical_u32(1);
+    let inputs_0 = vec![
+        g_one, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+    ];
+    let inputs_1 = vec![
+        g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one,
+        g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one,
+        g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_zero,
+    ];
+    let outputs = vec![
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_one,
+    ];
+    test_add_module_32_bits(inputs_0, inputs_1, outputs);
+}
 
+#[test]
+fn test_add_module_32_bits_with_overflow(){
+    let g_zero = F::default();
+    let g_one = F::from_canonical_u32(1);
+    let inputs_0 = vec![
+        g_one, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+    ];
+    let inputs_1 = vec![
+        g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one,
+        g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one,
+        g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one,
+    ];
+    let outputs = vec![
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+    ];
+    test_add_module_32_bits(inputs_0, inputs_1, outputs);
 }
 
 fn test_add_module_32_bits(

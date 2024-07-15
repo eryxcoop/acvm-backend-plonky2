@@ -106,10 +106,10 @@ impl CircuitBuilderFromAcirToPlonky2 {
                             self.builder.range_check(target, long_max_bits)
                         }
                         opcodes::BlackBoxFuncCall::AND { lhs, rhs, output } => {
-                            self._extend_circuit_with_operation(lhs, rhs, output, Self::and);
+                            self._extend_circuit_with_operation(lhs, rhs, output, BinaryDigitsTarget::and);
                         }
                         opcodes::BlackBoxFuncCall::XOR { lhs, rhs, output } => {
-                            self._extend_circuit_with_operation(lhs, rhs, output, Self::xor);
+                            self._extend_circuit_with_operation(lhs, rhs, output, BinaryDigitsTarget::xor);
                         }
                         opcodes::BlackBoxFuncCall::Sha256Compression {
                             inputs,
@@ -151,14 +151,14 @@ impl CircuitBuilderFromAcirToPlonky2 {
         lhs: &FunctionInput,
         rhs: &FunctionInput,
         output: &Witness,
-        operation: fn(&mut Self, BinaryDigitsTarget, BinaryDigitsTarget) -> BinaryDigitsTarget,
+        operation: fn(BinaryDigitsTarget, BinaryDigitsTarget, &mut CB) -> BinaryDigitsTarget,
     ) {
         assert_eq!(lhs.num_bits, rhs.num_bits);
         let binary_digits = lhs.num_bits as usize;
         let lhs_binary_target = self.binary_number_target_for_witness(lhs.witness, binary_digits);
         let rhs_binary_target = self.binary_number_target_for_witness(rhs.witness, binary_digits);
 
-        let output_binary_target = operation(self, lhs_binary_target, rhs_binary_target);
+        let output_binary_target = operation(lhs_binary_target, rhs_binary_target, &mut self.builder);
 
         let output_target = self.convert_binary_number_to_number(output_binary_target);
         self.witness_target_map.insert(*output, output_target);
@@ -274,29 +274,21 @@ impl CircuitBuilderFromAcirToPlonky2 {
         }
     }
 
-    fn xor(&mut self, b1: BinaryDigitsTarget, b2: BinaryDigitsTarget) -> BinaryDigitsTarget {
-        self.apply_bitwise_to_binary_digits_target(b1, b2, Self::bit_xor)
-    }
-
-    fn and(&mut self, b1: BinaryDigitsTarget, b2: BinaryDigitsTarget) -> BinaryDigitsTarget {
-        self.apply_bitwise_to_binary_digits_target(b1, b2, Self::bit_and)
-    }
-
     fn add_module_32_bits(
         &mut self,
         b1: &BinaryDigitsTarget,
         b2: &BinaryDigitsTarget,
     ) -> BinaryDigitsTarget {
 
-        let partial_sum = self.apply_bitwise_and_output_bool_targets(&b1, &b2, Self::bit_xor);
-        let partial_carries = self.apply_bitwise_and_output_bool_targets(&b1, &b2, Self::bit_and);
+        let partial_sum = BinaryDigitsTarget::apply_bitwise_and_output_bool_targets(&b1, &b2, &mut self.builder, BinaryDigitsTarget::bit_xor);
+        let partial_carries = BinaryDigitsTarget::apply_bitwise_and_output_bool_targets(&b1, &b2, &mut self.builder, BinaryDigitsTarget::bit_and);
 
         let mut carry_in = self._bool_target_false();
 
         let sum = (0..b1.number_of_digits())
             .map(|idx_bit| {
-                let sum_with_carry_in = self.bit_xor(partial_sum[idx_bit], carry_in);
-                let carry_out = self.bit_or(partial_carries[idx_bit], carry_in);
+                let sum_with_carry_in = BinaryDigitsTarget::bit_xor(partial_sum[idx_bit], carry_in, &mut self.builder);
+                let carry_out = BinaryDigitsTarget::bit_or(partial_carries[idx_bit], carry_in, &mut self.builder);
 
                 carry_in = carry_out; // The new carry_in is the current carry_out
                 sum_with_carry_in
@@ -305,45 +297,4 @@ impl CircuitBuilderFromAcirToPlonky2 {
 
         BinaryDigitsTarget { bits: sum }
     }
-
-    fn apply_bitwise_to_binary_digits_target(
-        &mut self,
-        b1: BinaryDigitsTarget,
-        b2: BinaryDigitsTarget,
-        op: fn(&mut CircuitBuilderFromAcirToPlonky2, BoolTarget, BoolTarget) -> BoolTarget,
-    ) -> BinaryDigitsTarget {
-        BinaryDigitsTarget {
-            bits: self.apply_bitwise_and_output_bool_targets(&b1, &b2, op),
-        }
-    }
-
-    fn apply_bitwise_and_output_bool_targets(
-        &mut self,
-        b1: &BinaryDigitsTarget,
-        b2: &BinaryDigitsTarget,
-        op: fn(&mut CircuitBuilderFromAcirToPlonky2, BoolTarget, BoolTarget) -> BoolTarget,
-    ) -> Vec<BoolTarget> {
-        b1.bits
-            .iter()
-            .zip(b2.bits.iter())
-            .map(|(bit1, bit2)| op(self, *bit1, *bit2))
-            .collect()
-    }
-
-    fn bit_and(&mut self, b1: BoolTarget, b2: BoolTarget) -> BoolTarget {
-        self.builder.and(b1, b2)
-    }
-
-    fn bit_or(&mut self, b1: BoolTarget, b2: BoolTarget) -> BoolTarget {
-        self.builder.or(b1, b2)
-    }
-
-    fn bit_xor(&mut self, b1: BoolTarget, b2: BoolTarget) -> BoolTarget {
-        // a xor b = (a or b) and (not (a and b))
-        let b1_or_b2 = self.builder.or(b1, b2);
-        let b1_and_b2 = self.builder.and(b1, b2);
-        let not_b1_and_b2 = self.builder.not(b1_and_b2);
-        self.builder.and(b1_or_b2, not_b1_and_b2)
-    }
-
 }

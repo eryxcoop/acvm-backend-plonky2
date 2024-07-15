@@ -54,7 +54,24 @@ fn test_rotate_right_32_2(){
     test_rotate_right(2, 32, inputs, outputs);
 }
 
-
+#[test]
+fn test_rotate_right_32_32(){
+    let g_zero = F::default();
+    let g_one = F::from_canonical_u32(1);
+    let inputs = vec![
+        g_one, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+    ];
+    let outputs = vec![
+        g_one, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+    ];
+    test_rotate_right(32, 32, inputs, outputs);
+}
 
 
 fn test_rotate_right(n: usize, size: usize, input_values: Vec<F>, output_values: Vec<F>){

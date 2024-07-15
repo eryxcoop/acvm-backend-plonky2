@@ -445,8 +445,8 @@ fn test_rotate_right(n: usize, size: usize, mut input_values: Vec<F>, mut output
     let rotated_bits = BinaryDigitsTarget::rotate_right(&binary_input, n, &mut circuit_builder);
 
     let mut partial_witnesses = PartialWitness::<F>::new();
-    // input_values.reverse();
-    // output_values.reverse();
+    input_values.reverse();
+    output_values.reverse();
     for i in 0..size {
         partial_witnesses.set_target(binary_input.bits[i].target, input_values[i]);
         partial_witnesses.set_target(rotated_bits.bits[i].target, output_values[i]);

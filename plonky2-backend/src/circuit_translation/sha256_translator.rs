@@ -229,11 +229,22 @@ impl<'a> Sha256CompressionTranslator<'a> {
         w_t_16: &BinaryDigitsTarget,
     ) -> BinaryDigitsTarget {
         let sigma_1 = self.sigma_1(w_t_2);
-        let sumand_1 = self.circuit_builder.add_module_32_bits(&sigma_1, w_t_7);
+        let sumand_1 = BinaryDigitsTarget::add_module_32_bits(
+            &sigma_1,
+            w_t_7,
+            &mut self.circuit_builder.builder,
+        );
         let sigma_0 = self.sigma_0(w_t_15);
-        let sumand_2 = self.circuit_builder.add_module_32_bits(&sigma_0, w_t_16);
-        self.circuit_builder
-            .add_module_32_bits(&sumand_1, &sumand_2)
+        let sumand_2 = BinaryDigitsTarget::add_module_32_bits(
+            &sigma_0,
+            w_t_16,
+            &mut self.circuit_builder.builder,
+        );
+        BinaryDigitsTarget::add_module_32_bits(
+            &sumand_1,
+            &sumand_2,
+            &mut self.circuit_builder.builder,
+        )
     }
 
     fn compression_function_iteration(
@@ -245,27 +256,39 @@ impl<'a> Sha256CompressionTranslator<'a> {
         let [a, b, c, d, e, f, g, h] = s.unpack();
         let sigma_1 = self.sigma_1(&e);
         let majority = BinaryDigitsTarget::majority(&e, &f, &g, &mut self.circuit_builder.builder);
-        let sumand_aux = self.circuit_builder.add_module_32_bits(k_t, w_t);
-        let sumand_1 = self.circuit_builder.add_module_32_bits(&h, &sigma_1);
-        let sumand_2 = self
-            .circuit_builder
-            .add_module_32_bits(&majority, &sumand_aux);
-        let t_1 = self
-            .circuit_builder
-            .add_module_32_bits(&sumand_1, &sumand_2);
+        let sumand_aux =
+            BinaryDigitsTarget::add_module_32_bits(k_t, w_t, &mut self.circuit_builder.builder);
+        let sumand_1 =
+            BinaryDigitsTarget::add_module_32_bits(&h, &sigma_1, &mut self.circuit_builder.builder);
+        let sumand_2 = BinaryDigitsTarget::add_module_32_bits(
+            &majority,
+            &sumand_aux,
+            &mut self.circuit_builder.builder,
+        );
+        let t_1 = BinaryDigitsTarget::add_module_32_bits(
+            &sumand_1,
+            &sumand_2,
+            &mut self.circuit_builder.builder,
+        );
 
         let sigma_0 = self.sigma_0(&a);
         let majority_2 =
             BinaryDigitsTarget::majority(&a, &b, &c, &mut self.circuit_builder.builder);
-        let t_2 = self
-            .circuit_builder
-            .add_module_32_bits(&sigma_0, &majority_2);
+        let t_2 = BinaryDigitsTarget::add_module_32_bits(
+            &sigma_0,
+            &majority_2,
+            &mut self.circuit_builder.builder,
+        );
         CompressionIterationState {
-            a: self.circuit_builder.add_module_32_bits(&t_1, &t_2),
+            a: BinaryDigitsTarget::add_module_32_bits(
+                &t_1,
+                &t_2,
+                &mut self.circuit_builder.builder,
+            ),
             b: a,
             c: b,
             d: c,
-            e: self.circuit_builder.add_module_32_bits(&d, &t_1),
+            e: BinaryDigitsTarget::add_module_32_bits(&d, &t_1, &mut self.circuit_builder.builder),
             f: e,
             g: f,
             h: g,

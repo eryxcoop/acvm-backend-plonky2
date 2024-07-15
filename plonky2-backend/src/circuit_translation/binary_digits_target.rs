@@ -174,4 +174,39 @@ impl BinaryDigitsTarget {
         let not_b1_and_b2 = builder.not(b1_and_b2);
         builder.and(b1_or_b2, not_b1_and_b2)
     }
+
+    pub fn add_module_32_bits(
+        b1: &BinaryDigitsTarget,
+        b2: &BinaryDigitsTarget,
+        builder: &mut CB,
+    ) -> BinaryDigitsTarget {
+        let partial_sum = BinaryDigitsTarget::apply_bitwise_and_output_bool_targets(
+            &b1,
+            &b2,
+            builder,
+            BinaryDigitsTarget::bit_xor,
+        );
+        let partial_carries = BinaryDigitsTarget::apply_bitwise_and_output_bool_targets(
+            &b1,
+            &b2,
+            builder,
+            BinaryDigitsTarget::bit_and,
+        );
+
+        let mut carry_in = builder._false();
+
+        let sum = (0..b1.number_of_digits())
+            .map(|idx_bit| {
+                let sum_with_carry_in =
+                    BinaryDigitsTarget::bit_xor(partial_sum[idx_bit], carry_in, builder);
+                let carry_out =
+                    BinaryDigitsTarget::bit_or(partial_carries[idx_bit], carry_in, builder);
+
+                carry_in = carry_out; // The new carry_in is the current carry_out
+                sum_with_carry_in
+            })
+            .collect();
+
+        BinaryDigitsTarget { bits: sum }
+    }
 }

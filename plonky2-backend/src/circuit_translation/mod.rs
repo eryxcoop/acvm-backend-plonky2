@@ -284,42 +284,4 @@ impl CircuitBuilderFromAcirToPlonky2 {
             }
         }
     }
-
-    fn add_module_32_bits(
-        &mut self,
-        b1: &BinaryDigitsTarget,
-        b2: &BinaryDigitsTarget,
-    ) -> BinaryDigitsTarget {
-        let partial_sum = BinaryDigitsTarget::apply_bitwise_and_output_bool_targets(
-            &b1,
-            &b2,
-            &mut self.builder,
-            BinaryDigitsTarget::bit_xor,
-        );
-        let partial_carries = BinaryDigitsTarget::apply_bitwise_and_output_bool_targets(
-            &b1,
-            &b2,
-            &mut self.builder,
-            BinaryDigitsTarget::bit_and,
-        );
-
-        let mut carry_in = self._bool_target_false();
-
-        let sum = (0..b1.number_of_digits())
-            .map(|idx_bit| {
-                let sum_with_carry_in =
-                    BinaryDigitsTarget::bit_xor(partial_sum[idx_bit], carry_in, &mut self.builder);
-                let carry_out = BinaryDigitsTarget::bit_or(
-                    partial_carries[idx_bit],
-                    carry_in,
-                    &mut self.builder,
-                );
-
-                carry_in = carry_out; // The new carry_in is the current carry_out
-                sum_with_carry_in
-            })
-            .collect();
-
-        BinaryDigitsTarget { bits: sum }
-    }
 }

@@ -28,13 +28,9 @@ impl BinaryDigitsTarget {
 
         for i in 0..times {
             let new_bool_target = builder.add_virtual_bool_target_safe();
-            builder.connect(
-                binary_target.bits[i].target,
-                new_bool_target.target,
-            );
+            builder.connect(binary_target.bits[i].target, new_bool_target.target);
             new_bits.push(new_bool_target);
         }
-
 
         BinaryDigitsTarget { bits: new_bits }
     }
@@ -202,8 +198,8 @@ impl BinaryDigitsTarget {
                 let sum_with_carry_in =
                     BinaryDigitsTarget::bit_xor(partial_sum[idx_bit], carry_in, builder);
                 let pair_sum = BinaryDigitsTarget::bit_and(carry_in, partial_sum[idx_bit], builder);
-                let carry_out = BinaryDigitsTarget::bit_or(partial_carries[idx_bit],
-                                                           pair_sum, builder);
+                let carry_out =
+                    BinaryDigitsTarget::bit_or(partial_carries[idx_bit], pair_sum, builder);
                 carry_in = carry_out; // The new carry_in is the current carry_out
                 sum_with_carry_in
             })

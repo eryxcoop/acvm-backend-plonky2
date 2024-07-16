@@ -194,14 +194,14 @@ fn test_majority_32() {
     let inputs_2 = vec![
         g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one,
         g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one,
-        g_one, g_one, g_one, g_one, g_one, g_one
+        g_one, g_one, g_one, g_one, g_one, g_one,
     ];
     let outputs = inputs_0.clone();
     test_majority(32, inputs_0, inputs_1, inputs_2, outputs);
 }
 
 #[test]
-fn test_add_module_32_bits_without_any_carry(){
+fn test_add_module_32_bits_without_any_carry() {
     let g_zero = F::default();
     let g_one = F::from_canonical_u32(1);
     let inputs_0 = vec![
@@ -212,7 +212,7 @@ fn test_add_module_32_bits_without_any_carry(){
     let inputs_1 = vec![
         g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one,
         g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one,
-        g_one, g_one, g_one, g_one, g_one, g_one
+        g_one, g_one, g_one, g_one, g_one, g_one,
     ];
     let outputs = inputs_1.clone();
     test_add_module_32_bits(inputs_0, inputs_1, outputs);
@@ -220,7 +220,7 @@ fn test_add_module_32_bits_without_any_carry(){
 
 #[test]
 #[should_panic]
-fn test_add_module_32_bits_fail(){
+fn test_add_module_32_bits_fail() {
     let g_zero = F::default();
     let g_one = F::from_canonical_u32(1);
     let inputs_0 = vec![
@@ -231,14 +231,14 @@ fn test_add_module_32_bits_fail(){
     let inputs_1 = vec![
         g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one,
         g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one,
-        g_one, g_one, g_one, g_one, g_one, g_zero
+        g_one, g_one, g_one, g_one, g_one, g_zero,
     ];
     let outputs = inputs_1.clone();
     test_add_module_32_bits(inputs_0, inputs_1, outputs);
 }
 
 #[test]
-fn test_simple_add_module_32_bits_with_carry(){
+fn test_simple_add_module_32_bits_with_carry() {
     let g_zero = F::default();
     let g_one = F::from_canonical_u32(1);
     let inputs_0 = vec![
@@ -260,7 +260,7 @@ fn test_simple_add_module_32_bits_with_carry(){
 }
 
 #[test]
-fn test_flooded_add_module_32_bits_with_carry(){
+fn test_flooded_add_module_32_bits_with_carry() {
     let g_zero = F::default();
     let g_one = F::from_canonical_u32(1);
     let inputs_0 = vec![
@@ -269,9 +269,9 @@ fn test_flooded_add_module_32_bits_with_carry(){
         g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
     ];
     let inputs_1 = vec![
-        g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one,
-        g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one,
-        g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_zero,
+        g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one,
+        g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one,
+        g_one, g_one, g_one, g_one, g_one, g_zero,
     ];
     let outputs = vec![
         g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
@@ -282,7 +282,7 @@ fn test_flooded_add_module_32_bits_with_carry(){
 }
 
 #[test]
-fn test_add_module_32_bits_with_overflow(){
+fn test_add_module_32_bits_with_overflow() {
     let g_zero = F::default();
     let g_one = F::from_canonical_u32(1);
     let inputs_0 = vec![
@@ -291,9 +291,9 @@ fn test_add_module_32_bits_with_overflow(){
         g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
     ];
     let inputs_1 = vec![
-        g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one,
-        g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one,
-        g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one,
+        g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one,
+        g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one,
+        g_one, g_one, g_one, g_one, g_one, g_one,
     ];
     let outputs = vec![
         g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
@@ -303,11 +303,7 @@ fn test_add_module_32_bits_with_overflow(){
     test_add_module_32_bits(inputs_0, inputs_1, outputs);
 }
 
-fn test_add_module_32_bits(
-    input_values_1: Vec<F>,
-    input_values_2: Vec<F>,
-    output_values: Vec<F>,
-) {
+fn test_add_module_32_bits(input_values_1: Vec<F>, input_values_2: Vec<F>, output_values: Vec<F>) {
     let config = CircuitConfig::standard_recursion_config();
     let mut circuit_builder = CB::new(config);
 

@@ -78,7 +78,7 @@ impl<'a> Sha256CompressionTranslator<'a> {
         let mut constant_k_digit_target_values = self.initial_k();
         let initial_h = self.initial_h();
         let mut iteration_states: Vec<CompressionIterationState> =
-            vec![CompressionIterationState::from_vec(initial_h)];
+            vec![CompressionIterationState::from_vec(initial_h.clone())];
         for t in 0..64 {
             let prev_iteration_state = iteration_states[t].clone();
             let next_state = self.compression_function_iteration(
@@ -88,25 +88,26 @@ impl<'a> Sha256CompressionTranslator<'a> {
             );
             iteration_states.push(next_state);
         }
-
         // Link all the binary digits target outputs into the corresponding output targets
         let last_iteration_state = iteration_states.last().unwrap().clone();
         let output_binary_targets = last_iteration_state.unpack();
-        for (output_witness, output_binary_target) in
-            self.outputs.iter().zip(output_binary_targets.iter())
-        {
+
+        let mut final_h: Vec<BinaryDigitsTarget> = Vec::new();
+        for i in 0..8 {
+            final_h.push(BinaryDigitsTarget::add_module_32_bits(
+                &initial_h[i],
+                &output_binary_targets[i],
+                &mut self.circuit_builder.builder,
+            ))
+        }
+
+        for (output_witness, output_binary_target) in self.outputs.iter().zip(final_h.iter()) {
             let new_output_target = self
                 .circuit_builder
                 .convert_binary_number_to_number(output_binary_target.clone());
             self.circuit_builder
                 .witness_target_map
                 .insert(*output_witness, new_output_target);
-        }
-    }
-
-    fn _register_targets_for_input_witnesses(&mut self) {
-        for hash_value in self.hash_values.iter() {
-            self._get_or_create_target_for_witness(hash_value.witness);
         }
     }
 
@@ -150,23 +151,6 @@ impl<'a> Sha256CompressionTranslator<'a> {
         let y1 = BinaryDigitsTarget::xor(x1, x2, &mut self.circuit_builder.builder);
         let y2 = BinaryDigitsTarget::xor(y1, x3, &mut self.circuit_builder.builder);
         y2
-    }
-
-    fn _extract_witnesses(&self, inputs: Vec<FunctionInput>) -> Vec<Witness> {
-        inputs.into_iter().map(|input| input.witness).collect()
-    }
-
-    fn _get_or_create_target_for_witness(self: &mut Self, witness: Witness) -> Target {
-        match self.circuit_builder.witness_target_map.get(&witness) {
-            Some(target) => *target,
-            _ => {
-                let target = self.circuit_builder.builder.add_virtual_target();
-                self.circuit_builder
-                    .witness_target_map
-                    .insert(witness, target);
-                target
-            }
-        }
     }
 
     fn initial_h(&mut self) -> Vec<BinaryDigitsTarget> {
@@ -238,11 +222,15 @@ impl<'a> Sha256CompressionTranslator<'a> {
     ) -> CompressionIterationState {
         let [a, b, c, d, e, f, g, h] = s.unpack();
         let big_sigma_1 = self.big_sigma_1(&e);
-        let choose_e_f_g = BinaryDigitsTarget::choose(&e, &f, &g, &mut self.circuit_builder.builder);
+        let choose_e_f_g =
+            BinaryDigitsTarget::choose(&e, &f, &g, &mut self.circuit_builder.builder);
         let sumand_0 =
             BinaryDigitsTarget::add_module_32_bits(k_t, w_t, &mut self.circuit_builder.builder);
-        let sumand_1 =
-            BinaryDigitsTarget::add_module_32_bits(&h, &big_sigma_1, &mut self.circuit_builder.builder);
+        let sumand_1 = BinaryDigitsTarget::add_module_32_bits(
+            &h,
+            &big_sigma_1,
+            &mut self.circuit_builder.builder,
+        );
         let sumand_2 = BinaryDigitsTarget::add_module_32_bits(
             &choose_e_f_g,
             &sumand_0,

@@ -1,8 +1,6 @@
 use super::*;
-use crate::circuit_translation::tests::factories::circuit_factory;
-use crate::circuit_translation::tests::factories::utils::*;
+use crate::circuit_translation::tests::factories::{circuit_factory, circuit_parser, utils};
 use plonky2::field::goldilocks_field::GoldilocksField;
-use sha2::{Digest, Sha256};
 
 #[test]
 fn test_backend_can_translate_blackbox_func_call_range_check_u8() {
@@ -62,8 +60,18 @@ fn test_backend_cannot_provide_witness_value_bigger_than_u32_for_u32_range_check
 }
 
 #[test]
+fn test_backend_can_translate_blackbox_func_call_range_check_u33() {
+    // This was needed for the std sha256 noir function.
+    let max_num_bits = 33;
+    let max_allowed_witness_value = 2u64.pow(max_num_bits.clone()) - 1;
+    let max_allowed_witness_value_field =
+        F::from_noncanonical_u64(max_allowed_witness_value.into());
+    test_range_check_with_witness_value(max_allowed_witness_value_field, max_num_bits);
+}
+
+#[test]
 #[should_panic(
-    expected = "Range checks with more than 32 bits are not allowed yet while using Plonky2 prover"
+    expected = "Range checks with more than 33 bits are not allowed yet while using Plonky2 prover"
 )]
 fn test_backend_does_not_support_range_check_for_u64_or_bigger() {
     let max_num_bits = 64;
@@ -83,10 +91,12 @@ fn test_range_check_with_witness_value(witness_value: F, max_num_bits: u32) {
     );
 
     // When
-    let (circuit_data, witness_target_map) = generate_plonky2_circuit_from_acir_circuit(&circuit);
+    let (circuit_data, witness_target_map) =
+        utils::generate_plonky2_circuit_from_acir_circuit(&circuit);
 
     //Then
-    let proof = generate_plonky2_proof_using_witness_values(
+    utils::check_linked_output_targets_property(&circuit, &witness_target_map);
+    let proof = utils::generate_plonky2_proof_using_witness_values(
         vec![(public_input_witness, witness_value)],
         &witness_target_map,
         &circuit_data,
@@ -227,7 +237,8 @@ fn _assert_backend_supports_bitwise_operation(
     );
 
     // When
-    let (circuit_data, witness_target_map) = generate_plonky2_circuit_from_acir_circuit(&circuit);
+    let (circuit_data, witness_target_map) =
+        utils::generate_plonky2_circuit_from_acir_circuit(&circuit);
 
     //Then
     let witness_assignment = vec![
@@ -236,7 +247,8 @@ fn _assert_backend_supports_bitwise_operation(
         (output_witness_2, output),
     ];
 
-    let proof = generate_plonky2_proof_using_witness_values(
+    utils::check_linked_output_targets_property(&circuit, &witness_target_map);
+    let proof = utils::generate_plonky2_proof_using_witness_values(
         witness_assignment,
         &witness_target_map,
         &circuit_data,
@@ -248,43 +260,27 @@ fn _assert_backend_supports_bitwise_operation(
 // --------------------- SHA256 --------------------- //
 
 #[test]
-fn test_backend_can_translate_sha256_acir_opcode_with_short_input() {
-    // fn main(in: [u8, 4]) -> pub [u8, 32]{
-    //     std::hash::sha256(in, 4);
+fn test_backend_can_translate_sha256_acir_opcode_with_short_input_precompiled() {
+    // fn main(hash_input: [u8; 4]) -> pub [u8; 32]{
+    //     std::sha256::sha256_var(hash_input, 4)
     // }
+    let (circuit, mut witnesses) = circuit_parser::precompiled_sha256_circuit_and_witnesses();
+    let witness_mapping = witnesses.pop().unwrap().witness;
 
-    // Given
-    let public_input_witnesses = vec![Witness(0), Witness(1), Witness(2), Witness(3)];
-    let output_witnesses: [Witness; 32] =
-        (4..36).map(Witness).collect::<Vec<_>>().try_into().unwrap();
-    let circuit = circuit_factory::sha256_circuit_with_inputs(
-        public_input_witnesses.clone(),
-        output_witnesses,
-    );
+    print!("{:?}", circuit);
 
     // When
-    let (circuit_data, witness_target_map) = generate_plonky2_circuit_from_acir_circuit(&circuit);
+    let (circuit_data, witness_target_map) =
+        utils::generate_plonky2_circuit_from_acir_circuit(&circuit);
 
     //Then
-    let mut witness_assignment = vec![
-        (public_input_witnesses[0], F::from_canonical_u8(112)), // h
-        (public_input_witnesses[1], F::from_canonical_u8(97)),  // o
-        (public_input_witnesses[2], F::from_canonical_u8(119)), // l
-        (public_input_witnesses[3], F::from_canonical_u8(110)),
-    ]; // a
+    let mut witness_assignment: Vec<(Witness, F)> = vec![];
+    for (witness, value) in witness_mapping {
+        witness_assignment.push((witness, F::from_canonical_u64(value.try_to_u64().unwrap())));
+    }
 
-    let str_to_be_hashed = b"hola";
-    let mut hasher = Sha256::new();
-    hasher.update(str_to_be_hashed);
-    let result = hasher.finalize();
-    let result_as_bytes: Vec<_> = result
-        .into_iter()
-        .map(|b| F::from_canonical_u8(b))
-        .collect();
-
-    witness_assignment.extend(output_witnesses.into_iter().zip(result_as_bytes));
-
-    let proof = generate_plonky2_proof_using_witness_values(
+    // utils::check_linked_output_targets_property(&circuit, &witness_target_map);
+    let proof = utils::generate_plonky2_proof_using_witness_values(
         witness_assignment,
         &witness_target_map,
         &circuit_data,

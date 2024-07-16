@@ -20,13 +20,16 @@ use plonky2::plonk::circuit_data::CircuitConfig;
 use plonky2::plonk::circuit_data::CircuitData;
 use plonky2::plonk::config::{GenericConfig, KeccakGoldilocksConfig};
 
-use crate::circuit_translation::targets::BinaryDigitsTarget;
+mod binary_digits_target;
+mod sha256_translator;
+
+use binary_digits_target::BinaryDigitsTarget;
+use sha256_translator::Sha256CompressionTranslator;
 
 #[cfg(test)]
 mod tests;
 
 pub mod assert_zero_translator;
-mod targets;
 
 const D: usize = 2;
 
@@ -34,7 +37,6 @@ type C = KeccakGoldilocksConfig;
 type F = <C as GenericConfig<D>>::F;
 type CB = CircuitBuilder<F, D>;
 
-// pub type FieldElement = GenericFieldElement<GoldilocksFr>;
 pub type Opcode = GenericOpcode<FieldElement>;
 pub type Circuit = GenericCircuit<FieldElement>;
 pub type Program = GenericProgram<FieldElement>;
@@ -83,6 +85,7 @@ impl CircuitBuilderFromAcirToPlonky2 {
                     outputs: _,
                     predicate: _,
                 } => {}
+                Opcode::Directive(_directive) => {}
                 Opcode::MemoryInit {
                     block_id,
                     init,
@@ -161,30 +164,38 @@ impl CircuitBuilderFromAcirToPlonky2 {
                     match func_call {
                         opcodes::BlackBoxFuncCall::RANGE { input } => {
                             let long_max_bits = input.num_bits.clone() as usize;
-                            assert!(long_max_bits <= 32,
-                                    "Range checks with more than 32 bits are not allowed yet while using Plonky2 prover");
+                            assert!(long_max_bits <= 33,
+                                    "Range checks with more than 33 bits are not allowed yet while using Plonky2 prover");
                             let witness = input.witness;
                             let target = self._get_or_create_target_for_witness(witness);
                             self.builder.range_check(target, long_max_bits)
                         }
                         opcodes::BlackBoxFuncCall::AND { lhs, rhs, output } => {
-                            self._extend_circuit_with_bitwise_operation(
+                            self._extend_circuit_with_operation(
                                 lhs,
                                 rhs,
                                 output,
-                                Self::and,
+                                BinaryDigitsTarget::and,
                             );
                         }
                         opcodes::BlackBoxFuncCall::XOR { lhs, rhs, output } => {
-                            self._extend_circuit_with_bitwise_operation(
+                            self._extend_circuit_with_operation(
                                 lhs,
                                 rhs,
                                 output,
-                                Self::xor,
+                                BinaryDigitsTarget::xor,
                             );
                         }
-                        opcodes::BlackBoxFuncCall::SHA256 { inputs, outputs } => {
-                            self._extend_circuit_with_sha256_operation(inputs, outputs);
+                        opcodes::BlackBoxFuncCall::Sha256Compression {
+                            inputs,
+                            hash_values,
+                            outputs,
+                        } => {
+                            self._extend_circuit_with_sha256_compression_operation(
+                                inputs,
+                                hash_values,
+                                outputs,
+                            );
                         }
                         blackbox_func => {
                             panic!("Blackbox func not supported yet: {:?}", blackbox_func);
@@ -199,36 +210,38 @@ impl CircuitBuilderFromAcirToPlonky2 {
         }
     }
 
-    fn _extend_circuit_with_sha256_operation(
-        &self,
-        _inputs: &Vec<FunctionInput>,
-        _outputs: &Box<[Witness; 32]>,
+    fn _extend_circuit_with_sha256_compression_operation(
+        &mut self,
+        inputs: &Box<[FunctionInput; 16]>,
+        hash_values: &Box<[FunctionInput; 8]>,
+        outputs: &Box<[Witness; 8]>,
     ) {
-        //         h = ['0x6a09e667', '0xbb67ae85', '0x3c6ef372', '0xa54ff53a', '0x510e527f', '0x9b05688c', '0x1f83d9ab', '0x5be0cd19']
-        //         k = ['0x428a2f98', '0x71374491', '0xb5c0fbcf', '0xe9b5dba5', '0x3956c25b', '0x59f111f1', '0x923f82a4','0xab1c5ed5', '0xd807aa98', '0x12835b01', '0x243185be', '0x550c7dc3', '0x72be5d74', '0x80deb1fe','0x9bdc06a7', '0xc19bf174', '0xe49b69c1', '0xefbe4786', '0x0fc19dc6', '0x240ca1cc', '0x2de92c6f','0x4a7484aa', '0x5cb0a9dc', '0x76f988da', '0x983e5152', '0xa831c66d', '0xb00327c8', '0xbf597fc7','0xc6e00bf3', '0xd5a79147', '0x06ca6351', '0x14292967', '0x27b70a85', '0x2e1b2138', '0x4d2c6dfc','0x53380d13', '0x650a7354', '0x766a0abb', '0x81c2c92e', '0x92722c85', '0xa2bfe8a1', '0xa81a664b','0xc24b8b70', '0xc76c51a3', '0xd192e819', '0xd6990624', '0xf40e3585', '0x106aa070', '0x19a4c116','0x1e376c08', '0x2748774c', '0x34b0bcb5', '0x391c0cb3', '0x4ed8aa4a', '0x5b9cca4f', '0x682e6ff3','0x748f82ee', '0x78a5636f', '0x84c87814', '0x8cc70208', '0x90befffa', '0xa4506ceb', '0xbef9a3f7','0xc67178f2']
+        let mut sha256_compression_translator =
+            Sha256CompressionTranslator::new_for(self, inputs, hash_values, outputs);
+        sha256_compression_translator.translate();
     }
 
-    fn _extend_circuit_with_bitwise_operation(
+    fn _extend_circuit_with_operation(
         self: &mut Self,
         lhs: &FunctionInput,
         rhs: &FunctionInput,
         output: &Witness,
-        operation: fn(&mut Self, BoolTarget, BoolTarget) -> BoolTarget,
+        operation: fn(BinaryDigitsTarget, BinaryDigitsTarget, &mut CB) -> BinaryDigitsTarget,
     ) {
         assert_eq!(lhs.num_bits, rhs.num_bits);
         let binary_digits = lhs.num_bits as usize;
-        let lhs_binary_target = self._binary_number_target_for_witness(lhs.witness, binary_digits);
-        let rhs_binary_target = self._binary_number_target_for_witness(rhs.witness, binary_digits);
+        let lhs_binary_target = self.binary_number_target_for_witness(lhs.witness, binary_digits);
+        let rhs_binary_target = self.binary_number_target_for_witness(rhs.witness, binary_digits);
 
         let output_binary_target =
-            self._translate_bitwise_operation(lhs_binary_target, rhs_binary_target, operation);
+            operation(lhs_binary_target, rhs_binary_target, &mut self.builder);
 
         let output_target = self.convert_binary_number_to_number(output_binary_target);
         self.witness_target_map.insert(*output, output_target);
     }
 
-    fn _binary_number_target_for_witness(
-        self: &mut Self,
+    pub fn binary_number_target_for_witness(
+        &mut self,
         w: Witness,
         digits: usize,
     ) -> BinaryDigitsTarget {
@@ -236,9 +249,29 @@ impl CircuitBuilderFromAcirToPlonky2 {
         self.convert_number_to_binary_number(target, digits)
     }
 
-    fn convert_number_to_binary_number(&mut self, a: Target, digits: usize) -> BinaryDigitsTarget {
+    pub fn binary_number_target_for_constant(
+        &mut self,
+        constant: usize,
+        digits: usize,
+    ) -> BinaryDigitsTarget {
+        let bit_targets = (0..digits)
+            .map(|bit_position| self._constant_bool_target_for_bit(constant, bit_position))
+            .collect();
+        BinaryDigitsTarget { bits: bit_targets }
+    }
+
+    fn convert_number_to_binary_number(
+        &mut self,
+        number_target: Target,
+        digits: usize,
+    ) -> BinaryDigitsTarget {
         BinaryDigitsTarget {
-            bits: self.builder.split_le(a, digits).into_iter().rev().collect(),
+            bits: self
+                .builder
+                .split_le(number_target, digits)
+                .into_iter()
+                .rev()
+                .collect(),
         }
     }
 
@@ -246,20 +279,21 @@ impl CircuitBuilderFromAcirToPlonky2 {
         self.builder.le_sum(a.bits.into_iter().rev())
     }
 
-    fn _translate_bitwise_operation(
-        self: &mut Self,
-        lhs: BinaryDigitsTarget,
-        rhs: BinaryDigitsTarget,
-        operation: fn(&mut Self, BoolTarget, BoolTarget) -> BoolTarget,
-    ) -> BinaryDigitsTarget {
-        BinaryDigitsTarget {
-            bits: lhs
-                .bits
-                .iter()
-                .zip(rhs.bits.iter())
-                .map(|(x, y)| operation(self, *x, *y))
-                .collect(),
-        }
+    fn zeroes(&mut self, digits: usize) -> Vec<BoolTarget> {
+        vec![self._bool_target_false(); digits]
+    }
+
+    fn _constant_bool_target_for_bit(
+        &mut self,
+        constant_value: usize,
+        bit_position: usize,
+    ) -> BoolTarget {
+        let cond = (constant_value & (1 << bit_position)) == 1;
+        self.builder.constant_bool(cond)
+    }
+
+    fn _bool_target_false(&mut self) -> BoolTarget {
+        self.builder._false()
     }
 
     fn _register_public_parameters_from_acir_circuit(self: &mut Self, circuit: &Circuit) {
@@ -298,17 +332,5 @@ impl CircuitBuilderFromAcirToPlonky2 {
                 target
             }
         }
-    }
-
-    fn and(&mut self, b1: BoolTarget, b2: BoolTarget) -> BoolTarget {
-        self.builder.and(b1, b2)
-    }
-
-    fn xor(&mut self, b1: BoolTarget, b2: BoolTarget) -> BoolTarget {
-        // a xor b = (a or b) and (not (a and b))
-        let b1_or_b2 = self.builder.or(b1, b2);
-        let b1_and_b2 = self.builder.and(b1, b2);
-        let not_b1_and_b2 = self.builder.not(b1_and_b2);
-        self.builder.and(b1_or_b2, not_b1_and_b2)
     }
 }

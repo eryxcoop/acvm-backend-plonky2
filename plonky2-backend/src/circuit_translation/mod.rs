@@ -21,10 +21,12 @@ use plonky2::plonk::circuit_data::CircuitData;
 use plonky2::plonk::config::{GenericConfig, KeccakGoldilocksConfig};
 
 mod binary_digits_target;
+mod memory_translator;
 mod sha256_translator;
 
 use binary_digits_target::BinaryDigitsTarget;
 use sha256_translator::Sha256CompressionTranslator;
+use memory_translator::MemoryOperationsTranslator;
 
 #[cfg(test)]
 mod tests;
@@ -91,11 +93,16 @@ impl CircuitBuilderFromAcirToPlonky2 {
                     init,
                     block_type: _,
                 } => {
-                    let vector_targets = init
-                        .into_iter()
-                        .map(|w| self._get_or_create_target_for_witness(*w))
-                        .collect();
-                    self.memory_blocks.insert(*block_id, vector_targets);
+                    MemoryOperationsTranslator::new_for(
+                        &mut self.builder,
+                        &mut self.witness_target_map,
+                        &mut self.memory_blocks
+                    ).translate_memory_init(init, block_id);
+                    // let vector_targets = init
+                    //     .into_iter()
+                    //     .map(|w| self._get_or_create_target_for_witness(*w))
+                    //     .collect();
+                    // self.memory_blocks.insert(*block_id, vector_targets);
                 }
                 Opcode::MemoryOp {
                     block_id,

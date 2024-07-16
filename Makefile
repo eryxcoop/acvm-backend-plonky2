@@ -1,4 +1,4 @@
-all: clone_custom_noir build_noir clone_custom_plonky2 build_plonky2 build_backend
+all: clone_custom_noir build_noir clone_custom_plonky2 build_plonky2 build_backend precompile_tests
 
 clone_custom_noir:
 	git clone https://github.com/brweisz/noir
@@ -14,6 +14,9 @@ build_plonky2:
 
 build_backend:
 	cd plonky2-backend && cargo build
+
+precompile_tests:
+	python prepare_compiled_noir_test_programs.py
 
 run_noir_example:
 	cd noir_example && ../noir/target/debug/nargo execute witness --print-acir && \

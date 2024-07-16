@@ -231,10 +231,6 @@ impl CircuitBuilderFromAcirToPlonky2 {
         self.builder.le_sum(a.bits.into_iter().rev())
     }
 
-    fn zeroes(&mut self, digits: usize) -> Vec<BoolTarget> {
-        vec![self._bool_target_false(); digits]
-    }
-
     fn _constant_bool_target_for_bit(
         &mut self,
         constant_value: usize,

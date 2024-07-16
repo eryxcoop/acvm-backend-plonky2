@@ -4,8 +4,8 @@ use crate::circuit_translation::tests::factories::{circuit_parser, utils};
 use acir::circuit::opcodes::BlockId;
 use acir::circuit::opcodes::BlockType::Memory;
 use acir::circuit::{ExpressionWidth, PublicInputs};
-use plonky2::iop::witness::{PartialWitness, WitnessWrite};
 use std::collections::BTreeSet;
+use plonky2::iop::witness::{PartialWitness, WitnessWrite};
 
 #[test]
 fn test_plonky2_backend_can_translate_a_read_memory_operation() {

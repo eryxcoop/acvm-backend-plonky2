@@ -1,6 +1,6 @@
 use acir::circuit::opcodes;
-use acir::circuit::opcodes::FunctionInput;
 use acir::circuit::opcodes::MemOp as GenericMemOp;
+use acir::circuit::opcodes::{BlockId, FunctionInput};
 use acir::circuit::Circuit as GenericCircuit;
 use acir::circuit::Opcode as GenericOpcode;
 use acir::circuit::Program as GenericProgram;
@@ -9,6 +9,7 @@ pub use acir::native_types::Witness;
 use acir::native_types::WitnessStack as GenericWitnessStack;
 use num_bigint::BigUint;
 use std::collections::HashMap;
+
 // Generics
 pub use acir_field::AcirField;
 pub use acir_field::FieldElement;
@@ -44,6 +45,7 @@ pub type WitnessStack = GenericWitnessStack<FieldElement>;
 pub struct CircuitBuilderFromAcirToPlonky2 {
     pub builder: CB,
     pub witness_target_map: HashMap<Witness, Target>,
+    pub memory_blocks: HashMap<BlockId, Vec<Target>>,
 }
 
 impl CircuitBuilderFromAcirToPlonky2 {
@@ -51,9 +53,11 @@ impl CircuitBuilderFromAcirToPlonky2 {
         let config = CircuitConfig::standard_recursion_config();
         let builder = CB::new(config);
         let witness_target_map: HashMap<Witness, Target> = HashMap::new();
+        let memory_blocks: HashMap<BlockId, Vec<Target>> = HashMap::new();
         Self {
             builder,
             witness_target_map,
+            memory_blocks,
         }
     }
 
@@ -80,17 +84,78 @@ impl CircuitBuilderFromAcirToPlonky2 {
                     predicate: _,
                 } => {}
                 Opcode::MemoryInit {
-                    block_id: _,
-                    init: _,
+                    block_id,
+                    init,
                     block_type: _,
-                } => {}
+                } => {
+                    let vector_targets = init
+                        .into_iter()
+                        .map(|w| self._get_or_create_target_for_witness(*w))
+                        .collect();
+                    self.memory_blocks.insert(*block_id, vector_targets);
+                }
                 Opcode::MemoryOp {
-                    block_id: _,
+                    block_id,
                     op,
                     predicate: _,
                 } => {
                     // TODO: check whether we should register if the predicate is false
                     self._register_intermediate_witnesses_for_memory_op(&op);
+                    let is_memory_read = op.clone().operation.to_const().unwrap().is_zero();
+                    let is_memory_write = op.clone().operation.to_const().unwrap().is_one();
+                    if is_memory_read {
+                        let witness_idx_to_read = op.index.to_witness().unwrap();
+                        let target_idx_to_read =
+                            self._get_or_create_target_for_witness(witness_idx_to_read);
+                        let witness_to_save_result = op.value.to_witness().unwrap();
+                        let target_to_save_result = self.builder.random_access(
+                            target_idx_to_read,
+                            self.memory_blocks[block_id].clone(),
+                        );
+                        self.witness_target_map
+                            .insert(witness_to_save_result, target_to_save_result);
+                    } else if is_memory_write {
+                        let witness_idx_to_write = op.index.to_witness().unwrap();
+                        let target_idx_to_write =
+                            self._get_or_create_target_for_witness(witness_idx_to_write);
+                        let witness_holding_new_value = op.value.to_witness().unwrap();
+                        let target_holding_new_value =
+                            self._get_or_create_target_for_witness(witness_holding_new_value);
+
+                        let memory_block_length = (&self.memory_blocks[block_id]).len();
+                        for position in 0..memory_block_length {
+                            let target_with_position =
+                                self.builder.constant(F::from_canonical_usize(position));
+                            let is_current_position_being_modified = self
+                                .builder
+                                .is_equal(target_idx_to_write, target_with_position)
+                                .target;
+                            let constant_one = self.builder.constant(F::from_canonical_usize(1));
+                            let is_current_position_being_kept = self
+                                .builder
+                                .sub(constant_one, is_current_position_being_modified);
+
+                            let new_target_in_array = self.builder.add_virtual_target();
+                            let current_target_in_position =
+                                self.memory_blocks[block_id][position];
+
+                            // Case where the current position is being modified
+                            self.builder.conditional_assert_eq(
+                                is_current_position_being_modified,
+                                target_holding_new_value,
+                                new_target_in_array,
+                            );
+                            // Case where we want to keep the current value in the array
+                            self.builder.conditional_assert_eq(
+                                is_current_position_being_kept,
+                                current_target_in_position,
+                                new_target_in_array,
+                            );
+                            self.memory_blocks.get_mut(block_id).unwrap()[position] = new_target_in_array;
+                        }
+                    } else {
+                        panic!("Backend encountered unknown memory operation code (nor 0 or 1)");
+                    }
                 }
                 Opcode::BlackBoxFuncCall(func_call) => {
                     match func_call {

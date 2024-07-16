@@ -15,6 +15,7 @@ impl WriteVKAction {
         let CircuitBuilderFromAcirToPlonky2 {
             builder,
             witness_target_map: _,
+            memory_blocks: _,
         } = translator;
         let plonky2_circuit = builder.build::<C>();
         let verifier_data = plonky2_circuit.verifier_data();

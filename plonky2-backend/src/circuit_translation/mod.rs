@@ -131,28 +131,15 @@ impl CircuitBuilderFromAcirToPlonky2 {
                                 self.builder.constant(F::from_canonical_usize(position));
                             let is_current_position_being_modified = self
                                 .builder
-                                .is_equal(target_idx_to_write, target_with_position)
-                                .target;
-                            let constant_one = self.builder.constant(F::from_canonical_usize(1));
-                            let is_current_position_being_kept = self
-                                .builder
-                                .sub(constant_one, is_current_position_being_modified);
+                                .is_equal(target_idx_to_write, target_with_position);
 
-                            let new_target_in_array = self.builder.add_virtual_target();
                             let current_target_in_position = self.memory_blocks[block_id][position];
-
-                            // Case where the current position is being modified
-                            self.builder.conditional_assert_eq(
+                            let new_target_in_array = self.builder._if(
                                 is_current_position_being_modified,
                                 target_holding_new_value,
-                                new_target_in_array,
+                                current_target_in_position
                             );
-                            // Case where we want to keep the current value in the array
-                            self.builder.conditional_assert_eq(
-                                is_current_position_being_kept,
-                                current_target_in_position,
-                                new_target_in_array,
-                            );
+
                             self.memory_blocks.get_mut(block_id).unwrap()[position] =
                                 new_target_in_array;
                         }

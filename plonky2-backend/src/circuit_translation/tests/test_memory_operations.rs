@@ -4,6 +4,7 @@ use acir::circuit::opcodes::BlockId;
 use acir::circuit::opcodes::BlockType::Memory;
 use acir::circuit::{ExpressionWidth, PublicInputs};
 use std::collections::BTreeSet;
+use plonky2::iop::witness::{PartialWitness, WitnessWrite};
 use crate::circuit_translation::tests::factories::{circuit_parser, utils};
 
 #[test]
@@ -258,4 +259,48 @@ fn expression_witness(witness: Witness) -> Expression {
         linear_combinations: vec![(FieldElement::one(), witness)],
         q_c: FieldElement::zero(),
     }
+}
+
+#[test]
+fn plonky2_is_equal_test_positive(){
+    let config = CircuitConfig::standard_recursion_config();
+    let mut circuit_builder = CB::new(config);
+
+    let x = circuit_builder.add_virtual_target();
+    let y = circuit_builder.add_virtual_target();
+
+    let mut partial_witnesses = PartialWitness::<F>::new();
+    let zero = F::from_canonical_u64(0);
+    let one = F::from_canonical_u64(1);
+    let is_equal = circuit_builder.is_equal(x, y);
+
+    partial_witnesses.set_target(x, zero);
+    partial_witnesses.set_target(y, zero);
+    partial_witnesses.set_target(is_equal.target, one);
+
+    let circuit_data = circuit_builder.build::<C>();
+    let proof = circuit_data.prove(partial_witnesses).unwrap();
+    assert!(circuit_data.verify(proof).is_ok());
+}
+
+#[test]
+fn plonky2_is_equal_test_negative(){
+    let config = CircuitConfig::standard_recursion_config();
+    let mut circuit_builder = CB::new(config);
+
+    let x = circuit_builder.add_virtual_target();
+    let y = circuit_builder.add_virtual_target();
+
+    let mut partial_witnesses = PartialWitness::<F>::new();
+    let one = F::from_canonical_u64(1);
+    let zero = F::from_canonical_u64(0);
+    let is_equal = circuit_builder.is_equal(x, y);
+
+    partial_witnesses.set_target(x, one);
+    partial_witnesses.set_target(y, zero);
+    partial_witnesses.set_target(is_equal.target, zero);
+
+    let circuit_data = circuit_builder.build::<C>();
+    let proof = circuit_data.prove(partial_witnesses).unwrap();
+    assert!(circuit_data.verify(proof).is_ok());
 }

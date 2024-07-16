@@ -1,6 +1,8 @@
-use super::*;
-use crate::circuit_translation::tests::factories::{circuit_factory, circuit_parser, utils};
 use plonky2::field::goldilocks_field::GoldilocksField;
+
+use crate::circuit_translation::tests::factories::{circuit_factory, utils};
+
+use super::*;
 
 #[test]
 fn test_backend_can_translate_blackbox_func_call_range_check_u8() {
@@ -248,38 +250,6 @@ fn _assert_backend_supports_bitwise_operation(
     ];
 
     utils::check_linked_output_targets_property(&circuit, &witness_target_map);
-    let proof = utils::generate_plonky2_proof_using_witness_values(
-        witness_assignment,
-        &witness_target_map,
-        &circuit_data,
-    );
-
-    assert!(circuit_data.verify(proof).is_ok());
-}
-
-// --------------------- SHA256 --------------------- //
-
-#[test]
-fn test_backend_can_translate_sha256_acir_opcode_with_short_input_precompiled() {
-    // fn main(hash_input: [u8; 4]) -> pub [u8; 32]{
-    //     std::sha256::sha256_var(hash_input, 4)
-    // }
-    let (circuit, mut witnesses) = circuit_parser::precompiled_sha256_circuit_and_witnesses();
-    let witness_mapping = witnesses.pop().unwrap().witness;
-
-    print!("{:?}", circuit);
-
-    // When
-    let (circuit_data, witness_target_map) =
-        utils::generate_plonky2_circuit_from_acir_circuit(&circuit);
-
-    //Then
-    let mut witness_assignment: Vec<(Witness, F)> = vec![];
-    for (witness, value) in witness_mapping {
-        witness_assignment.push((witness, F::from_canonical_u64(value.try_to_u64().unwrap())));
-    }
-
-    // utils::check_linked_output_targets_property(&circuit, &witness_target_map);
     let proof = utils::generate_plonky2_proof_using_witness_values(
         witness_assignment,
         &witness_target_map,

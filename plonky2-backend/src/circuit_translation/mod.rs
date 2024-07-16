@@ -25,8 +25,8 @@ mod memory_translator;
 mod sha256_translator;
 
 use binary_digits_target::BinaryDigitsTarget;
-use sha256_translator::Sha256CompressionTranslator;
 use memory_translator::MemoryOperationsTranslator;
+use sha256_translator::Sha256CompressionTranslator;
 
 #[cfg(test)]
 mod tests;
@@ -96,8 +96,9 @@ impl CircuitBuilderFromAcirToPlonky2 {
                     MemoryOperationsTranslator::new_for(
                         &mut self.builder,
                         &mut self.witness_target_map,
-                        &mut self.memory_blocks
-                    ).translate_memory_init(init, block_id);
+                        &mut self.memory_blocks,
+                    )
+                    .translate_memory_init(init, block_id);
                 }
                 Opcode::MemoryOp {
                     block_id,
@@ -107,8 +108,9 @@ impl CircuitBuilderFromAcirToPlonky2 {
                     MemoryOperationsTranslator::new_for(
                         &mut self.builder,
                         &mut self.witness_target_map,
-                        &mut self.memory_blocks
-                    ).translate_memory_op(block_id, op);
+                        &mut self.memory_blocks,
+                    )
+                    .translate_memory_op(block_id, op);
                 }
                 Opcode::BlackBoxFuncCall(func_call) => {
                     match func_call {

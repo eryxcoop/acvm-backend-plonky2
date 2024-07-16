@@ -139,8 +139,7 @@ impl CircuitBuilderFromAcirToPlonky2 {
                                 .sub(constant_one, is_current_position_being_modified);
 
                             let new_target_in_array = self.builder.add_virtual_target();
-                            let current_target_in_position =
-                                self.memory_blocks[block_id][position];
+                            let current_target_in_position = self.memory_blocks[block_id][position];
 
                             // Case where the current position is being modified
                             self.builder.conditional_assert_eq(
@@ -154,7 +153,8 @@ impl CircuitBuilderFromAcirToPlonky2 {
                                 current_target_in_position,
                                 new_target_in_array,
                             );
-                            self.memory_blocks.get_mut(block_id).unwrap()[position] = new_target_in_array;
+                            self.memory_blocks.get_mut(block_id).unwrap()[position] =
+                                new_target_in_array;
                         }
                     } else {
                         panic!("Backend encountered unknown memory operation code (nor 0 or 1)");

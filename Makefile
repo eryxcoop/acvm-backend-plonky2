@@ -16,7 +16,7 @@ build_backend:
 	cd plonky2-backend && cargo build
 
 run_noir_example:
-	cd noir_example && ../noir/target/debug/nargo execute witness && \
+	cd noir_example && ../noir/target/debug/nargo execute witness --print-acir && \
 	cd ../plonky2-backend && ./target/debug/plonky2-backend prove -c ../noir_example/target/noir_example.json -w  ../noir_example/target/witness -o ../noir_example/proof && \
 	./target/debug/plonky2-backend write_vk -b ../noir_example/target/noir_example.json -o ../noir_example/target/vk && \
 	./target/debug/plonky2-backend verify -k ../noir_example/target/vk -p ../noir_example/proof

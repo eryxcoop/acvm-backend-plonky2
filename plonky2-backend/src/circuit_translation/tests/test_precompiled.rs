@@ -7,7 +7,8 @@ use parameterized::parameterized;
 #[parameterized(program_name = {
     "basic_memory_write",
     "assert_x_equals_5",
-    "node_guardians_example"
+    "node_guardians_example",
+    "array_dynamic",
 })]
 fn test_noir_program(program_name: &str) {
     let (circuit, mut witnesses) =

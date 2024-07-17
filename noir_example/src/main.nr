@@ -1,3 +1,3 @@
-fn main(mut v: pub [Field; 3], idx: pub Field){
-    assert(v[idx] == 5);
+fn main(x: i32){
+    assert(x==-7);
 }

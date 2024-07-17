@@ -70,7 +70,7 @@ impl CircuitBuilderFromAcirToPlonky2 {
     }
 
     pub fn translate_circuit(self: &mut Self, circuit: &Circuit) {
-        self._register_public_parameters_from_acir_circuit(circuit);
+        self._register_parameters_from_acir_circuit(circuit);
         for opcode in &circuit.opcodes {
             match opcode {
                 Opcode::AssertZero(expr) => {
@@ -248,23 +248,35 @@ impl CircuitBuilderFromAcirToPlonky2 {
         self.builder._false()
     }
 
-    fn _register_public_parameters_from_acir_circuit(self: &mut Self, circuit: &Circuit) {
+    fn _register_parameters_from_acir_circuit(self: &mut Self, circuit: &Circuit) {
+        // Public parameters
         let public_parameters_as_list: Vec<Witness> =
             circuit.public_parameters.0.iter().cloned().collect();
         for public_parameter_witness in public_parameters_as_list {
             self._register_new_public_input_from_witness(public_parameter_witness);
+        }
+        // Private parameters
+        let private_parameters_as_list: Vec<Witness> =
+            circuit.private_parameters.iter().cloned().collect();
+        for private_parameter_witness in private_parameters_as_list {
+            self._register_new_private_input_from_witness(private_parameter_witness);
         }
     }
 
     fn _register_new_public_input_from_witness(
         self: &mut Self,
         public_input_witness: Witness,
-    ) -> Target {
+    ) {
         let public_input_target = self.builder.add_virtual_target();
         self.builder.register_public_input(public_input_target);
-        self.witness_target_map
-            .insert(public_input_witness, public_input_target);
-        public_input_target
+        self.witness_target_map.insert(public_input_witness, public_input_target);
+    }
+
+    fn _register_new_private_input_from_witness(
+        self: &mut Self,
+        private_input_witness: Witness,
+    ) {
+        self._get_or_create_target_for_witness(private_input_witness);
     }
 
     fn _get_or_create_target_for_witness(self: &mut Self, witness: Witness) -> Target {

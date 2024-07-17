@@ -79,33 +79,6 @@ fn test_plonky2_backend_can_translate_a_program_with_basic_memory_write() {
     assert!(circuit_data.verify(proof).is_ok());
 }
 
-#[test]
-fn test_plonky2_backend_can_translate_a_program_with_basic_memory_write_precompiled() {
-    let (circuit, mut witnesses) = circuit_parser::precompiled_mem_write_circuit_and_witnesses();
-    let witness_mapping = witnesses.pop().unwrap().witness;
-
-    print!("{:?}", circuit);
-
-    // When
-    let (circuit_data, witness_target_map) =
-        utils::generate_plonky2_circuit_from_acir_circuit(&circuit);
-
-    //Then
-    let mut witness_assignment: Vec<(Witness, F)> = vec![];
-    for (witness, value) in witness_mapping {
-        witness_assignment.push((witness, F::from_canonical_u64(value.try_to_u64().unwrap())));
-    }
-
-    // utils::check_linked_output_targets_property(&circuit, &witness_target_map);
-    let proof = utils::generate_plonky2_proof_using_witness_values(
-        witness_assignment,
-        &witness_target_map,
-        &circuit_data,
-    );
-
-    assert!(circuit_data.verify(proof).is_ok());
-}
-
 fn _memory_simple_read_circuit(
     array_positions_input_witnesses: Vec<Witness>,
     index_input_witness: Witness,

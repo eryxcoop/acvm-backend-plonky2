@@ -26,14 +26,9 @@ fn _path_for_witnesses(nargo_project_name: &str) -> String {
     ))
 }
 
-pub fn precompiled_sha256_circuit_and_witnesses() -> (Circuit, WitnessStack) {
-    let circuit_path = _path_for_circuit("sha256_4");
-    let witness_path = _path_for_witnesses("sha256_4");
+pub fn precompiled_circuit_and_withesses_with_name(program_name: &str) -> (Circuit, WitnessStack) {
+    let circuit_path = _path_for_circuit(program_name);
+    let witness_path = _path_for_witnesses(program_name);
     parse_circuit_and_witnesses(&circuit_path, witness_path)
 }
 
-pub fn precompiled_mem_write_circuit_and_witnesses() -> (Circuit, WitnessStack) {
-    let circuit_path = _path_for_circuit("basic_memory_write");
-    let witness_path = _path_for_witnesses("basic_memory_write");
-    parse_circuit_and_witnesses(&circuit_path, witness_path)
-}

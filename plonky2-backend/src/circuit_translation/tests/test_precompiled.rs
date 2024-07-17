@@ -9,6 +9,10 @@ use parameterized::parameterized;
     "assert_x_equals_5",
     "node_guardians_example",
     "array_dynamic",
+    "1_mul",
+    "3_add",
+    "5_over",
+    "7_function",
 })]
 fn test_noir_program(program_name: &str) {
     let (circuit, mut witnesses) =

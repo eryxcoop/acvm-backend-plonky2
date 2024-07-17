@@ -1,5 +1,6 @@
 [package]
-name = "1327_concrete_in_generic"
+name = "7_function"
 type = "bin"
 authors = [""]
+
 [dependencies]

@@ -31,4 +31,3 @@ pub fn precompiled_circuit_and_withesses_with_name(program_name: &str) -> (Circu
     let witness_path = _path_for_witnesses(program_name);
     parse_circuit_and_witnesses(&circuit_path, witness_path)
 }
-

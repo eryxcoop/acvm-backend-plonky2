@@ -1,12 +1,13 @@
+use super::*;
 use crate::circuit_translation::tests::factories::{circuit_parser, utils};
 use parameterized::parameterized;
-use super::*;
 
 // --------------------- SHA256 --------------------- //
 
-#[parameterized(program_name = {"basic_memory_write"})]
+#[parameterized(program_name = {"basic_memory_write", "sha256_4", "assert_x_equals_5"})]
 fn test_noir_program(program_name: &str) {
-    let (circuit, mut witnesses) = circuit_parser::precompiled_circuit_and_withesses_with_name(program_name);
+    let (circuit, mut witnesses) =
+        circuit_parser::precompiled_circuit_and_withesses_with_name(program_name);
     let witness_mapping = witnesses.pop().unwrap().witness;
 
     // print!("{:?}", circuit);

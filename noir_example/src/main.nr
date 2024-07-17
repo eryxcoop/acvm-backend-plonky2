@@ -1,5 +1,3 @@
-fn main(mut x: pub [Field; 2], y: pub Field, v: pub Field){
-    x[y] = v;
-    assert(x[0] == 1);
-    assert(x[1] == 11);
+fn main(mut v: pub [Field; 3], idx: pub Field){
+    assert(v[idx] == 5);
 }

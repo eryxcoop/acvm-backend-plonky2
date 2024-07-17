@@ -61,19 +61,30 @@ impl<'a> MemoryOperationsTranslator<'a> {
         let witness_idx_to_read = op.index.to_witness().unwrap();
         let target_idx_to_read = self._get_or_create_target_for_witness(witness_idx_to_read);
         let witness_to_save_result = op.value.to_witness().unwrap();
+        let block_of_memory = self.memory_blocks[block_id].clone();
         let target_to_save_result = self
             .builder
-            .random_access(target_idx_to_read, self.memory_blocks[block_id].clone());
+            .random_access(target_idx_to_read, block_of_memory);
         self.witness_target_map
             .insert(witness_to_save_result, target_to_save_result);
     }
 
     pub fn translate_memory_init(&mut self, init: &Vec<Witness>, block_id: &BlockId) {
-        let vector_targets = init
+        let mut vector_targets: Vec<Target> = init
             .into_iter()
             .map(|w| self._get_or_create_target_for_witness(*w))
             .collect();
+        self._extend_block_with_zeroes_to_have_a_power_of_two_length(&mut vector_targets);
         self.memory_blocks.insert(*block_id, vector_targets);
+    }
+
+    /// This is necessary because plonky2 can only perform a random_access operation
+    /// on vectors with a length that is a power of two.
+    /// "Index out of bounds" accesses shouldn't happen because Noir won't allow them.
+    fn _extend_block_with_zeroes_to_have_a_power_of_two_length(&mut self, vector_targets: &mut Vec<Target>) {
+        let length_of_block = vector_targets.len();
+        let targets_to_add = (length_of_block as u32).checked_next_power_of_two().unwrap_or(0) - length_of_block as u32;
+        vector_targets.extend((0..targets_to_add).into_iter().map(|_| self.builder.zero()));
     }
 
     fn _register_intermediate_witnesses_for_memory_op(self: &mut Self, op: &MemOp) {

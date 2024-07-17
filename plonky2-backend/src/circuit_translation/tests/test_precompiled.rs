@@ -4,7 +4,11 @@ use parameterized::parameterized;
 
 // --------------------- SHA256 --------------------- //
 
-#[parameterized(program_name = {"basic_memory_write", "sha256_4", "assert_x_equals_5"})]
+#[parameterized(program_name = {
+    "basic_memory_write",
+    "assert_x_equals_5",
+    "node_guardians_example"
+})]
 fn test_noir_program(program_name: &str) {
     let (circuit, mut witnesses) =
         circuit_parser::precompiled_circuit_and_withesses_with_name(program_name);

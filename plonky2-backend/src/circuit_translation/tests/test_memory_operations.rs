@@ -78,6 +78,92 @@ fn test_plonky2_backend_can_translate_a_program_with_basic_memory_write() {
     assert!(circuit_data.verify(proof).is_ok());
 }
 
+#[test]
+fn test_backend_supports_creation_of_memory_blocks_with_irregular_size(){
+    // Irregular means that is not a power of 2.
+    // Apparently the way plonky2 handles random access requires a vector with a length of power of 2
+    // The solution is appending dummy targets to fill the necessary spaces when reading a block
+
+    // fn main(mut v: pub [Field; 3], idx: pub Field){
+    //     assert(v[idx] == 5);
+    // }
+
+    //Given
+    let array_input_witnesses = vec![Witness(0), Witness(1), Witness(2)];
+    let index_input_witness = Witness(3);
+    let circuit = _read_memory_of_length_3_circuit(
+        array_input_witnesses.clone(),
+        index_input_witness,
+    );
+
+    // When
+    let (circuit_data, witness_target_map) = generate_plonky2_circuit_from_acir_circuit(&circuit);
+
+    //Then
+    let zero = F::from_canonical_u64(0);
+    let five = F::from_canonical_u64(5);
+    let ten = F::from_canonical_u64(10);
+    let eleven = F::from_canonical_u64(11);
+    let proof = generate_plonky2_proof_using_witness_values(
+        vec![
+            (array_input_witnesses[0], five),
+            (array_input_witnesses[1], ten),
+            (array_input_witnesses[2], eleven),
+            (index_input_witness, zero),
+            (Witness(4), five),
+        ],
+        &witness_target_map,
+        &circuit_data,
+    );
+    assert!(circuit_data.verify(proof).is_ok());
+}
+
+fn _read_memory_of_length_3_circuit(
+    array_positions_input_witnesses: Vec<Witness>,
+    index_input_witness: Witness,
+) -> Circuit {
+    // public parameters indices : [0, 1, 2, 3]
+    // return value indices : []
+    // INIT (id: 0, len: 3)
+    // MEM (id: 0, read at: x3, value: x4)
+    // EXPR [ (1, _4) -5 ]
+    Circuit {
+        current_witness_index: 0,
+        expression_width: ExpressionWidth::Unbounded,
+        opcodes: vec![
+            Opcode::MemoryInit {
+                block_id: BlockId(0),
+                init: array_positions_input_witnesses.clone(),
+                block_type: Memory,
+            },
+            Opcode::MemoryOp {
+                block_id: BlockId(0),
+                op: MemOp {
+                    operation: expression_read(),
+                    index: expression_witness(index_input_witness),
+                    value: expression_witness(Witness(4)),
+                },
+                predicate: None,
+            },
+            Opcode::AssertZero(Expression {
+                mul_terms: Vec::new(),
+                linear_combinations: vec![(FieldElement::one(), Witness(4))],
+                q_c: -FieldElement::from_hex("0x05").unwrap(),
+            }),
+        ],
+        private_parameters: BTreeSet::new(),
+        public_parameters: PublicInputs(BTreeSet::from_iter(vec![
+            array_positions_input_witnesses[0],
+            array_positions_input_witnesses[1],
+            array_positions_input_witnesses[2],
+            index_input_witness,
+        ])),
+        return_values: PublicInputs(BTreeSet::new()),
+        assert_messages: Default::default(),
+        recursive: false,
+    }
+}
+
 fn _memory_simple_read_circuit(
     array_positions_input_witnesses: Vec<Witness>,
     index_input_witness: Witness,
@@ -98,7 +184,7 @@ fn _memory_simple_read_circuit(
                 block_id: BlockId(0),
                 op: MemOp {
                     operation: expression_read(),
-                    index: expression_witness(Witness(2)),
+                    index: expression_witness(index_input_witness),
                     value: expression_witness(Witness(3)),
                 },
                 predicate: None,
@@ -106,7 +192,7 @@ fn _memory_simple_read_circuit(
             Opcode::AssertZero(Expression {
                 mul_terms: Vec::new(),
                 linear_combinations: vec![
-                    (FieldElement::one(), Witness(0)),
+                    (FieldElement::one(), array_positions_input_witnesses[0].clone()),
                     (-FieldElement::one(), Witness(3)),
                 ],
                 q_c: FieldElement::zero(),

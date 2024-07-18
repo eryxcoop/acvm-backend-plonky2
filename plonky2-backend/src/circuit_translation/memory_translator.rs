@@ -3,14 +3,14 @@ use super::*;
 pub struct MemoryOperationsTranslator<'a> {
     builder: &'a mut CircuitBuilder<F, D>,
     witness_target_map: &'a mut HashMap<Witness, Target>,
-    memory_blocks: &'a mut HashMap<BlockId, Vec<Target>>,
+    memory_blocks: &'a mut HashMap<BlockId, (Vec<Target>, usize)>,
 }
 
 impl<'a> MemoryOperationsTranslator<'a> {
     pub fn new_for(
         builder: &'a mut CircuitBuilder<F, D>,
         witness_target_map: &'a mut HashMap<Witness, Target>,
-        memory_blocks: &'a mut HashMap<BlockId, Vec<Target>>,
+        memory_blocks: &'a mut HashMap<BlockId, (Vec<Target>, usize)>,
     ) -> Self {
         Self {
             builder,
@@ -21,6 +21,15 @@ impl<'a> MemoryOperationsTranslator<'a> {
 
     pub fn translate_memory_op(&mut self, block_id: &BlockId, op: &MemOp) {
         self._register_intermediate_witnesses_for_memory_op(&op);
+
+        let witness_index_to_access = op.index.to_witness().unwrap();
+        let target_index_to_access = self._get_or_create_target_for_witness(witness_index_to_access);
+        MemoryOperationsTranslator::add_restrictions_to_check_index_is_in_range(
+            self.memory_blocks.get(block_id).unwrap().1 - 1,
+            target_index_to_access,
+            &mut self.builder
+        );
+
         let is_memory_read = op.clone().operation.to_const().unwrap().is_zero();
         let is_memory_write = op.clone().operation.to_const().unwrap().is_one();
         if is_memory_read {
@@ -32,28 +41,53 @@ impl<'a> MemoryOperationsTranslator<'a> {
         }
     }
 
-    fn _translate_memory_write(&mut self, block_id: &&BlockId, op: &MemOp) {
+    pub fn add_restrictions_to_check_index_is_in_range(length_of_block: usize,
+                                                   target_index: Target,
+                                                   builder: &mut  CB) {
+        let binary_representation: Vec<u8> = format!("{:b}", length_of_block).chars()
+            .map(|c| c.to_digit(2).unwrap() as u8).collect();
+
+        let binary_target_index = BinaryDigitsTarget {
+            bits: builder
+                .split_le(target_index, binary_representation.len())
+                .into_iter()
+                .collect(),
+        };
+
+        let mut acc_target = builder.one();
+        for i in 0..binary_target_index.number_of_digits() {
+            if binary_representation[i] == 0 {
+                let aux = builder.mul(binary_target_index.bits[i].target, acc_target);
+                builder.assert_zero(aux);
+            } else if binary_representation[i] == 1 {
+                let new_acc_target = builder.mul(acc_target, binary_target_index.bits[i].target);
+                acc_target = new_acc_target;
+            }
+        }
+    }
+
+    fn _translate_memory_write(&mut self, block_id: &BlockId, op: &MemOp) {
         let witness_idx_to_write = op.index.to_witness().unwrap();
         let target_idx_to_write = self._get_or_create_target_for_witness(witness_idx_to_write);
         let witness_holding_new_value = op.value.to_witness().unwrap();
         let target_holding_new_value =
             self._get_or_create_target_for_witness(witness_holding_new_value);
 
-        let memory_block_length = (&self.memory_blocks[block_id]).len();
+        let memory_block_length = (&self.memory_blocks[block_id].0).len();
         for position in 0..memory_block_length {
             let target_with_position = self.builder.constant(F::from_canonical_usize(position));
             let is_current_position_being_modified = self
                 .builder
                 .is_equal(target_idx_to_write, target_with_position);
 
-            let current_target_in_position = self.memory_blocks[block_id][position];
+            let current_target_in_position = self.memory_blocks[block_id].0[position];
             let new_target_in_array = self.builder._if(
                 is_current_position_being_modified,
                 target_holding_new_value,
                 current_target_in_position,
             );
 
-            self.memory_blocks.get_mut(block_id).unwrap()[position] = new_target_in_array;
+            self.memory_blocks.get_mut(block_id).unwrap().0[position] = new_target_in_array;
         }
     }
 
@@ -61,7 +95,7 @@ impl<'a> MemoryOperationsTranslator<'a> {
         let witness_idx_to_read = op.index.to_witness().unwrap();
         let target_idx_to_read = self._get_or_create_target_for_witness(witness_idx_to_read);
         let witness_to_save_result = op.value.to_witness().unwrap();
-        let block_of_memory = self.memory_blocks[block_id].clone();
+        let block_of_memory = self.memory_blocks[block_id].0.clone();
         let target_to_save_result = self
             .builder
             .random_access(target_idx_to_read, block_of_memory);
@@ -74,8 +108,9 @@ impl<'a> MemoryOperationsTranslator<'a> {
             .into_iter()
             .map(|w| self._get_or_create_target_for_witness(*w))
             .collect();
+        let real_memory_block_size = vector_targets.len();
         self._extend_block_with_zeroes_to_have_a_power_of_two_length(&mut vector_targets);
-        self.memory_blocks.insert(*block_id, vector_targets);
+        self.memory_blocks.insert(*block_id, (vector_targets, real_memory_block_size));
     }
 
     /// This is necessary because plonky2 can only perform a random_access operation

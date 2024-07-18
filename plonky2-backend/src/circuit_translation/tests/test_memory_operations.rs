@@ -118,6 +118,27 @@ fn test_backend_supports_creation_of_memory_blocks_with_irregular_size(){
     assert!(circuit_data.verify(proof).is_ok());
 }
 
+#[test]
+#[should_panic]
+fn test_there_cannot_be_accesses_out_of_range(){
+    let config = CircuitConfig::standard_recursion_config();
+    let mut circuit_builder = CB::new(config);
+
+    let n = 5;
+    let x = circuit_builder.add_virtual_public_input();
+
+    MemoryOperationsTranslator::add_restrictions_to_check_index_is_in_range(
+        n-1, x, &mut circuit_builder);
+
+    let mut partial_witnesses = PartialWitness::<F>::new();
+    let f_n = F::from_canonical_usize(n);
+    partial_witnesses.set_target(x, f_n);
+
+    let circuit_data = circuit_builder.build::<C>();
+    let proof = circuit_data.prove(partial_witnesses).unwrap();
+    assert!(circuit_data.verify(proof).is_ok());
+}
+
 fn _read_memory_of_length_3_circuit(
     array_positions_input_witnesses: Vec<Witness>,
     index_input_witness: Witness,

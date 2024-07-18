@@ -49,7 +49,7 @@ pub type WitnessStack = GenericWitnessStack<FieldElement>;
 pub struct CircuitBuilderFromAcirToPlonky2 {
     pub builder: CB,
     pub witness_target_map: HashMap<Witness, Target>,
-    pub memory_blocks: HashMap<BlockId, Vec<Target>>,
+    pub memory_blocks: HashMap<BlockId, (Vec<Target>, usize)>,
 }
 
 impl CircuitBuilderFromAcirToPlonky2 {
@@ -57,7 +57,7 @@ impl CircuitBuilderFromAcirToPlonky2 {
         let config = CircuitConfig::standard_recursion_config();
         let builder = CB::new(config);
         let witness_target_map: HashMap<Witness, Target> = HashMap::new();
-        let memory_blocks: HashMap<BlockId, Vec<Target>> = HashMap::new();
+        let memory_blocks: HashMap<BlockId, (Vec<Target>, usize)> = HashMap::new();
         Self {
             builder,
             witness_target_map,

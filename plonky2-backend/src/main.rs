@@ -29,23 +29,44 @@ pub mod noir_and_plonky2_serialization;
 #[global_allocator] // This is a plonky2 recommendation
 static GLOBAL: Jemalloc = Jemalloc;
 
-fn main() {
-    let prove_command_name = "prove";
-
-    let short_help_circuit_argument = "";
-    let long_help_circuit_argument = "";
-    let circuit_path_argument = Arg::new("circuit_path")
-        .help(short_help_circuit_argument)
-        .long_help(long_help_circuit_argument)
-        .short('c')
-        .long("circuit_path")
+fn create_argument(argument_id: &'static str,
+                   short_identifier: char,
+                   long_identifier: &'static str,
+                   short_help: &'static str,
+                   long_help: &'static str) -> Arg {
+    Arg::new(argument_id)
+        .help(short_help)
+        .long_help(long_help)
+        .short(short_identifier)
+        .long(long_identifier)
         .required(true)
         .action(clap::ArgAction::Set)
-        .value_parser(value_parser!(PathBuf));
+        .value_parser(value_parser!(PathBuf))
+}
 
-    let prove_command =
-        Command::new(prove_command_name)
-            .arg(circuit_path_argument);
+fn create_command_with_args(command_name: &'static str, args: Vec<Arg>) -> Command {
+    args.iter().fold(
+        Command::new(command_name),
+        |acc_command, arg| acc_command.arg(arg)
+    )
+}
+
+fn create_command_with_subcommands(command_name: &'static str, subcommands: Vec<Command>) -> Command {
+    subcommands.iter().fold(
+        Command::new(command_name),
+        |acc_command, subcommand| acc_command.subcommand(subcommand)
+    )
+}
+
+fn main() {
+    let circuit_path_argument = _prove_argument_circuit_path();
+
+
+    let prove_command_name = "prove";
+    let prove_command = create_command_with_args(
+        prove_command_name,
+        vec![circuit_path_argument.clone()]
+    );
 
     let main_command = Command::new("myprog")
         .subcommand_required(true)
@@ -54,9 +75,9 @@ fn main() {
 
     let matches = main_command.get_matches();
     if let Some(subcommand_matches) = matches.subcommand_matches(prove_command_name) {
-        if let Some(circuit_path) = subcommand_matches.get_one::<PathBuf>("circuit_path") {
-            println!("Value for config: {:?}", circuit_path);
-        }
+        let circuit_path = subcommand_matches.get_one::<PathBuf>(
+            circuit_path_argument.get_id().to_string().as_str()).expect("---");
+
     }
 
     // let args: Vec<String> = env::args().collect();
@@ -67,6 +88,22 @@ fn main() {
     //     "verify" => _execute_verify_command(&args),
     //     other => eprintln!("Invalid command: {:?}", other),
     // }
+}
+
+fn _prove_argument_circuit_path() -> Arg {
+    let circuit_path_argument_id = "circuit_path";
+    let short_command_identifier = 'c';
+    let long_command_identifier = "circuit-path";
+    let short_help_circuit_argument = "";
+    let long_help_circuit_argument = "";
+    let circuit_path_argument = create_argument(
+        circuit_path_argument_id,
+        short_command_identifier,
+        long_command_identifier,
+        short_help_circuit_argument,
+        long_help_circuit_argument,
+    );
+    circuit_path_argument
 }
 
 fn _execute_prove_command(args: &Vec<String>) {

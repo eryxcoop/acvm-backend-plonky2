@@ -263,19 +263,14 @@ impl CircuitBuilderFromAcirToPlonky2 {
         }
     }
 
-    fn _register_new_public_input_from_witness(
-        self: &mut Self,
-        public_input_witness: Witness,
-    ) {
+    fn _register_new_public_input_from_witness(self: &mut Self, public_input_witness: Witness) {
         let public_input_target = self.builder.add_virtual_target();
         self.builder.register_public_input(public_input_target);
-        self.witness_target_map.insert(public_input_witness, public_input_target);
+        self.witness_target_map
+            .insert(public_input_witness, public_input_target);
     }
 
-    fn _register_new_private_input_from_witness(
-        self: &mut Self,
-        private_input_witness: Witness,
-    ) {
+    fn _register_new_private_input_from_witness(self: &mut Self, private_input_witness: Witness) {
         self._get_or_create_target_for_witness(private_input_witness);
     }
 

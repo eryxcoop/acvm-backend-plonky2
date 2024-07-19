@@ -79,7 +79,7 @@ fn test_plonky2_backend_can_translate_a_program_with_basic_memory_write() {
 }
 
 #[test]
-fn test_backend_supports_creation_of_memory_blocks_with_irregular_size(){
+fn test_backend_supports_creation_of_memory_blocks_with_irregular_size() {
     // Irregular means that is not a power of 2.
     // Apparently the way plonky2 handles random access requires a vector with a length of power of 2
     // The solution is appending dummy targets to fill the necessary spaces when reading a block
@@ -91,10 +91,8 @@ fn test_backend_supports_creation_of_memory_blocks_with_irregular_size(){
     //Given
     let array_input_witnesses = vec![Witness(0), Witness(1), Witness(2)];
     let index_input_witness = Witness(3);
-    let circuit = _read_memory_of_length_3_circuit(
-        array_input_witnesses.clone(),
-        index_input_witness,
-    );
+    let circuit =
+        _read_memory_of_length_3_circuit(array_input_witnesses.clone(), index_input_witness);
 
     // When
     let (circuit_data, witness_target_map) = generate_plonky2_circuit_from_acir_circuit(&circuit);
@@ -118,26 +116,70 @@ fn test_backend_supports_creation_of_memory_blocks_with_irregular_size(){
     assert!(circuit_data.verify(proof).is_ok());
 }
 
+// Test less or equal
+
+fn _generate_valid_combinations() -> Vec<(usize, usize)>{
+    let mut test_values: Vec<(usize, usize)> = Vec::new();
+    for max_value in 0..300 {
+        for target_value in 0..max_value+1 {
+            test_values.push((max_value as usize, target_value as usize));
+        }
+    }
+    test_values
+}
+
+fn _generate_invalid_combinations() -> Vec<(usize, usize)>{
+    let mut test_values: Vec<(usize, usize)> = Vec::new();
+    for max_value in 0..300 {
+        for target_value in (max_value+1)..300 {
+            test_values.push((max_value as usize, target_value as usize));
+        }
+    }
+    test_values
+}
+
 #[test]
-#[should_panic]
-fn test_there_cannot_be_accesses_out_of_range(){
+#[ignore]
+fn test_all_invalid_combinations_are_invalid(){
+    use std::panic::{catch_unwind, AssertUnwindSafe};
+    for (max_value, target_value) in _generate_invalid_combinations() {
+        println!("(max: {}, target: {})", max_value, target_value);
+        let result = catch_unwind(AssertUnwindSafe(|| {
+            assert_target_is_less_or_equal(max_value, target_value);
+        }));
+        assert!(result.is_err(), "Expected panic");
+    }
+}
+
+#[test]
+#[ignore]
+fn test_all_valid_combinations_are_valid(){
+    for (max_value, target_value) in _generate_valid_combinations() {
+        println!("(max: {}, target: {})", max_value, target_value);
+        assert_target_is_less_or_equal(max_value, target_value);
+    }
+}
+
+fn assert_target_is_less_or_equal(max_allowed_value: usize, actual_target_value: usize) {
     let config = CircuitConfig::standard_recursion_config();
     let mut circuit_builder = CB::new(config);
 
-    let n = 5;
-    let x = circuit_builder.add_virtual_public_input();
-
-    MemoryOperationsTranslator::add_restrictions_to_check_index_is_in_range(
-        n-1, x, &mut circuit_builder);
+    let public_input_target= circuit_builder.add_virtual_public_input();
+    MemoryOperationsTranslator::add_restrictions_to_assert_target_is_less_or_equal_to(
+        max_allowed_value,
+        public_input_target,
+        &mut circuit_builder,
+    );
 
     let mut partial_witnesses = PartialWitness::<F>::new();
-    let f_n = F::from_canonical_usize(n);
-    partial_witnesses.set_target(x, f_n);
+    partial_witnesses.set_target(public_input_target, F::from_canonical_usize(actual_target_value));
 
     let circuit_data = circuit_builder.build::<C>();
     let proof = circuit_data.prove(partial_witnesses).unwrap();
     assert!(circuit_data.verify(proof).is_ok());
 }
+
+// ------------ CIRCUITS ------------ //
 
 fn _read_memory_of_length_3_circuit(
     array_positions_input_witnesses: Vec<Witness>,
@@ -213,7 +255,10 @@ fn _memory_simple_read_circuit(
             Opcode::AssertZero(Expression {
                 mul_terms: Vec::new(),
                 linear_combinations: vec![
-                    (FieldElement::one(), array_positions_input_witnesses[0].clone()),
+                    (
+                        FieldElement::one(),
+                        array_positions_input_witnesses[0].clone(),
+                    ),
                     (-FieldElement::one(), Witness(3)),
                 ],
                 q_c: FieldElement::zero(),

@@ -23,11 +23,12 @@ impl<'a> MemoryOperationsTranslator<'a> {
         self._register_intermediate_witnesses_for_memory_op(&op);
 
         let witness_index_to_access = op.index.to_witness().unwrap();
-        let target_index_to_access = self._get_or_create_target_for_witness(witness_index_to_access);
-        MemoryOperationsTranslator::add_restrictions_to_check_index_is_in_range(
+        let target_index_to_access =
+            self._get_or_create_target_for_witness(witness_index_to_access);
+        MemoryOperationsTranslator::add_restrictions_to_assert_target_is_less_or_equal_to(
             self.memory_blocks.get(block_id).unwrap().1 - 1,
             target_index_to_access,
-            &mut self.builder
+            &mut self.builder,
         );
 
         let is_memory_read = op.clone().operation.to_const().unwrap().is_zero();
@@ -41,16 +42,21 @@ impl<'a> MemoryOperationsTranslator<'a> {
         }
     }
 
-    pub fn add_restrictions_to_check_index_is_in_range(length_of_block: usize,
-                                                   target_index: Target,
-                                                   builder: &mut  CB) {
-        let binary_representation: Vec<u8> = format!("{:b}", length_of_block).chars()
-            .map(|c| c.to_digit(2).unwrap() as u8).collect();
+    pub fn add_restrictions_to_assert_target_is_less_or_equal_to(
+        max_allowed_value: usize,
+        target_index: Target,
+        builder: &mut CB,
+    ) {
+        let binary_representation: Vec<u8> = format!("{:b}", max_allowed_value)
+            .chars()
+            .map(|c| c.to_digit(2).unwrap() as u8)
+            .collect();
 
         let binary_target_index = BinaryDigitsTarget {
             bits: builder
                 .split_le(target_index, binary_representation.len())
                 .into_iter()
+                .rev()
                 .collect(),
         };
 
@@ -110,15 +116,22 @@ impl<'a> MemoryOperationsTranslator<'a> {
             .collect();
         let real_memory_block_size = vector_targets.len();
         self._extend_block_with_zeroes_to_have_a_power_of_two_length(&mut vector_targets);
-        self.memory_blocks.insert(*block_id, (vector_targets, real_memory_block_size));
+        self.memory_blocks
+            .insert(*block_id, (vector_targets, real_memory_block_size));
     }
 
     /// This is necessary because plonky2 can only perform a random_access operation
     /// on vectors with a length that is a power of two.
     /// "Index out of bounds" accesses shouldn't happen because Noir won't allow them.
-    fn _extend_block_with_zeroes_to_have_a_power_of_two_length(&mut self, vector_targets: &mut Vec<Target>) {
+    fn _extend_block_with_zeroes_to_have_a_power_of_two_length(
+        &mut self,
+        vector_targets: &mut Vec<Target>,
+    ) {
         let length_of_block = vector_targets.len();
-        let targets_to_add = (length_of_block as u32).checked_next_power_of_two().unwrap_or(0) - length_of_block as u32;
+        let targets_to_add = (length_of_block as u32)
+            .checked_next_power_of_two()
+            .unwrap_or(0)
+            - length_of_block as u32;
         vector_targets.extend((0..targets_to_add).into_iter().map(|_| self.builder.zero()));
     }
 

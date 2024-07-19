@@ -1,13 +1,14 @@
 extern crate core;
 
-use std::env;
 use std::fs::File;
 use std::io::{Read, Write};
+use std::path::PathBuf;
 use std::vec::Vec;
 
-use circuit_translation::*;
+use clap::{Arg, Command, value_parser};
 use jemallocator::Jemalloc;
 
+use circuit_translation::*;
 use noir_and_plonky2_serialization::*;
 use plonky2::plonk::circuit_data::VerifierCircuitData;
 use plonky2::plonk::config::{GenericConfig, KeccakGoldilocksConfig};
@@ -29,15 +30,43 @@ pub mod noir_and_plonky2_serialization;
 static GLOBAL: Jemalloc = Jemalloc;
 
 fn main() {
-    let args: Vec<String> = env::args().collect();
+    let prove_command_name = "prove";
 
-    let command: &str = &args.get(1).expect("Must specify a command");
-    match command {
-        "prove" => _execute_prove_command(&args),
-        "write_vk" => _execute_write_vk_command(&args),
-        "verify" => _execute_verify_command(&args),
-        other => eprintln!("Invalid command: {:?}", other),
+    let short_help_circuit_argument = "";
+    let long_help_circuit_argument = "";
+    let circuit_path_argument = Arg::new("circuit_path")
+        .help(short_help_circuit_argument)
+        .long_help(long_help_circuit_argument)
+        .short('c')
+        .long("circuit_path")
+        .required(true)
+        .action(clap::ArgAction::Set)
+        .value_parser(value_parser!(PathBuf));
+
+    let prove_command =
+        Command::new(prove_command_name)
+            .arg(circuit_path_argument);
+
+    let main_command = Command::new("myprog")
+        .subcommand_required(true)
+        .subcommand(prove_command);
+
+
+    let matches = main_command.get_matches();
+    if let Some(subcommand_matches) = matches.subcommand_matches(prove_command_name) {
+        if let Some(circuit_path) = subcommand_matches.get_one::<PathBuf>("circuit_path") {
+            println!("Value for config: {:?}", circuit_path);
+        }
     }
+
+    // let args: Vec<String> = env::args().collect();
+    // let command: &str = &args.get(1).expect("Must specify a command");
+    // match command {
+    //     "prove" => _execute_prove_command(&args),
+    //     "write_vk" => _execute_write_vk_command(&args),
+    //     "verify" => _execute_verify_command(&args),
+    //     other => eprintln!("Invalid command: {:?}", other),
+    // }
 }
 
 fn _execute_prove_command(args: &Vec<String>) {

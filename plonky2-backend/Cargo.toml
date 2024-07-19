@@ -17,6 +17,7 @@ base64 = "0.22.1"
 flate2 = "1.0.30"
 tar = "0.4.41"
 parameterized = "2.0.0"
+clap = { version = "4.5.9", features = ["derive", "cargo"] }
 
 [patch.crates-io]
 acir = { path = "../noir/acvm-repo/acir"}

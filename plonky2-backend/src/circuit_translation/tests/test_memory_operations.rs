@@ -118,6 +118,23 @@ fn test_backend_supports_creation_of_memory_blocks_with_irregular_size() {
 
 // Test less or equal
 
+#[test]
+#[ignore]
+fn test_brute_force_range_checks_up_to_300(){
+    for (max_value, target_value) in _generate_valid_combinations() {
+        // println!("(max: {}, target: {})", max_value, target_value);
+        assert_target_is_less_or_equal(max_value, target_value);
+    }
+    use std::panic::{catch_unwind, AssertUnwindSafe};
+    for (max_value, target_value) in _generate_invalid_combinations() {
+        // println!("(max: {}, target: {})", max_value, target_value);
+        let result = catch_unwind(AssertUnwindSafe(|| {
+            assert_target_is_less_or_equal(max_value, target_value);
+        }));
+        assert!(result.is_err(), "Expected panic");
+    }
+}
+
 fn _generate_valid_combinations() -> Vec<(usize, usize)>{
     let mut test_values: Vec<(usize, usize)> = Vec::new();
     for max_value in 0..300 {
@@ -136,28 +153,6 @@ fn _generate_invalid_combinations() -> Vec<(usize, usize)>{
         }
     }
     test_values
-}
-
-#[test]
-#[ignore]
-fn test_all_invalid_combinations_are_invalid(){
-    use std::panic::{catch_unwind, AssertUnwindSafe};
-    for (max_value, target_value) in _generate_invalid_combinations() {
-        println!("(max: {}, target: {})", max_value, target_value);
-        let result = catch_unwind(AssertUnwindSafe(|| {
-            assert_target_is_less_or_equal(max_value, target_value);
-        }));
-        assert!(result.is_err(), "Expected panic");
-    }
-}
-
-#[test]
-#[ignore]
-fn test_all_valid_combinations_are_valid(){
-    for (max_value, target_value) in _generate_valid_combinations() {
-        println!("(max: {}, target: {})", max_value, target_value);
-        assert_target_is_less_or_equal(max_value, target_value);
-    }
 }
 
 fn assert_target_is_less_or_equal(max_allowed_value: usize, actual_target_value: usize) {

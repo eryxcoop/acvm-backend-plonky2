@@ -155,7 +155,7 @@ impl<'a> Sha256CompressionTranslator<'a> {
 
     fn initial_h(&mut self) -> Vec<BinaryDigitsTarget> {
         let mut binary_inputs: Vec<BinaryDigitsTarget> = self
-            .inputs
+            .hash_values
             .into_iter()
             .map(|input| {
                 self.circuit_builder

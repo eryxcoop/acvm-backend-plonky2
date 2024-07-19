@@ -119,15 +119,16 @@ fn test_backend_supports_creation_of_memory_blocks_with_irregular_size() {
 // Test less or equal
 
 #[test]
-#[ignore]
-fn test_brute_force_range_checks_up_to_300(){
-    for (max_value, target_value) in _generate_valid_combinations() {
-        // println!("(max: {}, target: {})", max_value, target_value);
+// #[ignore]
+fn test_brute_force_range_checks_up_to_17(){
+    let max = 17;
+    for (max_value, target_value) in _generate_valid_combinations(max) {
+        println!("(max: {}, target: {})", max_value, target_value);
         assert_target_is_less_or_equal(max_value, target_value);
     }
     use std::panic::{catch_unwind, AssertUnwindSafe};
-    for (max_value, target_value) in _generate_invalid_combinations() {
-        // println!("(max: {}, target: {})", max_value, target_value);
+    for (max_value, target_value) in _generate_invalid_combinations(max) {
+        println!("(max: {}, target: {})", max_value, target_value);
         let result = catch_unwind(AssertUnwindSafe(|| {
             assert_target_is_less_or_equal(max_value, target_value);
         }));
@@ -135,9 +136,9 @@ fn test_brute_force_range_checks_up_to_300(){
     }
 }
 
-fn _generate_valid_combinations() -> Vec<(usize, usize)>{
+fn _generate_valid_combinations(max: u32) -> Vec<(usize, usize)>{
     let mut test_values: Vec<(usize, usize)> = Vec::new();
-    for max_value in 0..300 {
+    for max_value in 0..max {
         for target_value in 0..max_value+1 {
             test_values.push((max_value as usize, target_value as usize));
         }
@@ -145,10 +146,10 @@ fn _generate_valid_combinations() -> Vec<(usize, usize)>{
     test_values
 }
 
-fn _generate_invalid_combinations() -> Vec<(usize, usize)>{
+fn _generate_invalid_combinations(max: u32) -> Vec<(usize, usize)>{
     let mut test_values: Vec<(usize, usize)> = Vec::new();
-    for max_value in 0..300 {
-        for target_value in (max_value+1)..300 {
+    for max_value in 0..max {
+        for target_value in (max_value+1)..max {
             test_values.push((max_value as usize, target_value as usize));
         }
     }

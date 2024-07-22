@@ -5,7 +5,7 @@ use std::io::{Read, Write};
 use std::path::PathBuf;
 use std::vec::Vec;
 
-use clap::{Arg, Command, value_parser};
+use clap::{Arg, ArgMatches, Command, value_parser};
 use jemallocator::Jemalloc;
 
 use circuit_translation::*;
@@ -65,32 +65,30 @@ fn main() {
 
     let matches = main_command.get_matches();
     if let Some(subcommand_matches) = matches.subcommand_matches(prove_command.get_name()) {
-        let circuit_path = subcommand_matches.get_one::<PathBuf>(
-            _prove_argument_circuit_path().get_id().to_string().as_str()).expect("---");
-        let witness_path = subcommand_matches.get_one::<PathBuf>(
-            _prove_argument_witness_path().get_id().to_string().as_str()).expect("---");
-        let output_path = subcommand_matches.get_one::<PathBuf>(
-            _prove_argument_output_path().get_id().to_string().as_str()).expect("---");
+        let circuit_path = _get_argument_value(subcommand_matches, _prove_argument_circuit_path());
+        let witness_path = _get_argument_value(subcommand_matches, _prove_argument_witness_path());
+        let output_path = _get_argument_value(subcommand_matches, _prove_argument_output_path());
 
         _execute_prove_command(circuit_path, witness_path, output_path);
 
     } else if let Some(subcommand_matches) = matches.subcommand_matches(write_vk_command.get_name()) {
-        let circuit_path = subcommand_matches.get_one::<PathBuf>(
-            _write_vk_argument_circuit_path().get_id().to_string().as_str()).expect("---");
-        let output_path = subcommand_matches.get_one::<PathBuf>(
-            _write_vk_argument_output_path().get_id().to_string().as_str()).expect("---");
+        let circuit_path = _get_argument_value(subcommand_matches, _write_vk_argument_circuit_path());
+        let output_path = _get_argument_value(subcommand_matches, _write_vk_argument_output_path());
 
         _execute_write_vk_command(circuit_path, output_path);
 
     } else if let Some(subcommand_matches) = matches.subcommand_matches(verify_command.get_name()) {
-        let vk_path = subcommand_matches.get_one::<PathBuf>(
-            _verify_argument_vk_path().get_id().to_string().as_str()).expect("---");
-        let proof_path = subcommand_matches.get_one::<PathBuf>(
-            _verify_argument_proof().get_id().to_string().as_str()).expect("---");
+        let vk_path = _get_argument_value(subcommand_matches, _verify_argument_vk_path());
+        let proof_path = _get_argument_value(subcommand_matches, _verify_argument_proof());
 
         _execute_verify_command(vk_path, proof_path);
 
     }
+}
+
+fn _get_argument_value(subcommand_matches: &ArgMatches, argument: Arg) -> &PathBuf {
+    subcommand_matches.get_one::<PathBuf>(
+        argument.get_id().to_string().as_str()).expect("Value for command not found")
 }
 
 fn _create_prove_command() -> Command {

@@ -1,5 +1,5 @@
 [package]
-name = "1327_concrete_in_generic"
+name = "noir_example"
 type = "bin"
 authors = [""]
 [dependencies]

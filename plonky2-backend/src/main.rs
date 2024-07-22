@@ -1,9 +1,5 @@
 extern crate core;
 
-use std::fs::File;
-use std::io::{Read, Write};
-use std::vec::Vec;
-
 use jemallocator::Jemalloc;
 
 use circuit_translation::*;
@@ -13,7 +9,6 @@ use plonky2::plonk::config::{GenericConfig, KeccakGoldilocksConfig};
 use plonky2::plonk::proof::CompressedProofWithPublicInputs;
 use plonky2::util::serialization::DefaultGateSerializer;
 
-use crate::circuit_translation::CircuitBuilderFromAcirToPlonky2;
 
 const D: usize = 2;
 

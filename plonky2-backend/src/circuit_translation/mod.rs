@@ -1,3 +1,4 @@
+use super::*;
 use acir::circuit::opcodes;
 use acir::circuit::opcodes::MemOp as GenericMemOp;
 use acir::circuit::opcodes::{BlockId, FunctionInput};
@@ -18,7 +19,7 @@ use plonky2::iop::target::{BoolTarget, Target};
 use plonky2::plonk::circuit_builder::CircuitBuilder;
 use plonky2::plonk::circuit_data::CircuitConfig;
 use plonky2::plonk::circuit_data::CircuitData;
-use plonky2::plonk::config::{GenericConfig, KeccakGoldilocksConfig};
+use plonky2::plonk::config::{GenericConfig};
 
 mod binary_digits_target;
 mod memory_translator;
@@ -33,10 +34,7 @@ mod tests;
 
 pub mod assert_zero_translator;
 
-const D: usize = 2;
 
-type C = KeccakGoldilocksConfig;
-type F = <C as GenericConfig<D>>::F;
 type CB = CircuitBuilder<F, D>;
 
 pub type Opcode = GenericOpcode<FieldElement>;

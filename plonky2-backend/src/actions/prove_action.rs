@@ -7,16 +7,12 @@ use plonky2::field::types::Field;
 use plonky2::iop::target::Target;
 use plonky2::iop::witness::{PartialWitness, WitnessWrite};
 use plonky2::plonk::circuit_data::CircuitData;
-use plonky2::plonk::config::{GenericConfig, KeccakGoldilocksConfig};
 use plonky2::plonk::proof::ProofWithPublicInputs;
 
 use crate::circuit_translation;
 use crate::circuit_translation::*;
 use crate::noir_and_plonky2_serialization::*;
-
-const D: usize = 2;
-type C = KeccakGoldilocksConfig;
-type F = <C as GenericConfig<D>>::F;
+use super::*;
 
 pub struct ProveAction {
     pub acir_program_json_path: String,

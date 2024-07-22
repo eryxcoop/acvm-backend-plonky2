@@ -1,5 +1,7 @@
 use super::*;
 
+/// The Write Verification Key Action will translate the ACIR circuit into the Plonky2 circuit
+/// (again) and write the necessary data for the Verifier to verify the computation.
 pub struct WriteVKAction {
     pub acir_program_json_path: String,
     pub vk_path_output: String,

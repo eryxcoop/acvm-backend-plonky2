@@ -64,7 +64,8 @@ fn main() {
 
     let main_command = Command::new("myprog")
         .subcommand_required(true)
-        .subcommand(prove_command.clone());
+        .subcommand(prove_command.clone())
+        .subcommand(write_vk_command.clone());
 
 
     let matches = main_command.get_matches();
@@ -77,6 +78,9 @@ fn main() {
             _prove_argument_output_path().get_id().to_string().as_str()).expect("---");
 
         _execute_prove_command(circuit_path, witness_path, output_path);
+    } else if let Some(subcommand_matches) = matches.subcommand_matches(write_vk_command.get_name()) {
+        let circuit_path = subcommand_matches.get_one::<PathBuf>(
+            _write_vk_argument_circuit_path().get_id().to_string().as_str()).expect("---");
     }
 }
 
@@ -98,7 +102,7 @@ fn _create_write_vk_command() -> Command {
     let prove_command = create_command_with_args(
         write_vk_command_name,
         vec![
-
+            _write_vk_argument_circuit_path(),
         ]
     );
     prove_command

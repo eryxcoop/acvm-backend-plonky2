@@ -60,16 +60,15 @@ fn create_command_with_subcommands(command_name: &'static str, subcommands: Vec<
 
 fn main() {
     let prove_command = _create_prove_command();
-    let prove_command_name = prove_command.clone().get_name();
-
+    let write_vk_command = _create_write_vk_command();
 
     let main_command = Command::new("myprog")
         .subcommand_required(true)
-        .subcommand(prove_command);
+        .subcommand(prove_command.clone());
 
 
     let matches = main_command.get_matches();
-    if let Some(subcommand_matches) = matches.subcommand_matches(prove_command_name) {
+    if let Some(subcommand_matches) = matches.subcommand_matches(prove_command.get_name()) {
         let circuit_path = subcommand_matches.get_one::<PathBuf>(
             _prove_argument_circuit_path().get_id().to_string().as_str()).expect("---");
         let witness_path = subcommand_matches.get_one::<PathBuf>(
@@ -94,55 +93,78 @@ fn _create_prove_command() -> Command {
     prove_command
 }
 
+fn _create_write_vk_command() -> Command {
+    let write_vk_command_name = "write_vk";
+    let prove_command = create_command_with_args(
+        write_vk_command_name,
+        vec![
+
+        ]
+    );
+    prove_command
+}
+
+
 
 fn _prove_argument_circuit_path() -> Arg {
-    let circuit_path_argument_id = "circuit_path";
+    let argument_id = "circuit_path";
     let short_command_identifier = 'c';
     let long_command_identifier = "circuit-path";
-    let short_help_circuit_argument = "Path to the generated ACIR circuit";
-    let long_help_circuit_argument = "";
-    let circuit_path_argument = create_argument(
-        circuit_path_argument_id,
+    let short_help = "Path to the generated ACIR circuit";
+    let long_help = "";
+    create_argument(
+        argument_id,
         short_command_identifier,
         long_command_identifier,
-        short_help_circuit_argument,
-        long_help_circuit_argument,
-    );
-    circuit_path_argument
+        short_help,
+        long_help,
+    )
 }
 
 fn _prove_argument_witness_path() -> Arg {
-    let circuit_path_argument_id = "witness_path";
+    let argument_id = "witness_path";
     let short_command_identifier = 'w';
     let long_command_identifier = "witness-path";
-    let short_help_circuit_argument = "Path to the generated witness values";
-    let long_help_circuit_argument = "";
-    let circuit_path_argument = create_argument(
-        circuit_path_argument_id,
+    let short_help = "Path to the generated witness values";
+    let long_help = "";
+    create_argument(
+        argument_id,
         short_command_identifier,
         long_command_identifier,
-        short_help_circuit_argument,
-        long_help_circuit_argument,
-    );
-    circuit_path_argument
+        short_help,
+        long_help,
+    )
 }
 
 fn _prove_argument_output_path() -> Arg {
-    let circuit_path_argument_id = "output_path";
+    let argument_id = "output_path";
     let short_command_identifier = 'o';
     let long_command_identifier = "output-path";
-    let short_help_circuit_argument = "Path where the generated proof is to be stored";
-    let long_help_circuit_argument = "";
-    let circuit_path_argument = create_argument(
-        circuit_path_argument_id,
+    let short_help = "Path where the generated proof is to be stored";
+    let long_help = "";
+    create_argument(
+        argument_id,
         short_command_identifier,
         long_command_identifier,
-        short_help_circuit_argument,
-        long_help_circuit_argument,
-    );
-    circuit_path_argument
+        short_help,
+        long_help,
+    )
 }
 
+fn _write_vk_argument_circuit_path() -> Arg {
+    let argument_id = "circuit_path";
+    let short_command_identifier = 'b';
+    let long_command_identifier = "circuit-path";
+    let short_help = "Path to the generated ACIR circuit";
+    let long_help = "";
+    create_argument(
+        argument_id,
+        short_command_identifier,
+        long_command_identifier,
+        short_help,
+        long_help,
+    )
+}
 
 fn _execute_prove_command(circuit_path: &PathBuf, witness_path: &PathBuf, output_path: &PathBuf) {
     actions::prove_action::ProveAction {

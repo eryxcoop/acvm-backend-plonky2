@@ -78,9 +78,15 @@ fn main() {
             _prove_argument_output_path().get_id().to_string().as_str()).expect("---");
 
         _execute_prove_command(circuit_path, witness_path, output_path);
+
     } else if let Some(subcommand_matches) = matches.subcommand_matches(write_vk_command.get_name()) {
         let circuit_path = subcommand_matches.get_one::<PathBuf>(
             _write_vk_argument_circuit_path().get_id().to_string().as_str()).expect("---");
+        let output_path = subcommand_matches.get_one::<PathBuf>(
+            _write_vk_argument_output_path().get_id().to_string().as_str()).expect("---");
+
+        _execute_write_vk_command(circuit_path, output_path);
+
     }
 }
 
@@ -103,6 +109,7 @@ fn _create_write_vk_command() -> Command {
         write_vk_command_name,
         vec![
             _write_vk_argument_circuit_path(),
+            _write_vk_argument_output_path(),
         ]
     );
     prove_command
@@ -170,6 +177,21 @@ fn _write_vk_argument_circuit_path() -> Arg {
     )
 }
 
+fn _write_vk_argument_output_path() -> Arg {
+    let argument_id = "output_path";
+    let short_command_identifier = 'o';
+    let long_command_identifier = "output-path";
+    let short_help = "Path to the generated verification key";
+    let long_help = "";
+    create_argument(
+        argument_id,
+        short_command_identifier,
+        long_command_identifier,
+        short_help,
+        long_help,
+    )
+}
+
 fn _execute_prove_command(circuit_path: &PathBuf, witness_path: &PathBuf, output_path: &PathBuf) {
     actions::prove_action::ProveAction {
         acir_program_json_path: String::from(circuit_path.to_str().unwrap()),
@@ -178,14 +200,11 @@ fn _execute_prove_command(circuit_path: &PathBuf, witness_path: &PathBuf, output
     }.run();
 }
 
-fn _execute_write_vk_command(args: &Vec<String>) {
-    let acir_program_json_path = &args[3];
-    let vk_path_output = &args[5];
-    let write_vk_action = actions::write_vk_action::WriteVKAction {
-        acir_program_json_path: acir_program_json_path.clone(),
-        vk_path_output: vk_path_output.clone(),
-    };
-    write_vk_action.run()
+fn _execute_write_vk_command(circuit_path: &PathBuf, output_path: &PathBuf) {
+    actions::write_vk_action::WriteVKAction {
+        acir_program_json_path: String::from(circuit_path.to_str().unwrap()),
+        vk_path_output: String::from(output_path.to_str().unwrap()),
+    }.run()
 }
 
 fn _execute_verify_command(args: &Vec<String>) {

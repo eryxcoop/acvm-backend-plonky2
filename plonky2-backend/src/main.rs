@@ -24,5 +24,5 @@ pub mod noir_and_plonky2_serialization;
 static GLOBAL: Jemalloc = Jemalloc;
 
 fn main() {
-    argument_parsing::parse_commands();
+    argument_parsing::parse_and_execute_commands();
 }

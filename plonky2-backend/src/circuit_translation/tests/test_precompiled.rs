@@ -2,7 +2,7 @@ use super::*;
 use crate::circuit_translation::tests::factories::{circuit_parser, utils};
 use parameterized::parameterized;
 
-// --------------------- SHA256 --------------------- //
+/// Tests for compiled Noir programs
 
 #[parameterized(program_name = {
     "basic_memory_write",

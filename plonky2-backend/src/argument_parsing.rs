@@ -7,7 +7,7 @@ use std::path::PathBuf;
 ///     write_vk -b circuit/path -o output/verification/key/path
 ///     verify -k verification/key/path -p proof/path
 
-pub fn parse_commands() {
+pub fn parse_and_execute_commands() {
     let prove_command = _create_prove_command();
     let write_vk_command = _create_write_vk_command();
     let verify_command = _create_verify_command();

@@ -1,12 +1,10 @@
 use plonky2::iop::witness::{PartialWitness, WitnessWrite};
 
 use crate::circuit_translation::binary_digits_target::BinaryDigitsTarget;
-use crate::circuit_translation::tests::factories::{circuit_parser, utils};
 
 use super::*;
 
-// These are unit tests for internal functions of the sha256 algorithm
-// They are agnostic to acir code
+/// These are unit tests for internal functions of the sha256 algorithm. They are agnostic to ACIR.
 
 #[test]
 fn test_rotate_right_4_1() {

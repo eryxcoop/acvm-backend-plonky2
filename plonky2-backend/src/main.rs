@@ -59,13 +59,13 @@ fn create_command_with_subcommands(command_name: &'static str, subcommands: Vec<
 }
 
 fn main() {
-    let circuit_path_argument = _prove_argument_circuit_path();
-
-
     let prove_command_name = "prove";
     let prove_command = create_command_with_args(
         prove_command_name,
-        vec![circuit_path_argument.clone()]
+        vec![
+            _prove_argument_circuit_path(),
+            _prove_argument_witness_path()
+        ]
     );
 
     let main_command = Command::new("myprog")
@@ -76,8 +76,11 @@ fn main() {
     let matches = main_command.get_matches();
     if let Some(subcommand_matches) = matches.subcommand_matches(prove_command_name) {
         let circuit_path = subcommand_matches.get_one::<PathBuf>(
-            circuit_path_argument.get_id().to_string().as_str()).expect("---");
+            _prove_argument_circuit_path().get_id().to_string().as_str()).expect("---");
+        let witness_path = subcommand_matches.get_one::<PathBuf>(
+            _prove_argument_witness_path().get_id().to_string().as_str()).expect("---");
 
+        println!("{:?} {:?}", circuit_path, witness_path);
     }
 
     // let args: Vec<String> = env::args().collect();
@@ -94,7 +97,7 @@ fn _prove_argument_circuit_path() -> Arg {
     let circuit_path_argument_id = "circuit_path";
     let short_command_identifier = 'c';
     let long_command_identifier = "circuit-path";
-    let short_help_circuit_argument = "";
+    let short_help_circuit_argument = "Path to the generated ACIR circuit";
     let long_help_circuit_argument = "";
     let circuit_path_argument = create_argument(
         circuit_path_argument_id,
@@ -105,6 +108,24 @@ fn _prove_argument_circuit_path() -> Arg {
     );
     circuit_path_argument
 }
+
+fn _prove_argument_witness_path() -> Arg {
+    let circuit_path_argument_id = "witness_path";
+    let short_command_identifier = 'w';
+    let long_command_identifier = "witness-path";
+    let short_help_circuit_argument = "Path to the generated witness values";
+    let long_help_circuit_argument = "";
+    let circuit_path_argument = create_argument(
+        circuit_path_argument_id,
+        short_command_identifier,
+        long_command_identifier,
+        short_help_circuit_argument,
+        long_help_circuit_argument,
+    );
+    circuit_path_argument
+}
+
+
 
 fn _execute_prove_command(args: &Vec<String>) {
     let acir_program_json_path = &args[3];

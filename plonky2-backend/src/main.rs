@@ -59,15 +59,9 @@ fn create_command_with_subcommands(command_name: &'static str, subcommands: Vec<
 }
 
 fn main() {
-    let prove_command_name = "prove";
-    let prove_command = create_command_with_args(
-        prove_command_name,
-        vec![
-            _prove_argument_circuit_path(),
-            _prove_argument_witness_path(),
-            _prove_argument_output_path()
-        ]
-    );
+    let prove_command = _create_prove_command();
+    let prove_command_name = prove_command.clone().get_name();
+
 
     let main_command = Command::new("myprog")
         .subcommand_required(true)
@@ -86,6 +80,20 @@ fn main() {
         _execute_prove_command(circuit_path, witness_path, output_path);
     }
 }
+
+fn _create_prove_command() -> Command {
+    let prove_command_name = "prove";
+    let prove_command = create_command_with_args(
+        prove_command_name,
+        vec![
+            _prove_argument_circuit_path(),
+            _prove_argument_witness_path(),
+            _prove_argument_output_path()
+        ]
+    );
+    prove_command
+}
+
 
 fn _prove_argument_circuit_path() -> Arg {
     let circuit_path_argument_id = "circuit_path";

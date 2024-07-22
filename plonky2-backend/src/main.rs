@@ -29,11 +29,11 @@ pub mod noir_and_plonky2_serialization;
 #[global_allocator] // This is a plonky2 recommendation
 static GLOBAL: Jemalloc = Jemalloc;
 
-fn create_argument(argument_id: &'static str,
-                   short_identifier: char,
-                   long_identifier: &'static str,
-                   short_help: &'static str,
-                   long_help: &'static str) -> Arg {
+fn create_command_argument(argument_id: &'static str,
+                           short_identifier: char,
+                           long_identifier: &'static str,
+                           short_help: &'static str,
+                           long_help: &'static str) -> Arg {
     Arg::new(argument_id)
         .help(short_help)
         .long_help(long_help)
@@ -44,28 +44,23 @@ fn create_argument(argument_id: &'static str,
         .value_parser(value_parser!(PathBuf))
 }
 
-fn create_command_with_args(command_name: &'static str, args: Vec<Arg>) -> Command {
+fn create_command_from_arguments(command_name: &'static str, args: Vec<Arg>) -> Command {
     args.iter().fold(
         Command::new(command_name),
         |acc_command, arg| acc_command.arg(arg)
     )
 }
 
-fn create_command_with_subcommands(command_name: &'static str, subcommands: Vec<Command>) -> Command {
-    subcommands.iter().fold(
-        Command::new(command_name),
-        |acc_command, subcommand| acc_command.subcommand(subcommand)
-    )
-}
-
 fn main() {
     let prove_command = _create_prove_command();
     let write_vk_command = _create_write_vk_command();
+    let verify_command = _create_verify_command();
 
-    let main_command = Command::new("myprog")
+    let main_command = Command::new("plonky2_backend")
         .subcommand_required(true)
         .subcommand(prove_command.clone())
-        .subcommand(write_vk_command.clone());
+        .subcommand(write_vk_command.clone())
+        .subcommand(verify_command.clone());
 
 
     let matches = main_command.get_matches();
@@ -87,12 +82,20 @@ fn main() {
 
         _execute_write_vk_command(circuit_path, output_path);
 
+    } else if let Some(subcommand_matches) = matches.subcommand_matches(verify_command.get_name()) {
+        let vk_path = subcommand_matches.get_one::<PathBuf>(
+            _verify_argument_vk_path().get_id().to_string().as_str()).expect("---");
+        let proof_path = subcommand_matches.get_one::<PathBuf>(
+            _verify_argument_proof().get_id().to_string().as_str()).expect("---");
+
+        _execute_verify_command(vk_path, proof_path);
+
     }
 }
 
 fn _create_prove_command() -> Command {
     let prove_command_name = "prove";
-    let prove_command = create_command_with_args(
+    let prove_command = create_command_from_arguments(
         prove_command_name,
         vec![
             _prove_argument_circuit_path(),
@@ -105,11 +108,23 @@ fn _create_prove_command() -> Command {
 
 fn _create_write_vk_command() -> Command {
     let write_vk_command_name = "write_vk";
-    let prove_command = create_command_with_args(
+    let prove_command = create_command_from_arguments(
         write_vk_command_name,
         vec![
             _write_vk_argument_circuit_path(),
             _write_vk_argument_output_path(),
+        ]
+    );
+    prove_command
+}
+
+fn _create_verify_command() -> Command {
+    let verify_command_name = "verify";
+    let prove_command = create_command_from_arguments(
+        verify_command_name,
+        vec![
+            _verify_argument_vk_path(),
+            _verify_argument_proof(),
         ]
     );
     prove_command
@@ -123,7 +138,7 @@ fn _prove_argument_circuit_path() -> Arg {
     let long_command_identifier = "circuit-path";
     let short_help = "Path to the generated ACIR circuit";
     let long_help = "";
-    create_argument(
+    create_command_argument(
         argument_id,
         short_command_identifier,
         long_command_identifier,
@@ -138,7 +153,7 @@ fn _prove_argument_witness_path() -> Arg {
     let long_command_identifier = "witness-path";
     let short_help = "Path to the generated witness values";
     let long_help = "";
-    create_argument(
+    create_command_argument(
         argument_id,
         short_command_identifier,
         long_command_identifier,
@@ -153,7 +168,7 @@ fn _prove_argument_output_path() -> Arg {
     let long_command_identifier = "output-path";
     let short_help = "Path where the generated proof is to be stored";
     let long_help = "";
-    create_argument(
+    create_command_argument(
         argument_id,
         short_command_identifier,
         long_command_identifier,
@@ -168,7 +183,7 @@ fn _write_vk_argument_circuit_path() -> Arg {
     let long_command_identifier = "circuit-path";
     let short_help = "Path to the generated ACIR circuit";
     let long_help = "";
-    create_argument(
+    create_command_argument(
         argument_id,
         short_command_identifier,
         long_command_identifier,
@@ -183,7 +198,37 @@ fn _write_vk_argument_output_path() -> Arg {
     let long_command_identifier = "output-path";
     let short_help = "Path to the generated verification key";
     let long_help = "";
-    create_argument(
+    create_command_argument(
+        argument_id,
+        short_command_identifier,
+        long_command_identifier,
+        short_help,
+        long_help,
+    )
+}
+
+fn _verify_argument_vk_path() -> Arg {
+    let argument_id = "vk_path";
+    let short_command_identifier = 'k';
+    let long_command_identifier = "vk-path";
+    let short_help = "Path to the verification key";
+    let long_help = "";
+    create_command_argument(
+        argument_id,
+        short_command_identifier,
+        long_command_identifier,
+        short_help,
+        long_help,
+    )
+}
+
+fn _verify_argument_proof() -> Arg {
+    let argument_id = "proof_path";
+    let short_command_identifier = 'p';
+    let long_command_identifier = "proof-path";
+    let short_help = "Path to the proof";
+    let long_help = "";
+    create_command_argument(
         argument_id,
         short_command_identifier,
         long_command_identifier,
@@ -207,12 +252,9 @@ fn _execute_write_vk_command(circuit_path: &PathBuf, output_path: &PathBuf) {
     }.run()
 }
 
-fn _execute_verify_command(args: &Vec<String>) {
-    let vk_path = &args[3];
-    let proof_path = &args[5];
-    let verify_action = actions::verify_action::VerifyAction {
-        proof_path: proof_path.clone(),
-        vk_path: vk_path.clone(),
-    };
-    verify_action.run()
+fn _execute_verify_command(vk_path: &PathBuf, proof_path: &PathBuf) {
+    actions::verify_action::VerifyAction {
+        proof_path: String::from(proof_path.to_str().unwrap()),
+        vk_path: String::from(vk_path.to_str().unwrap()),
+    }.run()
 }

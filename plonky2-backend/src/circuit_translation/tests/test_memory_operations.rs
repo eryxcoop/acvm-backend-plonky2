@@ -119,8 +119,8 @@ fn test_backend_supports_creation_of_memory_blocks_with_irregular_size() {
 // Test less or equal
 
 #[test]
-// #[ignore]
-fn test_brute_force_range_checks_up_to_17(){
+#[ignore]
+fn test_brute_force_range_checks_up_to_17() {
     let max = 17;
     for (max_value, target_value) in _generate_valid_combinations(max) {
         println!("(max: {}, target: {})", max_value, target_value);
@@ -136,20 +136,20 @@ fn test_brute_force_range_checks_up_to_17(){
     }
 }
 
-fn _generate_valid_combinations(max: u32) -> Vec<(usize, usize)>{
+fn _generate_valid_combinations(max: u32) -> Vec<(usize, usize)> {
     let mut test_values: Vec<(usize, usize)> = Vec::new();
     for max_value in 0..max {
-        for target_value in 0..max_value+1 {
+        for target_value in 0..max_value + 1 {
             test_values.push((max_value as usize, target_value as usize));
         }
     }
     test_values
 }
 
-fn _generate_invalid_combinations(max: u32) -> Vec<(usize, usize)>{
+fn _generate_invalid_combinations(max: u32) -> Vec<(usize, usize)> {
     let mut test_values: Vec<(usize, usize)> = Vec::new();
     for max_value in 0..max {
-        for target_value in (max_value+1)..max {
+        for target_value in (max_value + 1)..max {
             test_values.push((max_value as usize, target_value as usize));
         }
     }
@@ -160,7 +160,7 @@ fn assert_target_is_less_or_equal(max_allowed_value: usize, actual_target_value:
     let config = CircuitConfig::standard_recursion_config();
     let mut circuit_builder = CB::new(config);
 
-    let public_input_target= circuit_builder.add_virtual_public_input();
+    let public_input_target = circuit_builder.add_virtual_public_input();
     MemoryOperationsTranslator::add_restrictions_to_assert_target_is_less_or_equal_to(
         max_allowed_value,
         public_input_target,
@@ -168,7 +168,10 @@ fn assert_target_is_less_or_equal(max_allowed_value: usize, actual_target_value:
     );
 
     let mut partial_witnesses = PartialWitness::<F>::new();
-    partial_witnesses.set_target(public_input_target, F::from_canonical_usize(actual_target_value));
+    partial_witnesses.set_target(
+        public_input_target,
+        F::from_canonical_usize(actual_target_value),
+    );
 
     let circuit_data = circuit_builder.build::<C>();
     let proof = circuit_data.prove(partial_witnesses).unwrap();

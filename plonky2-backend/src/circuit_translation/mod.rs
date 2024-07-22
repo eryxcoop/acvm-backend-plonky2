@@ -82,7 +82,8 @@ impl CircuitBuilderFromAcirToPlonky2 {
         (self.builder.build::<C>(), self.witness_target_map)
     }
 
-    /// Main function of the module
+    /// Main function of the module. It sequentially parses the ACIR opcodes, applying changes
+    /// in the CircuitBuilder accordingly.
     pub fn translate_circuit(self: &mut Self, circuit: &Circuit) {
         self._register_witnesses_from_acir_circuit(circuit);
         for opcode in &circuit.opcodes {
@@ -100,8 +101,8 @@ impl CircuitBuilderFromAcirToPlonky2 {
                     inputs: _,
                     outputs: _,
                     predicate: _,
-                } => {}
-                Opcode::Directive(_directive) => {}
+                } => {} /// The brillig call is ignored since it has no impact in the circuit
+                Opcode::Directive(_directive) => {} /// The same happens with the Directive
                 Opcode::MemoryInit {
                     block_id,
                     init,
@@ -137,7 +138,7 @@ impl CircuitBuilderFromAcirToPlonky2 {
                             self.builder.range_check(target, long_max_bits)
                         }
                         opcodes::BlackBoxFuncCall::AND { lhs, rhs, output } => {
-                            self._extend_circuit_with_operation(
+                            self._extend_circuit_with_bitwise_operation(
                                 lhs,
                                 rhs,
                                 output,
@@ -145,7 +146,7 @@ impl CircuitBuilderFromAcirToPlonky2 {
                             );
                         }
                         opcodes::BlackBoxFuncCall::XOR { lhs, rhs, output } => {
-                            self._extend_circuit_with_operation(
+                            self._extend_circuit_with_bitwise_operation(
                                 lhs,
                                 rhs,
                                 output,
@@ -187,7 +188,7 @@ impl CircuitBuilderFromAcirToPlonky2 {
         sha256_compression_translator.translate();
     }
 
-    fn _extend_circuit_with_operation(
+    fn _extend_circuit_with_bitwise_operation(
         self: &mut Self,
         lhs: &FunctionInput,
         rhs: &FunctionInput,
@@ -254,10 +255,6 @@ impl CircuitBuilderFromAcirToPlonky2 {
         self.builder.constant_bool(cond)
     }
 
-    fn _bool_target_false(&mut self) -> BoolTarget {
-        self.builder._false()
-    }
-
     fn _register_witnesses_from_acir_circuit(self: &mut Self, circuit: &Circuit) {
         // Public parameters
         let public_parameters_as_list: Vec<Witness> =
@@ -284,6 +281,10 @@ impl CircuitBuilderFromAcirToPlonky2 {
         self._get_or_create_target_for_witness(private_input_witness);
     }
 
+    /// This method is key. The ACIR Opcodes talk about witnesses, while Plonky2 operates with
+    /// targets, so when we want to know which target corresponds to a certain witness we might
+    /// encounter that there isn't a target yet in the builder for the witness, so we need to
+    /// create it.
     fn _get_or_create_target_for_witness(self: &mut Self, witness: Witness) -> Target {
         match self.witness_target_map.get(&witness) {
             Some(target) => *target,

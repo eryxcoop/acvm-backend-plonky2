@@ -1,5 +1,13 @@
 use super::*;
 
+/// This module performs memory operations such as creating blocks of memory, reading in a specific
+/// position known in prove time and write a value in a position both known at prove time. The
+/// length of the blocks is fixed and known in circuit building time.
+///
+/// The desired length of a memory block may not coincide with the length of the associated vector
+/// of targets representation. This is because we must append some zeroes at the end for making the
+/// length a power of 2, therefore the memory_blocks collaborator must hold the length of each
+/// memory block.
 pub struct MemoryOperationsTranslator<'a> {
     builder: &'a mut CircuitBuilder<F, D>,
     witness_target_map: &'a mut HashMap<Witness, Target>,
@@ -42,6 +50,8 @@ impl<'a> MemoryOperationsTranslator<'a> {
         }
     }
 
+    /// We use this algorithm to validate in-range access and restrain access to one of the padded
+    /// positions in the target vector.
     pub fn add_restrictions_to_assert_target_is_less_or_equal_to(
         max_allowed_value: usize,
         target_index: Target,
@@ -72,6 +82,10 @@ impl<'a> MemoryOperationsTranslator<'a> {
         }
     }
 
+    /// The problem is that we cannot know which target is going to be replaced in circuit-building
+    /// time. The solution, replacing all the targets, connecting all the values except for the
+    /// one modified. To know what position is being modified, we use the Plonky2 EqualGate.
+    /// The key is that the circuit has to be symmetrical for all possible values.
     fn _translate_memory_write(&mut self, block_id: &BlockId, op: &MemOp) {
         let witness_idx_to_write = op.index.to_witness().unwrap();
         let target_idx_to_write = self._get_or_create_target_for_witness(witness_idx_to_write);
@@ -97,6 +111,7 @@ impl<'a> MemoryOperationsTranslator<'a> {
         }
     }
 
+    /// For this Plonky2 uses the RandomAccessGate
     fn _translate_memory_read(&mut self, block_id: &BlockId, op: &MemOp) {
         let witness_idx_to_read = op.index.to_witness().unwrap();
         let target_idx_to_read = self._get_or_create_target_for_witness(witness_idx_to_read);
@@ -109,6 +124,7 @@ impl<'a> MemoryOperationsTranslator<'a> {
             .insert(witness_to_save_result, target_to_save_result);
     }
 
+    /// Creates a new block of memory with the associated id
     pub fn translate_memory_init(&mut self, init: &Vec<Witness>, block_id: &BlockId) {
         let mut vector_targets: Vec<Target> = init
             .into_iter()
@@ -122,7 +138,6 @@ impl<'a> MemoryOperationsTranslator<'a> {
 
     /// This is necessary because plonky2 can only perform a random_access operation
     /// on vectors with a length that is a power of two.
-    /// "Index out of bounds" accesses shouldn't happen because Noir won't allow them.
     fn _extend_block_with_zeroes_to_have_a_power_of_two_length(
         &mut self,
         vector_targets: &mut Vec<Target>,

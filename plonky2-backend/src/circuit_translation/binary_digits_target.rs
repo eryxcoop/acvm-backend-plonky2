@@ -3,6 +3,9 @@ use plonky2::iop::target::BoolTarget;
 
 use crate::circuit_translation::{CB, F};
 
+/// This module provides a BinaryDigitsTarget object. It's main goal is to represent numbers as
+/// its bit decomposition, so we can perform bitwise operations.
+/// TODO: Some operations might be optimized (https://github.com/JumpCrypto/plonky2-crypto/tree/main/src/u32/gates)
 #[derive(Clone, Debug)]
 pub struct BinaryDigitsTarget {
     pub bits: Vec<BoolTarget>,

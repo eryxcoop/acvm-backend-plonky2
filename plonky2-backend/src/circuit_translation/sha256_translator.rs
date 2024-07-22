@@ -1,5 +1,6 @@
 use super::*;
 
+/// This struct represents the outputs of each iteration in the 64-loop of the sha256 algorithm.
 #[derive(Clone)]
 struct CompressionIterationState {
     a: BinaryDigitsTarget,
@@ -33,6 +34,8 @@ impl CompressionIterationState {
     }
 }
 
+/// This module translates the sha256 compression function.
+/// TODO: it should support inputs bigger than 512 bits
 pub struct Sha256CompressionTranslator<'a> {
     circuit_builder: &'a mut CircuitBuilderFromAcirToPlonky2,
     inputs: &'a Box<[FunctionInput; 16]>,

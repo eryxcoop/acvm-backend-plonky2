@@ -37,12 +37,27 @@ pub mod assert_zero_translator;
 
 type CB = CircuitBuilder<F, D>;
 
+/// The FieldElement is imported from the Noir library, but for this backend to work the
+/// GoldilocksField should be used (and the witnesses generated accordingly).
+
 pub type Opcode = GenericOpcode<FieldElement>;
 pub type Circuit = GenericCircuit<FieldElement>;
 pub type Program = GenericProgram<FieldElement>;
 pub type Expression = GenericExpression<FieldElement>;
 pub type MemOp = GenericMemOp<FieldElement>;
 pub type WitnessStack = GenericWitnessStack<FieldElement>;
+
+/// This is the most important part of the backend. The CircuitBuilderFromAcirToPlonky2 translates
+/// the ACIR Circuit into an equivalent Plonky2 circuit. Besides the Plonky2 circuit, the output
+/// contains a mapping from ACIR Witnesses to Plonky2 Targets, which is not only for internal use
+/// but for assigning values to the targets when generating the proof.
+///
+/// The opcodes suported are: AssertZero, MemoryInit, MemoryOp, BrilligCall, Directive(ToLeRadix),
+/// and the BlackboxFunctions: Range, And, Xor, SHA256Compression.
+///
+/// Internally it uses a Plonky2 CircuitBuilder for generating the circuit, a mapping of memory
+/// blocks for the memory operations and the witness to targets mapping to retain the information
+/// about which target is which.
 
 pub struct CircuitBuilderFromAcirToPlonky2 {
     pub builder: CB,
@@ -67,8 +82,9 @@ impl CircuitBuilderFromAcirToPlonky2 {
         (self.builder.build::<C>(), self.witness_target_map)
     }
 
+    /// Main function of the module
     pub fn translate_circuit(self: &mut Self, circuit: &Circuit) {
-        self._register_parameters_from_acir_circuit(circuit);
+        self._register_witnesses_from_acir_circuit(circuit);
         for opcode in &circuit.opcodes {
             match opcode {
                 Opcode::AssertZero(expr) => {
@@ -242,7 +258,7 @@ impl CircuitBuilderFromAcirToPlonky2 {
         self.builder._false()
     }
 
-    fn _register_parameters_from_acir_circuit(self: &mut Self, circuit: &Circuit) {
+    fn _register_witnesses_from_acir_circuit(self: &mut Self, circuit: &Circuit) {
         // Public parameters
         let public_parameters_as_list: Vec<Witness> =
             circuit.public_parameters.0.iter().cloned().collect();

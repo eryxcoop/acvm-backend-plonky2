@@ -2,6 +2,11 @@ use crate::actions;
 use clap::{value_parser, Arg, ArgMatches, Command};
 use std::path::PathBuf;
 
+/// Commands: prove, write_vk, verify.
+///     prove -c circuit/path -w witness/path -o output/proof/path
+///     write_vk -b circuit/path -o output/verification/key/path
+///     verify -k verification/key/path -p proof/path
+
 pub fn parse_commands() {
     let prove_command = _create_prove_command();
     let write_vk_command = _create_write_vk_command();

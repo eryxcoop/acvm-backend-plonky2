@@ -1,41 +1,54 @@
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use std::fmt::Display;
+
+use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
+
+use acir::native_types::Witness;
+use acir_field::AcirField;
 use plonky2::field::types::Field;
 use plonky2::iop::witness::{PartialWitness, WitnessWrite};
-use plonky2::plonk::circuit_data::CircuitConfig;
-use plonky2_backend::circuit_translation::binary_digits_target::BinaryDigitsTarget;
-use plonky2_backend::F;
-use plonky2_backend::circuit_translation::CB;
+use plonky2::plonk::circuit_data::CircuitData;
+use plonky2_backend::{C, D, F};
+use plonky2_backend::circuit_translation::tests::factories::{circuit_parser, utils};
 
-fn xxx(){
-    let g_zero = F::default();
-    let g_one = F::from_canonical_u32(1);
-    let size = 4;
-    let n = 1;
-    let mut input_values = vec![g_zero, g_zero, g_one, g_zero];
-    let mut output_values = vec![g_zero, g_zero, g_zero, g_one];
+fn generate_circuit_and_witness(program_name: &str) -> (CircuitData<F, C, D>, PartialWitness<F>) {
+    let (circuit, mut witnesses) =
+        circuit_parser::precompiled_circuit_and_withesses_with_name(program_name);
+    let witness_mapping = witnesses.pop().unwrap().witness;
 
-    let config = CircuitConfig::standard_recursion_config();
-    let mut circuit_builder = CB::new(config);
+    // print!("{:?}", circuit);
 
-    let bits = (0..size)
-        .into_iter()
-        .map(|_| circuit_builder.add_virtual_bool_target_unsafe())
-        .collect();
+    // When
+    let (circuit_data, witness_target_map) =
+        utils::generate_plonky2_circuit_from_acir_circuit(&circuit);
 
-    let binary_input = BinaryDigitsTarget { bits };
-    let rotated_bits = BinaryDigitsTarget::rotate_right(&binary_input, n, &mut circuit_builder);
-
-    let mut partial_witnesses = PartialWitness::<F>::new();
-    input_values.reverse();
-    output_values.reverse();
-    for i in 0..size {
-        partial_witnesses.set_target(binary_input.bits[i].target, input_values[i]);
-        partial_witnesses.set_target(rotated_bits.bits[i].target, output_values[i]);
+    //Then
+    let mut witness_assignment: Vec<(Witness, F)> = vec![];
+    for (witness, value) in witness_mapping {
+        witness_assignment.push((witness, F::from_canonical_u64(value.try_to_u64().unwrap())));
     }
+
+    let mut witnesses = PartialWitness::<F>::new();
+    for (witness, value) in witness_assignment {
+        let plonky2_target = witness_target_map.get(&witness).unwrap();
+        witnesses.set_target(*plonky2_target, value);
+    }
+
+    (circuit_data, witnesses)
 }
 
+fn to_bench(x: &(CircuitData<F, C, D>, PartialWitness<F>)) {
+    let (circuit_data, witnesses) = x;
+    circuit_data.prove(witnesses.clone());
+}
+
+
 pub fn criterion_benchmark(c: &mut Criterion) {
-    c.bench_function("test", |b| b.iter(|| xxx()));
+    let x = generate_circuit_and_witness("basic_memory_write");
+    // c.bench_function("test", |b| b.iter(circuit_data.prove(witnesses)));
+
+    c.bench_with_input(BenchmarkId::new("input_example", "some_parameter"), &x, |b, s| {
+        b.iter(|| to_bench(s));
+    });
 }
 
 criterion_group!(benches, criterion_benchmark);

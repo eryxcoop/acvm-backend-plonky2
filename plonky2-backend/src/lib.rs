@@ -10,9 +10,9 @@ use plonky2::plonk::proof::CompressedProofWithPublicInputs;
 use plonky2::util::serialization::DefaultGateSerializer;
 
 
-const D: usize = 2;
+pub const D: usize = 2;
 
-type C = KeccakGoldilocksConfig;
+pub type C = KeccakGoldilocksConfig;
 pub type F = <C as GenericConfig<D>>::F;
 
 pub mod actions;

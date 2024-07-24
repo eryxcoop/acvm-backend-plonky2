@@ -78,7 +78,7 @@ impl<'a> Sha256CompressionTranslator<'a> {
             binary_input_targets.push(new_w_t);
         }
 
-        let mut constant_k_digit_target_values = self.initial_k();
+        let constant_k_digit_target_values = self.initial_k();
         let initial_h = self.initial_h();
         let mut iteration_states: Vec<CompressionIterationState> =
             vec![CompressionIterationState::from_vec(initial_h.clone())];
@@ -157,7 +157,7 @@ impl<'a> Sha256CompressionTranslator<'a> {
     }
 
     fn initial_h(&mut self) -> Vec<BinaryDigitsTarget> {
-        let mut binary_inputs: Vec<BinaryDigitsTarget> = self
+        let binary_inputs: Vec<BinaryDigitsTarget> = self
             .hash_values
             .into_iter()
             .map(|input| {

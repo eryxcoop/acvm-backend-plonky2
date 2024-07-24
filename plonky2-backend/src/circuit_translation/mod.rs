@@ -19,7 +19,6 @@ use plonky2::iop::target::{BoolTarget, Target};
 use plonky2::plonk::circuit_builder::CircuitBuilder;
 use plonky2::plonk::circuit_data::CircuitConfig;
 use plonky2::plonk::circuit_data::CircuitData;
-use plonky2::plonk::config::{GenericConfig};
 
 mod binary_digits_target;
 mod memory_translator;
@@ -101,8 +100,8 @@ impl CircuitBuilderFromAcirToPlonky2 {
                     inputs: _,
                     outputs: _,
                     predicate: _,
-                } => {} /// The brillig call is ignored since it has no impact in the circuit
-                Opcode::Directive(_directive) => {} /// The same happens with the Directive
+                } => {} // The brillig call is ignored since it has no impact in the circuit
+                Opcode::Directive(_directive) => {} // The same happens with the Directive
                 Opcode::MemoryInit {
                     block_id,
                     init,

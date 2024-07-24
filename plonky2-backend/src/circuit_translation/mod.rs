@@ -28,8 +28,7 @@ use binary_digits_target::BinaryDigitsTarget;
 use memory_translator::MemoryOperationsTranslator;
 use sha256_translator::Sha256CompressionTranslator;
 
-#[cfg(test)]
-mod tests;
+pub mod tests;
 
 pub mod assert_zero_translator;
 

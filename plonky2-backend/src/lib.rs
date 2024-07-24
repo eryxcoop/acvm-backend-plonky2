@@ -13,7 +13,7 @@ use plonky2::util::serialization::DefaultGateSerializer;
 const D: usize = 2;
 
 type C = KeccakGoldilocksConfig;
-type F = <C as GenericConfig<D>>::F;
+pub type F = <C as GenericConfig<D>>::F;
 
 pub mod actions;
 pub mod argument_parsing;

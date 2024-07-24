@@ -20,7 +20,7 @@ use plonky2::plonk::circuit_builder::CircuitBuilder;
 use plonky2::plonk::circuit_data::CircuitConfig;
 use plonky2::plonk::circuit_data::CircuitData;
 
-mod binary_digits_target;
+pub mod binary_digits_target;
 mod memory_translator;
 mod sha256_translator;
 
@@ -33,8 +33,7 @@ mod tests;
 
 pub mod assert_zero_translator;
 
-
-type CB = CircuitBuilder<F, D>;
+pub type CB = CircuitBuilder<F, D>;
 
 /// The FieldElement is imported from the Noir library, but for this backend to work the
 /// GoldilocksField should be used (and the witnesses generated accordingly).

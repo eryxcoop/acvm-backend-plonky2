@@ -23,13 +23,13 @@ impl BinaryDigitsTarget {
     ) -> BinaryDigitsTarget {
         let mut new_bits = Vec::new();
 
-        for i in times..binary_target.number_of_digits() {
+        for i in (binary_target.number_of_digits() - times)..binary_target.number_of_digits() {
             let new_bool_target = builder.add_virtual_bool_target_safe();
             builder.connect(binary_target.bits[i].target, new_bool_target.target);
             new_bits.push(new_bool_target);
         }
 
-        for i in 0..times {
+        for i in 0..(binary_target.number_of_digits() - times) {
             let new_bool_target = builder.add_virtual_bool_target_safe();
             builder.connect(binary_target.bits[i].target, new_bool_target.target);
             new_bits.push(new_bool_target);

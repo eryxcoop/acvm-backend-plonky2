@@ -27,16 +27,3 @@ acir = { path = "../noir/acvm-repo/acir"}
 acir_field = { path = "../noir/acvm-repo/acir_field"}
 plonky2 = { path = "../plonky2/plonky2"}
 
-[[bench]]
-name = "benchmarking"
-harness = false
-
-[profile.benchmarking]
-inherits = "release"
-opt-level = 3
-debug = false
-strip = "none"
-lto = true
-codegen-units = 1
-incremental = true
-panic = "abort"

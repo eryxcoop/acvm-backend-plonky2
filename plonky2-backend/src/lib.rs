@@ -9,7 +9,6 @@ use plonky2::plonk::config::{GenericConfig, KeccakGoldilocksConfig};
 use plonky2::plonk::proof::CompressedProofWithPublicInputs;
 use plonky2::util::serialization::DefaultGateSerializer;
 
-
 const D: usize = 2;
 
 type C = KeccakGoldilocksConfig;

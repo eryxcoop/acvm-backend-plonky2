@@ -33,7 +33,6 @@ mod tests;
 
 pub mod assert_zero_translator;
 
-
 type CB = CircuitBuilder<F, D>;
 
 /// The FieldElement is imported from the Noir library, but for this backend to work the
@@ -222,6 +221,7 @@ impl CircuitBuilderFromAcirToPlonky2 {
     ) -> BinaryDigitsTarget {
         let bit_targets = (0..digits)
             .map(|bit_position| self._constant_bool_target_for_bit(constant, bit_position))
+            .rev()
             .collect();
         BinaryDigitsTarget { bits: bit_targets }
     }
@@ -250,7 +250,7 @@ impl CircuitBuilderFromAcirToPlonky2 {
         constant_value: usize,
         bit_position: usize,
     ) -> BoolTarget {
-        let cond = (constant_value & (1 << bit_position)) == 1;
+        let cond = (constant_value & (1 << bit_position)) != 0;
         self.builder.constant_bool(cond)
     }
 

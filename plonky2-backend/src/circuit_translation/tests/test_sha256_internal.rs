@@ -53,9 +53,9 @@ fn test_rotate_right_32_2() {
         g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
     ];
     let outputs = vec![
+        g_zero, g_zero, g_one, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
         g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
-        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
-        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_one, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
     ];
     test_rotate_right(2, 32, inputs, outputs);
 }
@@ -243,19 +243,19 @@ fn test_simple_add_module_32_bits_with_carry() {
     let g_zero = F::default();
     let g_one = F::from_canonical_u32(1);
     let inputs_0 = vec![
-        g_one, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
         g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
-        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_one,
     ];
     let inputs_1 = vec![
-        g_one, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
         g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
-        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_one,
     ];
     let outputs = vec![
-        g_zero, g_one, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
         g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
-        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_one, g_zero,
     ];
     test_add_module_32_bits(inputs_0, inputs_1, outputs);
 }
@@ -265,19 +265,19 @@ fn test_flooded_add_module_32_bits_with_carry() {
     let g_zero = F::default();
     let g_one = F::from_canonical_u32(1);
     let inputs_0 = vec![
-        g_one, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
-        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
-        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
-    ];
-    let inputs_1 = vec![
-        g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one,
-        g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one,
-        g_one, g_one, g_one, g_one, g_one, g_zero,
-    ];
-    let outputs = vec![
         g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
         g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
         g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_one,
+    ];
+    let inputs_1 = vec![
+        g_zero, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one,
+        g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one,
+        g_one, g_one, g_one, g_one, g_one, g_one,
+    ];
+    let outputs = vec![
+        g_one, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
     ];
     test_add_module_32_bits(inputs_0, inputs_1, outputs);
 }
@@ -287,9 +287,9 @@ fn test_add_module_32_bits_with_overflow() {
     let g_zero = F::default();
     let g_one = F::from_canonical_u32(1);
     let inputs_0 = vec![
-        g_one, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
         g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
-        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero,
+        g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_zero, g_one,
     ];
     let inputs_1 = vec![
         g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one, g_one,
@@ -305,6 +305,8 @@ fn test_add_module_32_bits_with_overflow() {
 }
 
 fn test_add_module_32_bits(input_values_1: Vec<F>, input_values_2: Vec<F>, output_values: Vec<F>) {
+    assert_eq!(input_values_1.len(), input_values_2.len());
+    assert_eq!(input_values_1.len(), output_values.len());
     let config = CircuitConfig::standard_recursion_config();
     let mut circuit_builder = CB::new(config);
 
@@ -539,7 +541,7 @@ fn test_compression_function() {
         .into_iter()
         .zip(first_iteration_values.into_iter())
         .collect::<Vec<_>>();
-    // assignments.append(&mut output_values);
+    assignments.append(&mut output_values);
 
     let proof = utils::generate_plonky2_proof_using_witness_values(
         assignments,

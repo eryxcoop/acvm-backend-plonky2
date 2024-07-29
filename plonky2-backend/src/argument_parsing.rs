@@ -41,7 +41,8 @@ fn _match_command_values(
         _execute_prove_command(circuit_path, witness_path, output_path);
     } else if let Some(subcommand_matches) = matches.subcommand_matches(write_vk_command.get_name())
     {
-        let circuit_path= _get_argument_value(subcommand_matches, _write_vk_argument_circuit_path());
+        let circuit_path =
+            _get_argument_value(subcommand_matches, _write_vk_argument_circuit_path());
         let output_path = _get_argument_value(subcommand_matches, _write_vk_argument_output_path());
 
         _execute_write_vk_command(circuit_path, output_path);

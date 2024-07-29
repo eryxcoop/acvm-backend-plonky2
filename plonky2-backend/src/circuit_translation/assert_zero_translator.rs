@@ -1,6 +1,5 @@
 use super::*;
 
-
 /// Module in charge of translating each AssertZero operation. Currently, the Plonky2 feature used
 /// to deal with systems of equations is the ArithmeticGate, which the CircuitBuilder uses
 /// extensively (through methods like add, sub, mul, mul_const, etc.)

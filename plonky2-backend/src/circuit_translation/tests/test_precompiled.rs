@@ -13,6 +13,7 @@ use parameterized::parameterized;
     "3_add",
     "5_over",
     "7_function",
+    "sha256_4",
 })]
 fn test_noir_program(program_name: &str) {
     let (circuit, mut witnesses) =

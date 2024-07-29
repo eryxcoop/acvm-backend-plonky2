@@ -469,8 +469,6 @@ fn test_shift_right(n: usize, size: usize, mut input_values: Vec<F>, mut output_
     let rotated_bits = BinaryDigitsTarget::shift_right(&binary_input, n, &mut circuit_builder);
 
     let mut partial_witnesses = PartialWitness::<F>::new();
-    input_values.reverse();
-    output_values.reverse();
     for i in 0..size {
         partial_witnesses.set_target(binary_input.bits[i].target, input_values[i]);
         partial_witnesses.set_target(rotated_bits.bits[i].target, output_values[i]);
@@ -523,23 +521,23 @@ fn test_compression_function() {
         .zip(h_values.clone().into_iter())
         .collect::<Vec<_>>();
 
-    let mut first_iteration_values = vec![
-        F::from_canonical_u32(0b01111100000010001000100001001101),
-        F::from_canonical_u32(0b01101010000010011110011001100111),
-        F::from_canonical_u32(0b10111011011001111010111010000101),
-        F::from_canonical_u32(0b00111100011011101111001101110010),
-        F::from_canonical_u32(0b00011000110001111110001010100010),
-        F::from_canonical_u32(0b01010001000011100101001001111111),
-        F::from_canonical_u32(0b10011011000001010110100010001100),
-        F::from_canonical_u32(0b00011111100000111101100110101011),
+
+    let mut output_values = vec![
+        F::from_canonical_u32(0xe3b0c442),
+        F::from_canonical_u32(0x98fc1c14),
+        F::from_canonical_u32(0x9afbf4c8),
+        F::from_canonical_u32(0x996fb924),
+        F::from_canonical_u32(0x27ae41e4),
+        F::from_canonical_u32(0x649b934c),
+        F::from_canonical_u32(0xa495991b),
+        F::from_canonical_u32(0x7852b855),
     ];
 
     assignments.append(&mut initial_h_values);
-    // let mut output_values = output_witnesses.into_iter().zip(vec![F::from_canonical_u32(0xe3b0c442), F::from_canonical_u32(0x98fc1c14), F::from_canonical_u32(0x9afbf4c8), F::from_canonical_u32(0x996fb924), F::from_canonical_u32(0x27ae41e4),
-    //                                                  F::from_canonical_u32(0x649b934c), F::from_canonical_u32(0xa495991b), F::from_canonical_u32(0x7852b855)].into_iter()).collect::<Vec<_>>();
+
     let mut output_values = output_witnesses
         .into_iter()
-        .zip(first_iteration_values.into_iter())
+        .zip(output_values.into_iter())
         .collect::<Vec<_>>();
     assignments.append(&mut output_values);
 

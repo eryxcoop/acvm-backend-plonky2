@@ -44,17 +44,19 @@ impl BinaryDigitsTarget {
         builder: &mut CB,
     ) -> BinaryDigitsTarget {
         let mut new_bits = Vec::new();
-        for i in times..target.number_of_digits() {
-            let new_bool_target = builder.add_virtual_bool_target_safe();
-            builder.connect(target.bits[i].target, new_bool_target.target);
-            new_bits.push(new_bool_target);
-        }
-        // Fill zero bits
+
         for _ in 0..times {
             new_bits.push(BoolTarget::new_unsafe(
                 builder.constant(F::from_canonical_u8(0)),
             ));
         }
+        for i in 0..target.number_of_digits() - times {
+            let new_bool_target = builder.add_virtual_bool_target_safe();
+            builder.connect(target.bits[i].target, new_bool_target.target);
+            new_bits.push(new_bool_target);
+        }
+        // Fill zero bits
+
 
         BinaryDigitsTarget { bits: new_bits }
     }

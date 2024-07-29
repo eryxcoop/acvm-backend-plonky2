@@ -44,4 +44,4 @@ If you want to try out some Noir examples, execute the python script ```run_exam
 
 ## Contact Us
 Feel free to join our telegram group for suggestions, report bugs or any question you might have!
-https://t.me/+2sYwLSy1SEVhYjlh
+https://t.me/+HeUDkQPX_w0yMDQx

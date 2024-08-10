@@ -10,7 +10,7 @@ pub use acir::native_types::Witness;
 use acir::native_types::WitnessStack as GenericWitnessStack;
 use num_bigint::BigUint;
 use std::collections::HashMap;
-
+use std::sync::Arc;
 // Generics
 pub use acir_field::AcirField;
 pub use acir_field::FieldElement;
@@ -26,6 +26,7 @@ mod sha256_translator;
 
 use binary_digits_target::BinaryDigitsTarget;
 use memory_translator::MemoryOperationsTranslator;
+use plonky2::gates::lookup_table::LookupTable;
 use sha256_translator::Sha256CompressionTranslator;
 
 #[cfg(test)]
@@ -61,6 +62,7 @@ pub struct CircuitBuilderFromAcirToPlonky2 {
     pub builder: CB,
     pub witness_target_map: HashMap<Witness, Target>,
     pub memory_blocks: HashMap<BlockId, (Vec<Target>, usize)>,
+    pub u8_range_table_index: Option<usize>,
 }
 
 impl CircuitBuilderFromAcirToPlonky2 {
@@ -73,6 +75,7 @@ impl CircuitBuilderFromAcirToPlonky2 {
             builder,
             witness_target_map,
             memory_blocks,
+            u8_range_table_index: None,
         }
     }
 
@@ -127,13 +130,28 @@ impl CircuitBuilderFromAcirToPlonky2 {
                 }
                 Opcode::BlackBoxFuncCall(func_call) => {
                     match func_call {
+
                         opcodes::BlackBoxFuncCall::RANGE { input } => {
                             let long_max_bits = input.num_bits.clone() as usize;
-                            assert!(long_max_bits <= 33,
-                                    "Range checks with more than 33 bits are not allowed yet while using Plonky2 prover");
                             let witness = input.witness;
                             let target = self._get_or_create_target_for_witness(witness);
-                            self.builder.range_check(target, long_max_bits)
+
+                            if long_max_bits == 8 {
+                                match self.u8_range_table_index {
+                                    Some(index) => {},
+                                    None => {
+                                        let table: LookupTable = Arc::new((0..256u16).zip((0..256u16)).collect());
+                                        let u8_range_table_index = self.builder.add_lookup_table_from_pairs(table);
+                                        self.u8_range_table_index = Some(u8_range_table_index);
+                                    }
+                                }
+                                self.builder.add_lookup_from_index(target, self.u8_range_table_index.unwrap());
+                            } else {
+                                assert!(long_max_bits <= 33,
+                                        "Range checks with more than 33 bits are not allowed yet while using Plonky2 prover");
+                                self.builder.range_check(target, long_max_bits)
+                            }
+
                         }
                         opcodes::BlackBoxFuncCall::AND { lhs, rhs, output } => {
                             self._extend_circuit_with_bitwise_operation(

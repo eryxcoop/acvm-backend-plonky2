@@ -63,6 +63,7 @@ pub struct CircuitBuilderFromAcirToPlonky2 {
     pub witness_target_map: HashMap<Witness, Target>,
     pub memory_blocks: HashMap<BlockId, (Vec<Target>, usize)>,
     pub u8_range_table_index: Option<usize>,
+    pub u8_xor_table_index: Option<usize>,
 }
 
 impl CircuitBuilderFromAcirToPlonky2 {
@@ -76,6 +77,7 @@ impl CircuitBuilderFromAcirToPlonky2 {
             witness_target_map,
             memory_blocks,
             u8_range_table_index: None,
+            u8_xor_table_index: None,
         }
     }
 
@@ -130,7 +132,6 @@ impl CircuitBuilderFromAcirToPlonky2 {
                 }
                 Opcode::BlackBoxFuncCall(func_call) => {
                     match func_call {
-
                         opcodes::BlackBoxFuncCall::RANGE { input } => {
                             let long_max_bits = input.num_bits.clone() as usize;
                             let witness = input.witness;
@@ -138,20 +139,24 @@ impl CircuitBuilderFromAcirToPlonky2 {
 
                             if long_max_bits == 8 {
                                 match self.u8_range_table_index {
-                                    Some(index) => {},
+                                    Some(index) => {}
                                     None => {
-                                        let table: LookupTable = Arc::new((0..256u16).zip((0..256u16)).collect());
-                                        let u8_range_table_index = self.builder.add_lookup_table_from_pairs(table);
+                                        let table: LookupTable =
+                                            Arc::new((0..256u16).zip((0..256u16)).collect());
+                                        let u8_range_table_index =
+                                            self.builder.add_lookup_table_from_pairs(table);
                                         self.u8_range_table_index = Some(u8_range_table_index);
                                     }
                                 }
-                                self.builder.add_lookup_from_index(target, self.u8_range_table_index.unwrap());
+                                self.builder.add_lookup_from_index(
+                                    target,
+                                    self.u8_range_table_index.unwrap(),
+                                );
                             } else {
                                 assert!(long_max_bits <= 33,
                                         "Range checks with more than 33 bits are not allowed yet while using Plonky2 prover");
                                 self.builder.range_check(target, long_max_bits)
                             }
-
                         }
                         opcodes::BlackBoxFuncCall::AND { lhs, rhs, output } => {
                             self._extend_circuit_with_bitwise_operation(
@@ -162,12 +167,40 @@ impl CircuitBuilderFromAcirToPlonky2 {
                             );
                         }
                         opcodes::BlackBoxFuncCall::XOR { lhs, rhs, output } => {
-                            self._extend_circuit_with_bitwise_operation(
-                                lhs,
-                                rhs,
-                                output,
-                                BinaryDigitsTarget::xor,
-                            );
+                            if lhs.num_bits == 8 {
+                                let target_left =
+                                    self._get_or_create_target_for_witness(lhs.witness);
+                                let target_right =
+                                    self._get_or_create_target_for_witness(rhs.witness);
+                                let target_256 = self.builder.constant(F::from_canonical_u32(256));
+                                let target_index_lookup =
+                                    self.builder.mul_add(target_left, target_256, target_right);
+                                match self.u8_xor_table_index {
+                                    Some(index) => {}
+                                    None => {
+                                        let supported_indexes: Vec<u16> = (0..65535).collect();
+                                        let supported_indexes: &[u16] = &supported_indexes;
+                                        let u8_xor_table_index =
+                                            self.builder.add_lookup_table_from_fn(
+                                                Self::_xor_to_compressed_value,
+                                                supported_indexes,
+                                            );
+                                        self.u8_xor_table_index = Some(u8_xor_table_index);
+                                    }
+                                }
+                                let output_target = self.builder.add_lookup_from_index(
+                                    target_index_lookup,
+                                    self.u8_xor_table_index.unwrap(),
+                                );
+                                self.witness_target_map.insert(*output, output_target);
+                            } else {
+                                self._extend_circuit_with_bitwise_operation(
+                                    lhs,
+                                    rhs,
+                                    output,
+                                    BinaryDigitsTarget::xor,
+                                );
+                            }
                         }
                         opcodes::BlackBoxFuncCall::Sha256Compression {
                             inputs,
@@ -202,6 +235,12 @@ impl CircuitBuilderFromAcirToPlonky2 {
         let mut sha256_compression_translator =
             Sha256CompressionTranslator::new_for(self, inputs, hash_values, outputs);
         sha256_compression_translator.translate();
+    }
+
+    fn _xor_to_compressed_value(compressed_value: u16) -> u16 {
+        let a = compressed_value / 256;
+        let b = compressed_value % 256;
+        a ^ b
     }
 
     fn _extend_circuit_with_bitwise_operation(

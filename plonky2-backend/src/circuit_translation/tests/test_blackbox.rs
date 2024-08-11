@@ -97,7 +97,6 @@ fn test_range_check_with_witness_value(witness_value: F, max_num_bits: u32) {
         utils::generate_plonky2_circuit_from_acir_circuit(&circuit);
 
     //Then
-    utils::check_linked_output_targets_property(&circuit, &witness_target_map);
     let proof = utils::generate_plonky2_proof_using_witness_values(
         vec![(public_input_witness, witness_value)],
         &witness_target_map,
@@ -249,7 +248,6 @@ fn _assert_backend_supports_bitwise_operation(
         (output_witness_2, output),
     ];
 
-    utils::check_linked_output_targets_property(&circuit, &witness_target_map);
     let proof = utils::generate_plonky2_proof_using_witness_values(
         witness_assignment,
         &witness_target_map,

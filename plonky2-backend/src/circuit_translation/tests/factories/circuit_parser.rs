@@ -15,13 +15,13 @@ fn parse_circuit_and_witnesses(
 
 fn _path_for_circuit(nargo_project_name: &str) -> String {
     String::from(format!(
-        "src/circuit_translation/tests/factories/precompiled_circuits_0.47.0/{}/target/circuit.json",
+        "src/circuit_translation/tests/factories/precompiled_circuits/{}/target/circuit.json",
         nargo_project_name))
 }
 
 fn _path_for_witnesses(nargo_project_name: &str) -> String {
     String::from(format!(
-        "src/circuit_translation/tests/factories/precompiled_circuits_0.47.0/{}/target/witness",
+        "src/circuit_translation/tests/factories/precompiled_circuits/{}/target/witness",
         nargo_project_name
     ))
 }

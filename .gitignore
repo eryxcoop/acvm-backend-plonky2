@@ -1,4 +1,9 @@
 plonky2-backend/target/
+plonky2-backend/example_programs/*/target/
+plonky2-backend/example_programs/*/proof
+plonky2-backend/benches/noir_programs_for_benchmarking/*/target/
+plonky2-backend/benches/noir_programs_for_benchmarking/*/proof
+plonky2-backend/src/circuit_translation/tests/factories/precompiled_circuits/*/target/
 .idea
 noir_example/target/
 noir/

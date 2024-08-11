@@ -178,7 +178,8 @@ impl CircuitBuilderFromAcirToPlonky2 {
                                 match self.u8_xor_table_index {
                                     Some(_index) => {}
                                     None => {
-                                        let supported_indexes: Vec<u16> = (0..65535).collect();
+                                        let mut supported_indexes: Vec<u16> = (0..65535).collect();
+                                        supported_indexes.push(65535u16);
                                         let supported_indexes: &[u16] = &supported_indexes;
                                         let u8_xor_table_index =
                                             self.builder.add_lookup_table_from_fn(
@@ -238,6 +239,9 @@ impl CircuitBuilderFromAcirToPlonky2 {
     }
 
     fn _xor_to_compressed_value(compressed_value: u16) -> u16 {
+        /// We represent a xor operation (a xor b) = c in a lookup table as
+        /// a * 256 + b --> c
+        /// since lookup tables limit us to (u16, u16) pairs
         let a = compressed_value / 256;
         let b = compressed_value % 256;
         a ^ b

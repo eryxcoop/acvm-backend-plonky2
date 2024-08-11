@@ -139,7 +139,7 @@ impl CircuitBuilderFromAcirToPlonky2 {
 
                             if long_max_bits == 8 {
                                 match self.u8_range_table_index {
-                                    Some(index) => {}
+                                    Some(_index) => {}
                                     None => {
                                         let table: LookupTable =
                                             Arc::new((0..256u16).zip((0..256u16)).collect());
@@ -176,7 +176,7 @@ impl CircuitBuilderFromAcirToPlonky2 {
                                 let target_index_lookup =
                                     self.builder.mul_add(target_left, target_256, target_right);
                                 match self.u8_xor_table_index {
-                                    Some(index) => {}
+                                    Some(_index) => {}
                                     None => {
                                         let supported_indexes: Vec<u16> = (0..65535).collect();
                                         let supported_indexes: &[u16] = &supported_indexes;

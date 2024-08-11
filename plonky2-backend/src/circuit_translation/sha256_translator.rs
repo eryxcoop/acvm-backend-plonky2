@@ -104,9 +104,7 @@ impl<'a> Sha256CompressionTranslator<'a> {
             ))
         }
 
-        for (output_witness, output_binary_target) in
-            self.outputs.iter().zip(final_h.iter())
-        {
+        for (output_witness, output_binary_target) in self.outputs.iter().zip(final_h.iter()) {
             let new_output_target = self
                 .circuit_builder
                 .convert_binary_number_to_number(output_binary_target.clone());

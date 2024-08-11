@@ -519,7 +519,6 @@ fn test_compression_function() {
         .zip(h_values.clone().into_iter())
         .collect::<Vec<_>>();
 
-
     let mut output_values = vec![
         F::from_canonical_u32(0xe3b0c442),
         F::from_canonical_u32(0x98fc1c14),

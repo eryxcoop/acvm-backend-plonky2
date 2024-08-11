@@ -57,7 +57,6 @@ impl BinaryDigitsTarget {
         }
         // Fill zero bits
 
-
         BinaryDigitsTarget { bits: new_bits }
     }
 
@@ -203,8 +202,7 @@ impl BinaryDigitsTarget {
             let sum_with_carry_in =
                 BinaryDigitsTarget::bit_xor(partial_sum[idx_bit], carry_in, builder);
             let pair_sum = BinaryDigitsTarget::bit_and(carry_in, partial_sum[idx_bit], builder);
-            let carry_out =
-                BinaryDigitsTarget::bit_or(partial_carries[idx_bit], pair_sum, builder);
+            let carry_out = BinaryDigitsTarget::bit_or(partial_carries[idx_bit], pair_sum, builder);
             carry_in = carry_out; // The new carry_in is the current carry_out
             sum.push(sum_with_carry_in);
         }

@@ -14,9 +14,7 @@ impl WriteVKAction {
         let acir_circuit = &acir_program.functions[0];
         let mut translator = CircuitBuilderFromAcirToPlonky2::new();
         translator.translate_circuit(acir_circuit);
-        let CircuitBuilderFromAcirToPlonky2 {
-            builder, ..
-        } = translator;
+        let CircuitBuilderFromAcirToPlonky2 { builder, .. } = translator;
         let plonky2_circuit = builder.build::<C>();
         let verifier_data = plonky2_circuit.verifier_data();
         let gate_serializer = DefaultGateSerializer;

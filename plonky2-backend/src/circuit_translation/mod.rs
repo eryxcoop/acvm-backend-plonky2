@@ -27,11 +27,13 @@ mod sha256_translator;
 use binary_digits_target::BinaryDigitsTarget;
 use memory_translator::MemoryOperationsTranslator;
 use sha256_translator::Sha256CompressionTranslator;
+use crate::circuit_translation::ecdsa_secp256k1_translator::EcdsaSecp256k1Translator;
 
 #[cfg(test)]
 mod tests;
 
 pub mod assert_zero_translator;
+mod ecdsa_secp256k1_translator;
 
 type CB = CircuitBuilder<F, D>;
 
@@ -162,6 +164,21 @@ impl CircuitBuilderFromAcirToPlonky2 {
                                 outputs,
                             );
                         }
+                        opcodes::BlackBoxFuncCall::EcdsaSecp256k1 {
+                            public_key_x,
+                            public_key_y,
+                            signature,
+                            hashed_message,
+                            output,
+                        } => {
+                            self._extend_circuit_with_ecdsa_secp256k1_operation(
+                                public_key_x,
+                                public_key_y,
+                                signature,
+                                hashed_message,
+                                *output
+                            );
+                        }
                         blackbox_func => {
                             panic!("Blackbox func not supported yet: {:?}", blackbox_func);
                         }
@@ -184,6 +201,19 @@ impl CircuitBuilderFromAcirToPlonky2 {
         let mut sha256_compression_translator =
             Sha256CompressionTranslator::new_for(self, inputs, hash_values, outputs);
         sha256_compression_translator.translate();
+    }
+
+    fn _extend_circuit_with_ecdsa_secp256k1_operation(
+        &mut self,
+        public_key_x: &Box<[FunctionInput; 32]>,
+        public_key_y: &Box<[FunctionInput; 32]>,
+        signature: &Box<[FunctionInput; 64]>,
+        hashed_message: &Box<[FunctionInput; 32]>,
+        output: Witness,
+    ) {
+        let mut ecdsa_secp256k1_translator =
+            EcdsaSecp256k1Translator::new_for(self, hashed_message, public_key_x, public_key_y, signature, output);
+        ecdsa_secp256k1_translator.translate();
     }
 
     fn _extend_circuit_with_bitwise_operation(

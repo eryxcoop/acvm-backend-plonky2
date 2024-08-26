@@ -1,5 +1,7 @@
 use super::*;
 
+/// The verify action will receive a proof path and a verification key path, and verify the program
+/// execution using those values.
 pub struct VerifyAction {
     pub proof_path: String,
     pub vk_path: String,

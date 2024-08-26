@@ -44,4 +44,18 @@ If you want to try out some Noir examples, execute the python script ```run_exam
 
 ## Contact Us
 Feel free to join our telegram group for suggestions, report bugs or any question you might have!
-https://t.me/+2sYwLSy1SEVhYjlh
+https://t.me/+HeUDkQPX_w0yMDQx
+
+
+## Things already implemented in this version
+The Plonky2 backend for ACIR is still in a development phase, so there are some features that will be implemented in the next months. As for now, this is the roadmap:
+* AssertZero Opcode ✓
+* MemoryInit Opcode ✓
+* MemoryOp Opcode ✓
+* BrilligCall Opcode ✓
+* BlackBoxFunction ✓
+  * RANGE (up to 33 bits) ✓
+  * XOR ✓
+  * AND ✓
+  * SHA256 ✓
+  * EcdsaSecp256k1 x

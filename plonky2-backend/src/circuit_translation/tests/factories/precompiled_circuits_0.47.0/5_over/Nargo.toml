@@ -1,5 +1,6 @@
 [package]
-name = "noir_example"
+name = "5_over"
 type = "bin"
 authors = [""]
+
 [dependencies]

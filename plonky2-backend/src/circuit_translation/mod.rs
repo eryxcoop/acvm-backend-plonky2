@@ -1,3 +1,4 @@
+use super::*;
 use acir::circuit::opcodes;
 use acir::circuit::opcodes::MemOp as GenericMemOp;
 use acir::circuit::opcodes::{BlockId, FunctionInput};
@@ -18,7 +19,6 @@ use plonky2::iop::target::{BoolTarget, Target};
 use plonky2::plonk::circuit_builder::CircuitBuilder;
 use plonky2::plonk::circuit_data::CircuitConfig;
 use plonky2::plonk::circuit_data::CircuitData;
-use plonky2::plonk::config::{GenericConfig, KeccakGoldilocksConfig};
 
 mod binary_digits_target;
 mod memory_translator;
@@ -33,11 +33,10 @@ mod tests;
 
 pub mod assert_zero_translator;
 
-const D: usize = 2;
-
-type C = KeccakGoldilocksConfig;
-type F = <C as GenericConfig<D>>::F;
 type CB = CircuitBuilder<F, D>;
+
+/// The FieldElement is imported from the Noir library, but for this backend to work the
+/// GoldilocksField should be used (and the witnesses generated accordingly).
 
 pub type Opcode = GenericOpcode<FieldElement>;
 pub type Circuit = GenericCircuit<FieldElement>;
@@ -46,10 +45,22 @@ pub type Expression = GenericExpression<FieldElement>;
 pub type MemOp = GenericMemOp<FieldElement>;
 pub type WitnessStack = GenericWitnessStack<FieldElement>;
 
+/// This is the most important part of the backend. The CircuitBuilderFromAcirToPlonky2 translates
+/// the ACIR Circuit into an equivalent Plonky2 circuit. Besides the Plonky2 circuit, the output
+/// contains a mapping from ACIR Witnesses to Plonky2 Targets, which is not only for internal use
+/// but for assigning values to the targets when generating the proof.
+///
+/// The opcodes suported are: AssertZero, MemoryInit, MemoryOp, BrilligCall, Directive(ToLeRadix),
+/// and the BlackboxFunctions: Range, And, Xor, SHA256Compression.
+///
+/// Internally it uses a Plonky2 CircuitBuilder for generating the circuit, a mapping of memory
+/// blocks for the memory operations and the witness to targets mapping to retain the information
+/// about which target is which.
+
 pub struct CircuitBuilderFromAcirToPlonky2 {
     pub builder: CB,
     pub witness_target_map: HashMap<Witness, Target>,
-    pub memory_blocks: HashMap<BlockId, Vec<Target>>,
+    pub memory_blocks: HashMap<BlockId, (Vec<Target>, usize)>,
 }
 
 impl CircuitBuilderFromAcirToPlonky2 {
@@ -57,7 +68,7 @@ impl CircuitBuilderFromAcirToPlonky2 {
         let config = CircuitConfig::standard_recursion_config();
         let builder = CB::new(config);
         let witness_target_map: HashMap<Witness, Target> = HashMap::new();
-        let memory_blocks: HashMap<BlockId, Vec<Target>> = HashMap::new();
+        let memory_blocks: HashMap<BlockId, (Vec<Target>, usize)> = HashMap::new();
         Self {
             builder,
             witness_target_map,
@@ -69,8 +80,10 @@ impl CircuitBuilderFromAcirToPlonky2 {
         (self.builder.build::<C>(), self.witness_target_map)
     }
 
+    /// Main function of the module. It sequentially parses the ACIR opcodes, applying changes
+    /// in the CircuitBuilder accordingly.
     pub fn translate_circuit(self: &mut Self, circuit: &Circuit) {
-        self._register_public_parameters_from_acir_circuit(circuit);
+        self._register_witnesses_from_acir_circuit(circuit);
         for opcode in &circuit.opcodes {
             match opcode {
                 Opcode::AssertZero(expr) => {
@@ -86,8 +99,8 @@ impl CircuitBuilderFromAcirToPlonky2 {
                     inputs: _,
                     outputs: _,
                     predicate: _,
-                } => {}
-                Opcode::Directive(_directive) => {}
+                } => {} // The brillig call is ignored since it has no impact in the circuit
+                Opcode::Directive(_directive) => {} // The same happens with the Directive
                 Opcode::MemoryInit {
                     block_id,
                     init,
@@ -123,7 +136,7 @@ impl CircuitBuilderFromAcirToPlonky2 {
                             self.builder.range_check(target, long_max_bits)
                         }
                         opcodes::BlackBoxFuncCall::AND { lhs, rhs, output } => {
-                            self._extend_circuit_with_operation(
+                            self._extend_circuit_with_bitwise_operation(
                                 lhs,
                                 rhs,
                                 output,
@@ -131,7 +144,7 @@ impl CircuitBuilderFromAcirToPlonky2 {
                             );
                         }
                         opcodes::BlackBoxFuncCall::XOR { lhs, rhs, output } => {
-                            self._extend_circuit_with_operation(
+                            self._extend_circuit_with_bitwise_operation(
                                 lhs,
                                 rhs,
                                 output,
@@ -173,7 +186,7 @@ impl CircuitBuilderFromAcirToPlonky2 {
         sha256_compression_translator.translate();
     }
 
-    fn _extend_circuit_with_operation(
+    fn _extend_circuit_with_bitwise_operation(
         self: &mut Self,
         lhs: &FunctionInput,
         rhs: &FunctionInput,
@@ -208,6 +221,7 @@ impl CircuitBuilderFromAcirToPlonky2 {
     ) -> BinaryDigitsTarget {
         let bit_targets = (0..digits)
             .map(|bit_position| self._constant_bool_target_for_bit(constant, bit_position))
+            .rev()
             .collect();
         BinaryDigitsTarget { bits: bit_targets }
     }
@@ -236,33 +250,40 @@ impl CircuitBuilderFromAcirToPlonky2 {
         constant_value: usize,
         bit_position: usize,
     ) -> BoolTarget {
-        let cond = (constant_value & (1 << bit_position)) == 1;
+        let cond = (constant_value & (1 << bit_position)) != 0;
         self.builder.constant_bool(cond)
     }
 
-    fn _bool_target_false(&mut self) -> BoolTarget {
-        self.builder._false()
-    }
-
-    fn _register_public_parameters_from_acir_circuit(self: &mut Self, circuit: &Circuit) {
+    fn _register_witnesses_from_acir_circuit(self: &mut Self, circuit: &Circuit) {
+        // Public parameters
         let public_parameters_as_list: Vec<Witness> =
             circuit.public_parameters.0.iter().cloned().collect();
         for public_parameter_witness in public_parameters_as_list {
             self._register_new_public_input_from_witness(public_parameter_witness);
         }
+        // Private parameters
+        let private_parameters_as_list: Vec<Witness> =
+            circuit.private_parameters.iter().cloned().collect();
+        for private_parameter_witness in private_parameters_as_list {
+            self._register_new_private_input_from_witness(private_parameter_witness);
+        }
     }
 
-    fn _register_new_public_input_from_witness(
-        self: &mut Self,
-        public_input_witness: Witness,
-    ) -> Target {
+    fn _register_new_public_input_from_witness(self: &mut Self, public_input_witness: Witness) {
         let public_input_target = self.builder.add_virtual_target();
         self.builder.register_public_input(public_input_target);
         self.witness_target_map
             .insert(public_input_witness, public_input_target);
-        public_input_target
     }
 
+    fn _register_new_private_input_from_witness(self: &mut Self, private_input_witness: Witness) {
+        self._get_or_create_target_for_witness(private_input_witness);
+    }
+
+    /// This method is key. The ACIR Opcodes talk about witnesses, while Plonky2 operates with
+    /// targets, so when we want to know which target corresponds to a certain witness we might
+    /// encounter that there isn't a target yet in the builder for the witness, so we need to
+    /// create it.
     fn _get_or_create_target_for_witness(self: &mut Self, witness: Witness) -> Target {
         match self.witness_target_map.get(&witness) {
             Some(target) => *target,

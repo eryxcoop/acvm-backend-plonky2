@@ -1,5 +1,8 @@
 use super::*;
 
+/// Module in charge of translating each AssertZero operation. Currently, the Plonky2 feature used
+/// to deal with systems of equations is the ArithmeticGate, which the CircuitBuilder uses
+/// extensively (through methods like add, sub, mul, mul_const, etc.)
 pub struct AssertZeroTranslator<'a> {
     builder: &'a mut CircuitBuilder<F, D>,
     witness_target_map: &'a mut HashMap<Witness, Target>,
@@ -24,6 +27,16 @@ impl<'a> AssertZeroTranslator<'a> {
         self._translate_assert_zero();
     }
 
+    fn _translate_assert_zero(self: &mut Self) {
+        let g_constant = self._field_element_to_goldilocks_field(&self.expression.q_c);
+
+        let constant_target = self.builder.constant(g_constant);
+        let mut current_acc_target = constant_target;
+        current_acc_target = self._add_linear_combinations(current_acc_target);
+        current_acc_target = self._add_cuadratic_combinations(current_acc_target);
+        self.builder.assert_zero(current_acc_target);
+    }
+
     fn _get_or_create_target_for_witness(self: &mut Self, witness: Witness) -> Target {
         match self.witness_target_map.get(&witness) {
             Some(target) => *target,
@@ -35,6 +48,7 @@ impl<'a> AssertZeroTranslator<'a> {
         }
     }
 
+    /// Witnesses that weren't registered previously because it's its first appearance.
     fn _register_intermediate_witnesses_for_assert_zero(&mut self) {
         for (_, witness_1, witness_2) in &self.expression.mul_terms {
             self._get_or_create_target_for_witness(*witness_1);
@@ -43,16 +57,6 @@ impl<'a> AssertZeroTranslator<'a> {
         for (_, witness) in &self.expression.linear_combinations {
             self._get_or_create_target_for_witness(*witness);
         }
-    }
-
-    fn _translate_assert_zero(self: &mut Self) {
-        let g_constant = self._field_element_to_goldilocks_field(&self.expression.q_c);
-
-        let constant_target = self.builder.constant(g_constant);
-        let mut current_acc_target = constant_target;
-        current_acc_target = self._add_linear_combinations(current_acc_target);
-        current_acc_target = self._add_cuadratic_combinations(current_acc_target);
-        self.builder.assert_zero(current_acc_target);
     }
 
     fn _add_cuadratic_combinations(self: &mut Self, mut current_acc_target: Target) -> Target {

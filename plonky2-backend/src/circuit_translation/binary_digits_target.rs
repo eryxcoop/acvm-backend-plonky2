@@ -3,6 +3,9 @@ use plonky2::iop::target::BoolTarget;
 
 use crate::circuit_translation::{CB, F};
 
+/// This module provides a BinaryDigitsTarget object. It's main goal is to represent numbers as
+/// its bit decomposition, so we can perform bitwise operations.
+/// TODO: Some operations might be optimized (https://github.com/JumpCrypto/plonky2-crypto/tree/main/src/u32/gates)
 #[derive(Clone, Debug)]
 pub struct BinaryDigitsTarget {
     pub bits: Vec<BoolTarget>,
@@ -20,13 +23,13 @@ impl BinaryDigitsTarget {
     ) -> BinaryDigitsTarget {
         let mut new_bits = Vec::new();
 
-        for i in times..binary_target.number_of_digits() {
+        for i in (binary_target.number_of_digits() - times)..binary_target.number_of_digits() {
             let new_bool_target = builder.add_virtual_bool_target_safe();
             builder.connect(binary_target.bits[i].target, new_bool_target.target);
             new_bits.push(new_bool_target);
         }
 
-        for i in 0..times {
+        for i in 0..(binary_target.number_of_digits() - times) {
             let new_bool_target = builder.add_virtual_bool_target_safe();
             builder.connect(binary_target.bits[i].target, new_bool_target.target);
             new_bits.push(new_bool_target);
@@ -41,17 +44,19 @@ impl BinaryDigitsTarget {
         builder: &mut CB,
     ) -> BinaryDigitsTarget {
         let mut new_bits = Vec::new();
-        for i in times..target.number_of_digits() {
-            let new_bool_target = builder.add_virtual_bool_target_safe();
-            builder.connect(target.bits[i].target, new_bool_target.target);
-            new_bits.push(new_bool_target);
-        }
-        // Fill zero bits
+
         for _ in 0..times {
             new_bits.push(BoolTarget::new_unsafe(
                 builder.constant(F::from_canonical_u8(0)),
             ));
         }
+        for i in 0..target.number_of_digits() - times {
+            let new_bool_target = builder.add_virtual_bool_target_safe();
+            builder.connect(target.bits[i].target, new_bool_target.target);
+            new_bits.push(new_bool_target);
+        }
+        // Fill zero bits
+
 
         BinaryDigitsTarget { bits: new_bits }
     }
@@ -193,18 +198,17 @@ impl BinaryDigitsTarget {
         );
 
         let mut carry_in = builder._false();
-        let sum = (0..b1.number_of_digits())
-            .map(|idx_bit| {
-                let sum_with_carry_in =
-                    BinaryDigitsTarget::bit_xor(partial_sum[idx_bit], carry_in, builder);
-                let pair_sum = BinaryDigitsTarget::bit_and(carry_in, partial_sum[idx_bit], builder);
-                let carry_out =
-                    BinaryDigitsTarget::bit_or(partial_carries[idx_bit], pair_sum, builder);
-                carry_in = carry_out; // The new carry_in is the current carry_out
-                sum_with_carry_in
-            })
-            .collect();
-
+        let mut sum: Vec<BoolTarget> = Vec::new();
+        for idx_bit in (0..b1.number_of_digits()).rev() {
+            let sum_with_carry_in =
+                BinaryDigitsTarget::bit_xor(partial_sum[idx_bit], carry_in, builder);
+            let pair_sum = BinaryDigitsTarget::bit_and(carry_in, partial_sum[idx_bit], builder);
+            let carry_out =
+                BinaryDigitsTarget::bit_or(partial_carries[idx_bit], pair_sum, builder);
+            carry_in = carry_out; // The new carry_in is the current carry_out
+            sum.push(sum_with_carry_in);
+        }
+        sum.reverse();
         BinaryDigitsTarget { bits: sum }
     }
 }

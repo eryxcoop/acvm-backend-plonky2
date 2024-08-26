@@ -1,8 +1,16 @@
+use super::*;
+
 use base64;
 use base64::Engine;
 use serde_json;
+use std::fs::File;
+use std::io::{Read, Write};
+use std::vec::Vec;
 
-use super::*;
+/// Since Nargo is decoupled from the backend (they don't even have to be written in the same
+/// languaje) the communication between them is done through files, so there's a lot of serializing
+/// and deserializing in very specific formats. The fact that this backend is written in Rust is
+/// accidental, but also very usefull.
 
 pub fn deserialize_verifying_key_within_file_path(
     verifying_key_path: &String,

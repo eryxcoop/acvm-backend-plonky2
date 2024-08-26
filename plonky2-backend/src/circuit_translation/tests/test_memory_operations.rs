@@ -1,11 +1,10 @@
 use super::*;
 use crate::circuit_translation::tests::factories::utils::*;
-use crate::circuit_translation::tests::factories::{circuit_parser, utils};
 use acir::circuit::opcodes::BlockId;
 use acir::circuit::opcodes::BlockType::Memory;
 use acir::circuit::{ExpressionWidth, PublicInputs};
-use std::collections::BTreeSet;
 use plonky2::iop::witness::{PartialWitness, WitnessWrite};
+use std::collections::BTreeSet;
 
 #[test]
 fn test_plonky2_backend_can_translate_a_read_memory_operation() {
@@ -80,30 +79,151 @@ fn test_plonky2_backend_can_translate_a_program_with_basic_memory_write() {
 }
 
 #[test]
-fn test_plonky2_backend_can_translate_a_program_with_basic_memory_write_precompiled() {
-    let (circuit, mut witnesses) = circuit_parser::precompiled_mem_write_circuit_and_witnesses();
-    let witness_mapping = witnesses.pop().unwrap().witness;
+fn test_backend_supports_creation_of_memory_blocks_with_irregular_size() {
+    // Irregular means that is not a power of 2.
+    // Apparently the way plonky2 handles random access requires a vector with a length of power of 2
+    // The solution is appending dummy targets to fill the necessary spaces when reading a block
 
-    print!("{:?}", circuit);
+    // fn main(mut v: pub [Field; 3], idx: pub Field){
+    //     assert(v[idx] == 5);
+    // }
+
+    //Given
+    let array_input_witnesses = vec![Witness(0), Witness(1), Witness(2)];
+    let index_input_witness = Witness(3);
+    let circuit =
+        _read_memory_of_length_3_circuit(array_input_witnesses.clone(), index_input_witness);
 
     // When
-    let (circuit_data, witness_target_map) =
-        utils::generate_plonky2_circuit_from_acir_circuit(&circuit);
+    let (circuit_data, witness_target_map) = generate_plonky2_circuit_from_acir_circuit(&circuit);
 
     //Then
-    let mut witness_assignment: Vec<(Witness, F)> = vec![];
-    for (witness, value) in witness_mapping {
-        witness_assignment.push((witness, F::from_canonical_u64(value.try_to_u64().unwrap())));
-    }
-
-    // utils::check_linked_output_targets_property(&circuit, &witness_target_map);
-    let proof = utils::generate_plonky2_proof_using_witness_values(
-        witness_assignment,
+    let zero = F::from_canonical_u64(0);
+    let five = F::from_canonical_u64(5);
+    let ten = F::from_canonical_u64(10);
+    let eleven = F::from_canonical_u64(11);
+    let proof = generate_plonky2_proof_using_witness_values(
+        vec![
+            (array_input_witnesses[0], five),
+            (array_input_witnesses[1], ten),
+            (array_input_witnesses[2], eleven),
+            (index_input_witness, zero),
+            (Witness(4), five),
+        ],
         &witness_target_map,
         &circuit_data,
     );
-
     assert!(circuit_data.verify(proof).is_ok());
+}
+
+// Test less or equal
+
+#[test]
+#[ignore]
+fn test_brute_force_range_checks_up_to_17() {
+    let max = 17;
+    for (max_value, target_value) in _generate_valid_combinations(max) {
+        println!("(max: {}, target: {})", max_value, target_value);
+        assert_target_is_less_or_equal(max_value, target_value);
+    }
+    use std::panic::{catch_unwind, AssertUnwindSafe};
+    for (max_value, target_value) in _generate_invalid_combinations(max) {
+        println!("(max: {}, target: {})", max_value, target_value);
+        let result = catch_unwind(AssertUnwindSafe(|| {
+            assert_target_is_less_or_equal(max_value, target_value);
+        }));
+        assert!(result.is_err(), "Expected panic");
+    }
+}
+
+fn _generate_valid_combinations(max: u32) -> Vec<(usize, usize)> {
+    let mut test_values: Vec<(usize, usize)> = Vec::new();
+    for max_value in 0..max {
+        for target_value in 0..max_value + 1 {
+            test_values.push((max_value as usize, target_value as usize));
+        }
+    }
+    test_values
+}
+
+fn _generate_invalid_combinations(max: u32) -> Vec<(usize, usize)> {
+    let mut test_values: Vec<(usize, usize)> = Vec::new();
+    for max_value in 0..max {
+        for target_value in (max_value + 1)..max {
+            test_values.push((max_value as usize, target_value as usize));
+        }
+    }
+    test_values
+}
+
+fn assert_target_is_less_or_equal(max_allowed_value: usize, actual_target_value: usize) {
+    let config = CircuitConfig::standard_recursion_config();
+    let mut circuit_builder = CB::new(config);
+
+    let public_input_target = circuit_builder.add_virtual_public_input();
+    MemoryOperationsTranslator::add_restrictions_to_assert_target_is_less_or_equal_to(
+        max_allowed_value,
+        public_input_target,
+        &mut circuit_builder,
+    );
+
+    let mut partial_witnesses = PartialWitness::<F>::new();
+    partial_witnesses.set_target(
+        public_input_target,
+        F::from_canonical_usize(actual_target_value),
+    );
+
+    let circuit_data = circuit_builder.build::<C>();
+    let proof = circuit_data.prove(partial_witnesses).unwrap();
+    assert!(circuit_data.verify(proof).is_ok());
+}
+
+// ------------ CIRCUITS ------------ //
+
+fn _read_memory_of_length_3_circuit(
+    array_positions_input_witnesses: Vec<Witness>,
+    index_input_witness: Witness,
+) -> Circuit {
+    // public parameters indices : [0, 1, 2, 3]
+    // return value indices : []
+    // INIT (id: 0, len: 3)
+    // MEM (id: 0, read at: x3, value: x4)
+    // EXPR [ (1, _4) -5 ]
+    Circuit {
+        current_witness_index: 0,
+        expression_width: ExpressionWidth::Unbounded,
+        opcodes: vec![
+            Opcode::MemoryInit {
+                block_id: BlockId(0),
+                init: array_positions_input_witnesses.clone(),
+                block_type: Memory,
+            },
+            Opcode::MemoryOp {
+                block_id: BlockId(0),
+                op: MemOp {
+                    operation: expression_read(),
+                    index: expression_witness(index_input_witness),
+                    value: expression_witness(Witness(4)),
+                },
+                predicate: None,
+            },
+            Opcode::AssertZero(Expression {
+                mul_terms: Vec::new(),
+                linear_combinations: vec![(FieldElement::one(), Witness(4))],
+                q_c: -FieldElement::from_hex("0x05").unwrap(),
+            }),
+        ],
+        private_parameters: BTreeSet::new(),
+        public_parameters: PublicInputs(BTreeSet::from_iter(vec![
+            array_positions_input_witnesses[0],
+            array_positions_input_witnesses[1],
+            array_positions_input_witnesses[2],
+            index_input_witness,
+        ])),
+        return_values: PublicInputs(BTreeSet::new()),
+        assert_messages: Default::default(),
+        recursive: false,
+    }
 }
 
 fn _memory_simple_read_circuit(
@@ -126,7 +246,7 @@ fn _memory_simple_read_circuit(
                 block_id: BlockId(0),
                 op: MemOp {
                     operation: expression_read(),
-                    index: expression_witness(Witness(2)),
+                    index: expression_witness(index_input_witness),
                     value: expression_witness(Witness(3)),
                 },
                 predicate: None,
@@ -134,7 +254,10 @@ fn _memory_simple_read_circuit(
             Opcode::AssertZero(Expression {
                 mul_terms: Vec::new(),
                 linear_combinations: vec![
-                    (FieldElement::one(), Witness(0)),
+                    (
+                        FieldElement::one(),
+                        array_positions_input_witnesses[0].clone(),
+                    ),
                     (-FieldElement::one(), Witness(3)),
                 ],
                 q_c: FieldElement::zero(),

@@ -1,5 +1,6 @@
 [package]
-name = "noir_example"
+name = "array_dynamic"
 type = "bin"
 authors = [""]
+
 [dependencies]

@@ -1,5 +1,6 @@
 [package]
-name = "noir_example"
+name = "7_function"
 type = "bin"
 authors = [""]
+
 [dependencies]

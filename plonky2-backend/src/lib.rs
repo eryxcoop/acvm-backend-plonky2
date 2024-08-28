@@ -17,6 +17,8 @@ type F = <C as GenericConfig<D>>::F;
 pub mod actions;
 pub mod argument_parsing;
 pub mod circuit_translation;
+pub mod curve;
+pub mod biguint;
 pub mod noir_and_plonky2_serialization;
 
 #[global_allocator] // This is a plonky2 recommendation

@@ -235,6 +235,10 @@ impl CircuitBuilderFromAcirToPlonky2 {
         self.witness_target_map.insert(*output, output_target);
     }
 
+    pub fn target_for_witness(&mut self, w: Witness) -> Target {
+        self._get_or_create_target_for_witness(w)
+    }
+
     pub fn binary_number_target_for_witness(
         &mut self,
         w: Witness,

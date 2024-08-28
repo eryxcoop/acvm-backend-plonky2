@@ -21,8 +21,11 @@ tar = "0.4.41"
 parameterized = "2.0.0"
 clap = { version = "4.5.9", features = ["derive", "cargo"] }
 criterion = "0.3"
+num = "0.4.3"
+itertools = "0.10.5"
+anyhow = "1.0.83"
 
 [patch.crates-io]
 acir = { path = "../noir/acvm-repo/acir"}
 acir_field = { path = "../noir/acvm-repo/acir_field"}
-plonky2 = { path = "../plonky2/plonky2"}
+#plonky2 = { path = "../plonky2/plonky2"}

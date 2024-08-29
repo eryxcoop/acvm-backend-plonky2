@@ -1,5 +1,5 @@
 # acvm-backend-plonky2
-This is an open source backend for the ACIR standard as implemented in the Noir programming languaje, written in Rust.
+This is an open source backend for the ACIR standard as implemented in the Noir programming languaje, written in Rust. Check out [the docs](https://eryxcoop.github.io/acvm-backend-plonky2/foreword.html) for more detail on what this repo does.
 
 For the setup, run ```make``` on the root directory. This will do the following:
 

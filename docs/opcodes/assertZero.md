@@ -25,7 +25,7 @@ In Plonky2 we count with an ```ArithmeticGate``` that we can access through the 
 * ```add(t1: Target, t2: Target)```
 * ```mul(t1: Target, t2: Target)```
 * ```mul_const(t1: Target, c: FieldElement)```
-* ```assert_zero(t: Target)``` -> Restricts the value being held by the target to be equal to 0.
+* ```assert_zero(t: Target)``` -> Restricts the value being held by the target to equal 0.
 
 The ArithmeticGate accepts equations of the form 
 

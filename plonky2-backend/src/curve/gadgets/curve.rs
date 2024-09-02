@@ -287,12 +287,12 @@ impl<T: Witness<F>, F: PrimeField64> WitnessPoint<F> for T {
 
 #[cfg(test)]
 mod tests {
-    use num::{traits::FromBytes, BigUint, FromPrimitive};
+    use num::{traits::FromBytes, BigUint};
     use plonky2::{
         field::{
-            secp256k1_base::Secp256K1Base,
-            secp256k1_scalar::Secp256K1Scalar,
-            types::{Field, Sample},
+            secp256k1_base::Secp256K1Base
+            ,
+            types::Field,
         },
         iop::witness::PartialWitness,
         plonk::{
@@ -304,8 +304,8 @@ mod tests {
 
     use crate::{
         biguint::{
-            biguint::WitnessBigUint, gadgets::nonnative::CircuitBuilderNonNative,
-            witness::WitnessU32,
+            biguint::WitnessBigUint, gadgets::nonnative::CircuitBuilderNonNative
+            ,
         },
         curve::gadgets::{
             curve::{CircuitBuilderCurve, SECP256K1_GENERATOR_X, SECP256K1_GENERATOR_Y},

@@ -24,6 +24,7 @@ criterion = "0.3"
 num = "0.4.3"
 itertools = "0.10.5"
 anyhow = "1.0.83"
+rand = "0.8.5"
 
 [patch.crates-io]
 acir = { path = "../noir/acvm-repo/acir"}

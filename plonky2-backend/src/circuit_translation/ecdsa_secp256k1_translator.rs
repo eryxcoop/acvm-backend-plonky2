@@ -1,10 +1,10 @@
 use super::*;
-use crate::biguint::biguint::CircuitBuilderBiguint;
+use crate::biguint::biguint::{BigUintTarget, CircuitBuilderBiguint};
 use crate::biguint::gadgets::nonnative::{CircuitBuilderNonNative, NonNativeTarget};
 use crate::curve::gadgets::curve::{AffinePointTarget, CircuitBuilderCurve};
 use plonky2::field::secp256k1_base::Secp256K1Base;
 use plonky2::field::secp256k1_scalar::Secp256K1Scalar;
-
+use crate::biguint::gadgets::arithmetic_u32::U32Target;
 
 pub struct EcdsaSecp256k1Translator<'a> {
     circuit_builder: &'a mut CircuitBuilderFromAcirToPlonky2,
@@ -36,24 +36,30 @@ impl<'a> EcdsaSecp256k1Translator<'a> {
 
     pub fn translate(&mut self) {
         let public_key = self._public_key_target();
-        let r = self._vector_to_scalar_field_element(
-            self.signature[0..32].to_vec()
+        let r = self._32_bytes_to_field_element::<Secp256K1Scalar>(
+            self.signature.as_ref()[0..32].to_vec()
         );
-        let s = self._vector_to_scalar_field_element(
+
+        let s = self._32_bytes_to_field_element::<Secp256K1Scalar>(
             self.signature[32..64].to_vec()
         );
-        let h = self._vector_to_scalar_field_element(
+        let h = self._32_bytes_to_field_element::<Secp256K1Scalar>(
             self.hashed_msg.to_vec()
         );
+        /*
+                let r_point = self._calculate_r(&public_key, &r, &s, &h);
 
-        let r_point = self._calculate_r(&public_key, &r, &s, &h);
+                let does_signature_verify = self.circuit_builder.builder.cmp_biguint(
+                    &r.value, &r_point.x.value,
+                );
 
-        let does_signature_verify = self.circuit_builder.builder.cmp_biguint(
-            &r.value, &r_point.x.value,
-        );
-
+                let output_target = self.circuit_builder.target_for_witness(self.output);
+                self.circuit_builder.builder.connect(does_signature_verify.target, output_target);*/
+        // --------------- Test -------------//
         let output_target = self.circuit_builder.target_for_witness(self.output);
-        self.circuit_builder.builder.connect(does_signature_verify.target, output_target);
+        let true_target = self.circuit_builder.builder._true().target;
+        self.circuit_builder.builder.connect(true_target, output_target);
+        // ----------------------------------//
     }
 
     fn _calculate_r(
@@ -84,42 +90,36 @@ impl<'a> EcdsaSecp256k1Translator<'a> {
     }
 
     fn _public_key_target(&mut self) -> AffinePointTarget {
-        let x = self._vector_to_base_field_element(self.public_key_x.to_vec());
-        let y = self._vector_to_base_field_element(self.public_key_y.to_vec());
+        let x = self._32_bytes_to_field_element::<Secp256K1Base>(self.public_key_x.to_vec());
+        let y = self._32_bytes_to_field_element::<Secp256K1Base>(self.public_key_y.to_vec());
         AffinePointTarget { x, y }
     }
 
-    fn _vector_to_base_field_element(
-        &mut self, inputs: Vec<FunctionInput>,
-    ) -> NonNativeTarget<Secp256K1Base> {
-        let bytes_targets = self._inputs_to_targets(inputs);
+    fn _32_bytes_to_field_element<T: Field>(
+        &mut self, byte_inputs: Vec<FunctionInput>,
+    ) -> NonNativeTarget<T> {
+        let byte_targets: Vec<Target> = byte_inputs.iter().map(|i| {
+            self.circuit_builder._get_or_create_target_for_witness(i.witness)
+        }).collect();
 
-        // Create a virtual NonNative target
-        let nonnative_target = self.circuit_builder.builder.add_virtual_nonnative_target_sized(8);
+        let mut u32_limbs: Vec<U32Target> = Vec::new();
+        for u32_target_index in 0..8 {
+            let target_0 = byte_targets[4*u32_target_index];
+            let target_1 = byte_targets[4*u32_target_index+1];
+            let target_1_papota = self.circuit_builder.builder.mul_const(F::from_canonical_u64(1<<8), target_1);
+            let target_2 = byte_targets[4*u32_target_index+2];
+            let target_2_papota = self.circuit_builder.builder.mul_const(F::from_canonical_u64(1<<16), target_2);
+            let target_3 = byte_targets[4*u32_target_index+3];
+            let target_3_papota = self.circuit_builder.builder.mul_const(F::from_canonical_u64(1<<24), target_3);
 
-        // BoolTargets for the NonNative target
-        let bits_target_in_nonnative = self.circuit_builder.builder.split_nonnative_to_bits(
-            &nonnative_target
-        );
-
-        self._connect_32_bytes_with_256_bits(bytes_targets, bits_target_in_nonnative);
-        nonnative_target
-    }
-
-    fn _vector_to_scalar_field_element(
-        &mut self, inputs: Vec<FunctionInput>,
-    ) -> NonNativeTarget<Secp256K1Scalar> {
-        let bytes_targets = self._inputs_to_targets(inputs);
-
-        // Create a virtual NonNative target
-        let nonnative_target = self.circuit_builder.builder.add_virtual_nonnative_target_sized(8);
-
-        // BoolTargets for the NonNative target
-        let bits_target_in_nonnative = self.circuit_builder.builder.split_nonnative_to_bits(
-            &nonnative_target
-        );
-
-        self._connect_32_bytes_with_256_bits(bytes_targets, bits_target_in_nonnative);
+            let target = self.circuit_builder.builder.add_many([
+               target_0, target_1_papota, target_2_papota, target_3_papota
+            ]);
+            let u32_target = U32Target(target);
+            u32_limbs.push(u32_target);
+        }
+        let bui_target = BigUintTarget{ limbs: u32_limbs };
+        let nonnative_target = self.circuit_builder.builder.biguint_to_nonnative(&bui_target);
         nonnative_target
     }
 

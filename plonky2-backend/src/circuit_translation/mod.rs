@@ -67,7 +67,7 @@ pub struct CircuitBuilderFromAcirToPlonky2 {
 
 impl CircuitBuilderFromAcirToPlonky2 {
     pub fn new() -> Self {
-        let config = CircuitConfig::standard_recursion_config();
+        let config = CircuitConfig::wide_ecc_config();
         let builder = CB::new(config);
         let witness_target_map: HashMap<Witness, Target> = HashMap::new();
         let memory_blocks: HashMap<BlockId, (Vec<Target>, usize)> = HashMap::new();

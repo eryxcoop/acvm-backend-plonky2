@@ -5,6 +5,7 @@ use crate::curve::gadgets::curve::{AffinePointTarget, CircuitBuilderCurve};
 use plonky2::field::secp256k1_base::Secp256K1Base;
 use plonky2::field::secp256k1_scalar::Secp256K1Scalar;
 use crate::biguint::gadgets::arithmetic_u32::U32Target;
+use crate::curve::gadgets::glv::CircuitBuilderGlv;
 
 pub struct EcdsaSecp256k1Translator<'a> {
     circuit_builder: &'a mut CircuitBuilderFromAcirToPlonky2,
@@ -46,20 +47,15 @@ impl<'a> EcdsaSecp256k1Translator<'a> {
         let h = self._32_bytes_to_field_element::<Secp256K1Scalar>(
             self.hashed_msg.to_vec()
         );
-        /*
-                let r_point = self._calculate_r(&public_key, &r, &s, &h);
 
-                let does_signature_verify = self.circuit_builder.builder.cmp_biguint(
-                    &r.value, &r_point.x.value,
-                );
+        let r_point = self._calculate_r(&public_key, &r, &s, &h);
 
-                let output_target = self.circuit_builder.target_for_witness(self.output);
-                self.circuit_builder.builder.connect(does_signature_verify.target, output_target);*/
-        // --------------- Test -------------//
+        let does_signature_verify = self.circuit_builder.builder.cmp_biguint(
+            &r.value, &r_point.x.value,
+        );
+
         let output_target = self.circuit_builder.target_for_witness(self.output);
-        let true_target = self.circuit_builder.builder._true().target;
-        self.circuit_builder.builder.connect(true_target, output_target);
-        // ----------------------------------//
+        self.circuit_builder.builder.connect(does_signature_verify.target, output_target);
     }
 
     fn _calculate_r(
@@ -70,16 +66,17 @@ impl<'a> EcdsaSecp256k1Translator<'a> {
         h: &NonNativeTarget<Secp256K1Scalar>,
     ) -> AffinePointTarget {
         let s1 = self.circuit_builder.builder.inv_nonnative(&s);
+        // let s1 = self.circuit_builder.builder.add_virtual_nonnative_target();
 
         let u_1 = self.circuit_builder.builder.mul_nonnative(&h, &s1);
         let u_2 = self.circuit_builder.builder.mul_nonnative(&r, &s1);
 
         let generator = self.circuit_builder.builder.curve_generator_constant();
-        let r_factor_1 = self.circuit_builder.builder.curve_scalar_mul(
+        let r_factor_1 = self.circuit_builder.builder.glv_mul(
             &generator, &u_1,
         );
 
-        let r_factor_2 = self.circuit_builder.builder.curve_scalar_mul(
+        let r_factor_2 = self.circuit_builder.builder.glv_mul(
             &public_key, &u_2,
         );
 

@@ -8,7 +8,7 @@ use plonky2::iop::generator::{GeneratedValues, SimpleGenerator};
 use plonky2::iop::target::{BoolTarget, Target};
 use plonky2::iop::witness::{PartitionWitness, Witness};
 use plonky2::plonk::circuit_builder::CircuitBuilder;
-use crate::plonky2_ecdsa::biguint::gadgets::byte_target::ByteTarget;
+use crate::binary_digits_target::BinaryDigitsTarget;
 use crate::plonky2_ecdsa::biguint::gates::add_many_u32::U32AddManyGate;
 use crate::plonky2_ecdsa::biguint::gates::arithmetic_u32::U32ArithmeticGate;
 use crate::plonky2_ecdsa::biguint::gates::subtraction_u32::U32SubtractionGate;
@@ -64,7 +64,7 @@ pub trait CircuitBuilderU32<F: RichField + Extendable<D>, const D: usize> {
 
     fn split_into_bool_targets(&mut self, a: U32Target) -> [BoolTarget; 32];
 
-    fn split_into_byte_targets(&mut self, a: U32Target) -> [ByteTarget; 4];
+    fn split_into_byte_targets(&mut self, a: U32Target) -> [BinaryDigitsTarget; 4];
 }
 
 impl<F: RichField + Extendable<D>, const D: usize> CircuitBuilderU32<F, D>
@@ -248,19 +248,19 @@ impl<F: RichField + Extendable<D>, const D: usize> CircuitBuilderU32<F, D>
         bool_targets
     }
 
-    fn split_into_byte_targets(&mut self, a: U32Target) -> [ByteTarget; 4] {
+    fn split_into_byte_targets(&mut self, a: U32Target) -> [BinaryDigitsTarget; 4] {
         let bool_targets = self.split_into_bool_targets(a);
         [
-            ByteTarget {
+            BinaryDigitsTarget {
                 bits: bool_targets[0..8].to_vec(),
             },
-            ByteTarget {
+            BinaryDigitsTarget {
                 bits: bool_targets[8..16].to_vec(),
             },
-            ByteTarget {
+            BinaryDigitsTarget {
                 bits: bool_targets[16..24].to_vec(),
             },
-            ByteTarget {
+            BinaryDigitsTarget {
                 bits: bool_targets[24..32].to_vec(),
             },
         ]

@@ -2,10 +2,13 @@ use plonky2::field::extension::Extendable;
 use plonky2::hash::hash_types::RichField;
 use plonky2::iop::target::{BoolTarget, Target};
 use plonky2::plonk::circuit_builder::CircuitBuilder;
-use plonky2::util::ceil_div_usize;
 
 use crate::biguint::gadgets::arithmetic_u32::U32Target;
 use crate::biguint::gates::comparison::ComparisonGate;
+
+pub const fn ceil_div_usize(a: usize, b: usize) -> usize {
+    (a + b - 1) / b
+}
 
 /// Returns true if a is less than or equal to b, considered as base-`2^num_bits` limbs of a large value.
 /// This range-checks its inputs.

@@ -2,7 +2,7 @@ use acir::circuit::opcodes::BlackBoxFuncCall::Sha256Compression;
 use plonky2::iop::witness::{PartialWitness, WitnessWrite};
 
 use super::*;
-use crate::circuit_translation::binary_digits_target::BinaryDigitsTarget;
+use crate::binary_digits_target::BinaryDigitsTarget;
 use crate::circuit_translation::tests::factories::circuit_factory::circuit_with_single_opcode;
 use crate::circuit_translation::tests::factories::utils;
 

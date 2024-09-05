@@ -65,6 +65,12 @@ pub trait CircuitBuilderU32<F: RichField + Extendable<D>, const D: usize> {
     fn split_into_bool_targets(&mut self, a: U32Target) -> [BoolTarget; 32];
 
     fn split_into_byte_targets(&mut self, a: U32Target) -> [BinaryDigitsTarget; 4];
+
+    fn constant_byte(&mut self, byte: u8) -> BinaryDigitsTarget;
+
+    fn connect_byte(&mut self, x: BinaryDigitsTarget, y: BinaryDigitsTarget);
+
+    fn connect_bit(&mut self, x: BoolTarget, y: BoolTarget);
 }
 
 impl<F: RichField + Extendable<D>, const D: usize> CircuitBuilderU32<F, D>
@@ -235,7 +241,9 @@ impl<F: RichField + Extendable<D>, const D: usize> CircuitBuilderU32<F, D>
     }
 
     fn split_into_bool_targets(&mut self, a: U32Target) -> [BoolTarget; 32] {
-        let bool_targets: [BoolTarget; 32] = [self.add_virtual_bool_target_safe(); 32];
+        let bool_targets: [BoolTarget; 32] = std::array::from_fn(|_|
+            self.add_virtual_bool_target_safe()
+        );
         let mut acumulator = self.constant(F::ZERO);
         for i in 0..32 {
             acumulator = self.mul_const_add(
@@ -264,6 +272,31 @@ impl<F: RichField + Extendable<D>, const D: usize> CircuitBuilderU32<F, D>
                 bits: bool_targets[24..32].to_vec(),
             },
         ]
+    }
+
+    fn constant_byte(&mut self, byte: u8) -> BinaryDigitsTarget {
+        BinaryDigitsTarget {
+            bits: (0u8..8u8)
+                .rev()
+                .map(|i| {
+                    let value = ((1u8 << i) & byte) >> i;
+                    println!("Index {} value {}", i, value);
+                    BoolTarget::new_unsafe(
+                        self.constant(F::from_canonical_u8(value)),
+                    )
+                })
+                .collect(),
+        }
+    }
+
+    fn connect_byte(&mut self, x: BinaryDigitsTarget, y: BinaryDigitsTarget) {
+        for (a, b) in x.bits.iter().zip(y.bits.iter()) {
+            self.connect_bit(*a, *b);
+        }
+    }
+
+    fn connect_bit(&mut self, x: BoolTarget, y: BoolTarget) {
+        self.connect(x.target, y.target);
     }
 }
 
@@ -360,9 +393,7 @@ mod tests {
         data.verify(proof)
     }
 
-    /*
     #[test]
-    #[ignore]
     pub fn test_split_u32_into_target_bytes() -> Result<()> {
         const D: usize = 2;
         type C = PoseidonGoldilocksConfig;
@@ -389,5 +420,4 @@ mod tests {
         let proof = data.prove(pw).unwrap();
         data.verify(proof)
     }
-    */
 }

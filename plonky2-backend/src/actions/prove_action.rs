@@ -10,7 +10,6 @@ use plonky2::plonk::circuit_data::CircuitData;
 use plonky2::plonk::proof::ProofWithPublicInputs;
 
 use super::*;
-use crate::circuit_translation;
 use crate::circuit_translation::*;
 use crate::noir_and_plonky2_serialization::*;
 
@@ -53,7 +52,7 @@ impl ProveAction {
         &self,
         circuit: &Circuit,
     ) -> (CircuitData<F, C, 2>, HashMap<Witness, Target>) {
-        let mut translator = circuit_translation::CircuitBuilderFromAcirToPlonky2::new();
+        let mut translator = CircuitBuilderFromAcirToPlonky2::new();
         translator.translate_circuit(circuit);
         translator.unpack()
     }

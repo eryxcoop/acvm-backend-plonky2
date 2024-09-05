@@ -40,7 +40,7 @@ impl<F: RichField + Extendable<D>, const D: usize> U32AddManyGate<F, D> {
         }
     }
 
-    pub(crate) fn num_ops(num_addends: usize, config: &CircuitConfig) -> usize {
+    pub fn num_ops(num_addends: usize, config: &CircuitConfig) -> usize {
         debug_assert!(num_addends <= MAX_NUM_ADDENDS);
         let wires_per_op = (num_addends + 3) + Self::num_limbs();
         let routed_wires_per_op = num_addends + 3;
@@ -380,7 +380,7 @@ impl<F: RichField + Extendable<D>, const D: usize> SimpleGenerator<F, D>
 
 #[cfg(test)]
 mod tests {
-    use crate::biguint::gates::gate_testing::{test_eval_fns, test_low_degree};
+    use crate::plonky2_ecdsa::biguint::gates::gate_testing::{test_eval_fns, test_low_degree};
     use anyhow::Result;
     use plonky2::field::extension::quartic::QuarticExtension;
     use plonky2::field::goldilocks_field::GoldilocksField;

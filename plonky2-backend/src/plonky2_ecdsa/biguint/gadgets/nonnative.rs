@@ -15,12 +15,12 @@ pub const fn ceil_div_usize(a: usize, b: usize) -> usize {
     (a + b - 1) / b
 }
 
-use crate::biguint::biguint::{
+use crate::plonky2_ecdsa::biguint::biguint::{
     BigUintTarget, CircuitBuilderBiguint, GeneratedValuesBigUint, WitnessBigUint,
 };
-use crate::biguint::gadgets::arithmetic_u32::{CircuitBuilderU32, U32Target};
-use crate::biguint::gadgets::range_check_u32::range_check_u32_circuit;
-use crate::biguint::witness::GeneratedValuesU32;
+use crate::plonky2_ecdsa::biguint::gadgets::arithmetic_u32::{CircuitBuilderU32, U32Target};
+use crate::plonky2_ecdsa::biguint::gadgets::range_check_u32::range_check_u32_circuit;
+use crate::plonky2_ecdsa::biguint::witness::GeneratedValuesU32;
 
 #[derive(Clone, Debug)]
 pub struct NonNativeTarget<FF: Field> {
@@ -734,7 +734,7 @@ mod tests {
     use plonky2::plonk::circuit_data::CircuitConfig;
     use plonky2::plonk::config::{GenericConfig, PoseidonGoldilocksConfig};
 
-    use crate::biguint::gadgets::nonnative::CircuitBuilderNonNative;
+    use crate::plonky2_ecdsa::biguint::gadgets::nonnative::CircuitBuilderNonNative;
 
     #[test]
     fn test_nonnative_add() -> Result<()> {

@@ -1,11 +1,11 @@
 use super::*;
-use crate::biguint::biguint::{BigUintTarget, CircuitBuilderBiguint};
-use crate::biguint::gadgets::nonnative::{CircuitBuilderNonNative, NonNativeTarget};
-use crate::curve::gadgets::curve::{AffinePointTarget, CircuitBuilderCurve};
+use crate::plonky2_ecdsa::biguint::biguint::{BigUintTarget, CircuitBuilderBiguint};
+use crate::plonky2_ecdsa::biguint::gadgets::nonnative::{CircuitBuilderNonNative, NonNativeTarget};
+use crate::plonky2_ecdsa::curve::gadgets::curve::{AffinePointTarget, CircuitBuilderCurve};
 use plonky2::field::secp256k1_base::Secp256K1Base;
 use plonky2::field::secp256k1_scalar::Secp256K1Scalar;
-use crate::biguint::gadgets::arithmetic_u32::U32Target;
-use crate::curve::gadgets::glv::CircuitBuilderGlv;
+use crate::plonky2_ecdsa::biguint::gadgets::arithmetic_u32::U32Target;
+use crate::plonky2_ecdsa::curve::gadgets::glv::CircuitBuilderGlv;
 
 pub struct EcdsaSecp256k1Translator<'a> {
     circuit_builder: &'a mut CircuitBuilderFromAcirToPlonky2,

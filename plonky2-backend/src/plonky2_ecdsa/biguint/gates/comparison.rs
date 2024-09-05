@@ -30,8 +30,8 @@ pub const fn ceil_div_usize(a: usize, b: usize) -> usize {
 /// A gate for checking that one value is less than or equal to another.
 #[derive(Clone, Debug)]
 pub struct ComparisonGate<F: Field64 + Extendable<D>, const D: usize> {
-    pub(crate) num_bits: usize,
-    pub(crate) num_chunks: usize,
+    pub num_bits: usize,
+    pub num_chunks: usize,
     _phantom: PhantomData<F>,
 }
 
@@ -550,7 +550,7 @@ impl<F: RichField + Extendable<D>, const D: usize> SimpleGenerator<F, D>
 
 #[cfg(test)]
 mod tests {
-    use crate::biguint::gates::gate_testing::{test_eval_fns, test_low_degree};
+    use crate::plonky2_ecdsa::biguint::gates::gate_testing::{test_eval_fns, test_low_degree};
     use anyhow::Result;
     use plonky2::field::goldilocks_field::GoldilocksField;
     use plonky2::field::types::{PrimeField64, Sample};

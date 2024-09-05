@@ -13,10 +13,10 @@ use plonky2::iop::target::{BoolTarget, Target};
 use plonky2::iop::witness::{PartitionWitness, WitnessWrite};
 use plonky2::plonk::circuit_builder::CircuitBuilder;
 
-use crate::biguint::biguint::{BigUintTarget, GeneratedValuesBigUint, WitnessBigUint};
-use crate::biguint::gadgets::arithmetic_u32::{CircuitBuilderU32, U32Target};
-use crate::biguint::gadgets::nonnative::{CircuitBuilderNonNative, NonNativeTarget};
-use crate::biguint::gadgets::split_nonnative::CircuitBuilderSplit;
+use crate::plonky2_ecdsa::biguint::biguint::{BigUintTarget, GeneratedValuesBigUint, WitnessBigUint};
+use crate::plonky2_ecdsa::biguint::gadgets::arithmetic_u32::{CircuitBuilderU32, U32Target};
+use crate::plonky2_ecdsa::biguint::gadgets::nonnative::{CircuitBuilderNonNative, NonNativeTarget};
+use crate::plonky2_ecdsa::biguint::gadgets::split_nonnative::CircuitBuilderSplit;
 
 use super::curve::{generate_random_point, AffinePointTarget, CircuitBuilderCurve};
 

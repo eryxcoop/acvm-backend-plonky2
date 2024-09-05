@@ -36,7 +36,7 @@ impl<F: RichField + Extendable<D>, const D: usize> U32SubtractionGate<F, D> {
         }
     }
 
-    pub(crate) fn num_ops(config: &CircuitConfig) -> usize {
+    pub fn num_ops(config: &CircuitConfig) -> usize {
         let wires_per_op = 5 + Self::num_limbs();
         let routed_wires_per_op = 5;
         (config.num_wires / wires_per_op).min(config.num_routed_wires / routed_wires_per_op)
@@ -363,7 +363,7 @@ impl<F: RichField + Extendable<D>, const D: usize> SimpleGenerator<F, D>
 
 #[cfg(test)]
 mod tests {
-    use crate::biguint::gates::gate_testing::{test_eval_fns, test_low_degree};
+    use crate::plonky2_ecdsa::biguint::gates::gate_testing::{test_eval_fns, test_low_degree};
     use anyhow::Result;
     use plonky2::field::extension::quartic::QuarticExtension;
     use plonky2::field::goldilocks_field::GoldilocksField;

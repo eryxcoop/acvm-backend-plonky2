@@ -3,8 +3,8 @@ use plonky2::hash::hash_types::RichField;
 use plonky2::iop::target::{BoolTarget, Target};
 use plonky2::plonk::circuit_builder::CircuitBuilder;
 
-use crate::biguint::gadgets::arithmetic_u32::U32Target;
-use crate::biguint::gates::comparison::ComparisonGate;
+use crate::plonky2_ecdsa::biguint::gadgets::arithmetic_u32::U32Target;
+use crate::plonky2_ecdsa::biguint::gates::comparison::ComparisonGate;
 
 pub const fn ceil_div_usize(a: usize, b: usize) -> usize {
     (a + b - 1) / b

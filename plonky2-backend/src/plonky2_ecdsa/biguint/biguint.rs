@@ -1,8 +1,8 @@
 use core::marker::PhantomData;
 
-use crate::biguint::gadgets::arithmetic_u32::{CircuitBuilderU32, U32Target};
-use crate::biguint::gadgets::multiple_comparison::list_le_u32_circuit;
-use crate::biguint::witness::{GeneratedValuesU32, WitnessU32};
+use crate::plonky2_ecdsa::biguint::gadgets::arithmetic_u32::{CircuitBuilderU32, U32Target};
+use crate::plonky2_ecdsa::biguint::gadgets::multiple_comparison::list_le_u32_circuit;
+use crate::plonky2_ecdsa::biguint::witness::{GeneratedValuesU32, WitnessU32};
 use num::{BigUint, Integer, Zero};
 use plonky2::field::extension::Extendable;
 use plonky2::field::types::{PrimeField, PrimeField64};
@@ -361,7 +361,7 @@ impl<F: RichField + Extendable<D>, const D: usize> SimpleGenerator<F, D>
 
 #[cfg(test)]
 mod tests {
-    use crate::biguint::biguint::{CircuitBuilderBiguint, WitnessBigUint};
+    use crate::plonky2_ecdsa::biguint::biguint::{CircuitBuilderBiguint, WitnessBigUint};
     use anyhow::Result;
     use num::{BigUint, FromPrimitive, Integer};
     use plonky2::iop::witness::PartialWitness;

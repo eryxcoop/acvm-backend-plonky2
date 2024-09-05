@@ -8,7 +8,7 @@ use plonky2::iop::witness::Witness;
 use plonky2::plonk::circuit_builder::CircuitBuilder;
 use serde::{Deserialize, Serialize};
 
-use crate::biguint::gadgets::nonnative::{
+use crate::plonky2_ecdsa::biguint::gadgets::nonnative::{
     CircuitBuilderNonNative, NonNativeTarget, WitnessNonNative,
 };
 
@@ -303,11 +303,11 @@ mod tests {
     };
 
     use crate::{
-        biguint::{
+        plonky2_ecdsa::biguint::{
             biguint::WitnessBigUint, gadgets::nonnative::CircuitBuilderNonNative
             ,
         },
-        curve::gadgets::{
+        plonky2_ecdsa::curve::gadgets::{
             curve::{CircuitBuilderCurve, SECP256K1_GENERATOR_X, SECP256K1_GENERATOR_Y},
             glv::CircuitBuilderGlv,
         },

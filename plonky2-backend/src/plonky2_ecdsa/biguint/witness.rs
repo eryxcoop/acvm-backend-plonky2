@@ -2,7 +2,7 @@ use plonky2::field::types::{Field, PrimeField64};
 use plonky2::iop::generator::GeneratedValues;
 use plonky2::iop::witness::{Witness, WitnessWrite};
 
-use crate::biguint::gadgets::arithmetic_u32::U32Target;
+use crate::plonky2_ecdsa::biguint::gadgets::arithmetic_u32::U32Target;
 
 pub trait WitnessU32<F: PrimeField64>: Witness<F> {
     fn set_u32_target(&mut self, target: U32Target, value: u32);

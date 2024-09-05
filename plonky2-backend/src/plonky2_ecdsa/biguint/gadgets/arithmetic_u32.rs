@@ -8,12 +8,12 @@ use plonky2::iop::generator::{GeneratedValues, SimpleGenerator};
 use plonky2::iop::target::{BoolTarget, Target};
 use plonky2::iop::witness::{PartitionWitness, Witness};
 use plonky2::plonk::circuit_builder::CircuitBuilder;
-use crate::biguint::gadgets::byte_target::ByteTarget;
-use crate::biguint::gates::add_many_u32::U32AddManyGate;
-use crate::biguint::gates::arithmetic_u32::U32ArithmeticGate;
-use crate::biguint::gates::subtraction_u32::U32SubtractionGate;
-use crate::biguint::serialization::{ReadU32, WriteU32};
-use crate::biguint::witness::GeneratedValuesU32;
+use crate::plonky2_ecdsa::biguint::gadgets::byte_target::ByteTarget;
+use crate::plonky2_ecdsa::biguint::gates::add_many_u32::U32AddManyGate;
+use crate::plonky2_ecdsa::biguint::gates::arithmetic_u32::U32ArithmeticGate;
+use crate::plonky2_ecdsa::biguint::gates::subtraction_u32::U32SubtractionGate;
+use crate::plonky2_ecdsa::biguint::serialization::{ReadU32, WriteU32};
+use crate::plonky2_ecdsa::biguint::witness::GeneratedValuesU32;
 
 #[derive(Clone, Copy, Debug)]
 pub struct U32Target(pub Target);
@@ -61,6 +61,7 @@ pub trait CircuitBuilderU32<F: RichField + Extendable<D>, const D: usize> {
 
     // Returns x - y - borrow, as a pair (result, borrow), where borrow is 0 or 1 depending on whether borrowing from the next digit is required (iff y + borrow > x).
     fn sub_u32(&mut self, x: U32Target, y: U32Target, borrow: U32Target) -> (U32Target, U32Target);
+
     fn split_into_bool_targets(&mut self, a: U32Target) -> [BoolTarget; 32];
 
     fn split_into_byte_targets(&mut self, a: U32Target) -> [ByteTarget; 4];
@@ -281,6 +282,20 @@ impl<F: RichField + Extendable<D>, const D: usize> SimpleGenerator<F, D>
         "SplitToU32Generator".to_string()
     }
 
+    fn dependencies(&self) -> Vec<Target> {
+        vec![self.x]
+    }
+
+    fn run_once(&self, witness: &PartitionWitness<F>, out_buffer: &mut GeneratedValues<F>) {
+        let x = witness.get_target(self.x);
+        let x_u64 = x.to_canonical_u64();
+        let low = x_u64 as u32;
+        let high = (x_u64 >> 32) as u32;
+
+        out_buffer.set_u32_target(self.low, low);
+        out_buffer.set_u32_target(self.high, high);
+    }
+
     fn serialize(&self, dst: &mut Vec<u8>, _common_data: &CommonCircuitData<F, D>) -> IoResult<()> {
         dst.write_target(self.x)?;
         dst.write_target_u32(self.low)?;
@@ -297,20 +312,6 @@ impl<F: RichField + Extendable<D>, const D: usize> SimpleGenerator<F, D>
             high,
             _phantom: PhantomData,
         })
-    }
-
-    fn dependencies(&self) -> Vec<Target> {
-        vec![self.x]
-    }
-
-    fn run_once(&self, witness: &PartitionWitness<F>, out_buffer: &mut GeneratedValues<F>) {
-        let x = witness.get_target(self.x);
-        let x_u64 = x.to_canonical_u64();
-        let low = x_u64 as u32;
-        let high = (x_u64 >> 32) as u32;
-
-        out_buffer.set_u32_target(self.low, low);
-        out_buffer.set_u32_target(self.high, high);
     }
 }
 

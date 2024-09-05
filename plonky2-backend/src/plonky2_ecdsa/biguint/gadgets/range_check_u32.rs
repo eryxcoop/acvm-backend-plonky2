@@ -3,8 +3,8 @@ use plonky2::hash::hash_types::RichField;
 use plonky2::iop::target::Target;
 use plonky2::plonk::circuit_builder::CircuitBuilder;
 
-use crate::biguint::gadgets::arithmetic_u32::U32Target;
-use crate::biguint::gates::range_check_u32::U32RangeCheckGate;
+use crate::plonky2_ecdsa::biguint::gadgets::arithmetic_u32::U32Target;
+use crate::plonky2_ecdsa::biguint::gates::range_check_u32::U32RangeCheckGate;
 
 pub fn range_check_u32_circuit<F: RichField + Extendable<D>, const D: usize>(
     builder: &mut CircuitBuilder<F, D>,

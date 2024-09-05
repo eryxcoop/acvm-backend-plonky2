@@ -1,4 +1,4 @@
-use crate::biguint::gadgets::arithmetic_u32::U32Target;
+use crate::plonky2_ecdsa::biguint::gadgets::arithmetic_u32::U32Target;
 use plonky2::util::serialization::{Buffer, IoResult, Read, Write};
 
 pub trait WriteU32 {

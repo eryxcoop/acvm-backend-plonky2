@@ -58,4 +58,4 @@ The Plonky2 backend for ACIR is still in a development phase, so there are some 
   * XOR ✓
   * AND ✓
   * SHA256 ✓
-  * EcdsaSecp256k1 x
+  * EcdsaSecp256k1 ✓

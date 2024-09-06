@@ -20,7 +20,12 @@ use plonky2::plonk::vars::{
     EvaluationTargets, EvaluationVars, EvaluationVarsBase, EvaluationVarsBaseBatch,
     EvaluationVarsBasePacked,
 };
-use plonky2::util::{bits_u64, ceil_div_usize};
+use plonky2::util::{bits_u64};
+
+pub const fn ceil_div_usize(a: usize, b: usize) -> usize {
+    (a + b - 1) / b
+}
+
 
 /// A gate for checking that one value is less than or equal to another.
 #[derive(Clone, Debug)]

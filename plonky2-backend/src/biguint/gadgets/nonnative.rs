@@ -9,8 +9,11 @@ use plonky2::iop::target::{BoolTarget, Target};
 use plonky2::iop::witness::{PartitionWitness, Witness, WitnessWrite};
 use plonky2::plonk::circuit_builder::CircuitBuilder;
 use plonky2::plonk::circuit_data::CommonCircuitData;
-use plonky2::util::ceil_div_usize;
 use plonky2::util::serialization::{Buffer, IoResult};
+
+pub const fn ceil_div_usize(a: usize, b: usize) -> usize {
+    (a + b - 1) / b
+}
 
 use crate::biguint::biguint::{
     BigUintTarget, CircuitBuilderBiguint, GeneratedValuesBigUint, WitnessBigUint,
@@ -419,13 +422,8 @@ impl<F: RichField + Extendable<D>, const D: usize> CircuitBuilderNonNative<F, D>
 
         for i in 0..num_limbs {
             let limb = x.value.get_limb(i);
-            let bit_targets = self.split_le_base::<2>(limb.0, 32);
-            let mut bits: Vec<_> = bit_targets
-                .iter()
-                .map(|&t| BoolTarget::new_unsafe(t))
-                .collect();
-
-            result.append(&mut bits);
+            let mut bit_targets = self.split_le(limb.0, 32);
+            result.append(&mut bit_targets);
         }
 
         result

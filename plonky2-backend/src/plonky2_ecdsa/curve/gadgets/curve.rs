@@ -1,4 +1,3 @@
-use num::traits::FromBytes;
 use plonky2::field::secp256k1_scalar::Secp256K1Scalar;
 use plonky2::field::types::{Field, PrimeField, PrimeField64, Sample};
 use plonky2::field::{extension::Extendable, secp256k1_base::Secp256K1Base};
@@ -6,7 +5,6 @@ use plonky2::hash::hash_types::RichField;
 use plonky2::iop::target::BoolTarget;
 use plonky2::iop::witness::Witness;
 use plonky2::plonk::circuit_builder::CircuitBuilder;
-use serde::{Deserialize, Serialize};
 
 use crate::plonky2_ecdsa::biguint::gadgets::nonnative::{
     CircuitBuilderNonNative, NonNativeTarget, WitnessNonNative,

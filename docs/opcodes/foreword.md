@@ -1,0 +1,2 @@
+## Opcodes
+Opcodes are the basic elements that make the ACIR abstraction. An Abstract Circuit Intermediate Representation (ACIR) is a set of opcodes of different kinds (AssertZero, MemoryInit, MemoryOp, BlackBoxFunction, BrilligCall). These opcodes take different forms and talk about witnesses (inmutable variables in the circuit) and their main function is to establish restrictions over these witnesses. 

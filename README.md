@@ -59,3 +59,8 @@ The Plonky2 backend for ACIR is still in a development phase, so there are some 
   * AND ✓
   * SHA256 ✓
   * EcdsaSecp256k1 ✓
+
+## Credits
+We used some code from repos for the implementation of ECDSA verification and made some modifications to them:
+https://github.com/0xPolygonZero/plonky2-ecdsa
+https://github.com/0xPolygonZero/plonky2-u32

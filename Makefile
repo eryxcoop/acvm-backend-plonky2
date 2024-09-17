@@ -4,22 +4,22 @@ clone_custom_noir:
 	git clone https://github.com/brweisz/noir
 
 build_noir:
-	cd noir && cargo build
+	cd noir && cargo build --release
 
 clone_custom_plonky2:
 	git clone https://github.com/brweisz/plonky2
 
 build_plonky2:
-	rustup override set nightly && cd plonky2 && cargo build && rustup override unset
+	rustup override set nightly && cd plonky2 && cargo build --release
 
 build_backend:
-	cd plonky2-backend && cargo build
+	cd plonky2-backend && cargo build --release
 
 precompile_tests:
 	python prepare_compiled_noir_test_programs.py
 
 build_backend_release:
-	cd plonky2-backend && cargo build --profile=benchmarking
+	cd plonky2-backend && cargo build --release
 
 run_noir_example:
 	cd noir_example && ../noir/target/debug/nargo execute witness --print-acir && \
@@ -28,7 +28,7 @@ run_noir_example:
 	./target/debug/plonky2-backend verify -k ../noir_example/target/vk -p ../noir_example/proof
 
 run_noir_example_release:
-	cd noir_example && ../noir/target/debug/nargo execute witness --print-acir && \
+	cd noir_example && ../noir/target/release/nargo execute witness --print-acir && \
 	cd ../plonky2-backend && ./target/release/plonky2-backend prove -c ../noir_example/target/noir_example.json -w  ../noir_example/target/witness -o ../noir_example/proof && \
 	./target/release/plonky2-backend write_vk -b ../noir_example/target/noir_example.json -o ../noir_example/target/vk && \
 	./target/release/plonky2-backend verify -k ../noir_example/target/vk -p ../noir_example/proof

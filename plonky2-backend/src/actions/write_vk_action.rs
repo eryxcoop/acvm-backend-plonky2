@@ -18,11 +18,11 @@ use plonky2::gates::random_access::RandomAccessGate;
 use plonky2::gates::reducing::ReducingGate;
 use plonky2::gates::reducing_extension::ReducingExtensionGate;
 use plonky2::util::serialization::GateSerializer;
-use crate::biguint::gates::add_many_u32::U32AddManyGate;
-use crate::biguint::gates::arithmetic_u32::U32ArithmeticGate;
-use crate::biguint::gates::comparison::ComparisonGate;
-use crate::biguint::gates::range_check_u32::U32RangeCheckGate;
-use crate::biguint::gates::subtraction_u32::U32SubtractionGate;
+use crate::plonky2_ecdsa::biguint::gates::add_many_u32::U32AddManyGate;
+use crate::plonky2_ecdsa::biguint::gates::arithmetic_u32::U32ArithmeticGate;
+use crate::plonky2_ecdsa::biguint::gates::comparison::ComparisonGate;
+use crate::plonky2_ecdsa::biguint::gates::range_check_u32::U32RangeCheckGate;
+use crate::plonky2_ecdsa::biguint::gates::subtraction_u32::U32SubtractionGate;
 use super::*;
 
 /// The Write Verification Key Action will translate the ACIR circuit into the Plonky2 circuit

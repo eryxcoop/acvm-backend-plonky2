@@ -20,11 +20,10 @@ use plonky2::plonk::circuit_builder::CircuitBuilder;
 use plonky2::plonk::circuit_data::CircuitConfig;
 use plonky2::plonk::circuit_data::CircuitData;
 
-mod binary_digits_target;
 mod memory_translator;
 mod sha256_translator;
 
-use binary_digits_target::BinaryDigitsTarget;
+use crate::binary_digits_target::BinaryDigitsTarget;
 use memory_translator::MemoryOperationsTranslator;
 use sha256_translator::Sha256CompressionTranslator;
 use crate::circuit_translation::ecdsa_secp256k1_translator::EcdsaSecp256k1Translator;
@@ -35,7 +34,7 @@ mod tests;
 pub mod assert_zero_translator;
 mod ecdsa_secp256k1_translator;
 
-type CB = CircuitBuilder<F, D>;
+pub(crate) type CB = CircuitBuilder<F, D>;
 
 /// The FieldElement is imported from the Noir library, but for this backend to work the
 /// GoldilocksField should be used (and the witnesses generated accordingly).

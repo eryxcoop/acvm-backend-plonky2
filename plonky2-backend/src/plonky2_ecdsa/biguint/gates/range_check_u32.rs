@@ -233,7 +233,7 @@ impl<F: RichField + Extendable<D>, const D: usize> SimpleGenerator<F, D>
 
 #[cfg(test)]
 mod tests {
-    use crate::biguint::gates::gate_testing::{test_eval_fns, test_low_degree};
+    use crate::plonky2_ecdsa::biguint::gates::gate_testing::{test_eval_fns, test_low_degree};
     use anyhow::Result;
     use itertools::unfold;
     use plonky2::field::extension::quartic::QuarticExtension;

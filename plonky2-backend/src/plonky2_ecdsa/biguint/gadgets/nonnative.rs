@@ -15,12 +15,12 @@ pub const fn ceil_div_usize(a: usize, b: usize) -> usize {
     (a + b - 1) / b
 }
 
-use crate::biguint::biguint::{
+use crate::plonky2_ecdsa::biguint::biguint::{
     BigUintTarget, CircuitBuilderBiguint, GeneratedValuesBigUint, WitnessBigUint,
 };
-use crate::biguint::gadgets::arithmetic_u32::{CircuitBuilderU32, U32Target};
-use crate::biguint::gadgets::range_check_u32::range_check_u32_circuit;
-use crate::biguint::witness::GeneratedValuesU32;
+use crate::plonky2_ecdsa::biguint::gadgets::arithmetic_u32::{CircuitBuilderU32, U32Target};
+use crate::plonky2_ecdsa::biguint::gadgets::range_check_u32::range_check_u32_circuit;
+use crate::plonky2_ecdsa::biguint::witness::GeneratedValuesU32;
 
 #[derive(Clone, Debug)]
 pub struct NonNativeTarget<FF: Field> {
@@ -511,6 +511,10 @@ struct NonNativeMultipleAddsGenerator<F: RichField + Extendable<D>, const D: usi
 impl<F: RichField + Extendable<D>, const D: usize, FF: PrimeField> SimpleGenerator<F, D>
     for NonNativeMultipleAddsGenerator<F, D, FF>
 {
+    fn id(&self) -> String {
+        todo!()
+    }
+
     fn dependencies(&self) -> Vec<Target> {
         self.summands
             .iter()
@@ -543,10 +547,6 @@ impl<F: RichField + Extendable<D>, const D: usize, FF: PrimeField> SimpleGenerat
         out_buffer.set_u32_target(self.overflow, overflow);
     }
 
-    fn id(&self) -> String {
-        todo!()
-    }
-
     fn serialize(&self, _dst: &mut Vec<u8>, _common_data: &CommonCircuitData<F, D>) -> IoResult<()> {
         todo!()
     }
@@ -571,6 +571,10 @@ struct NonNativeSubtractionGenerator<F: RichField + Extendable<D>, const D: usiz
 impl<F: RichField + Extendable<D>, const D: usize, FF: PrimeField> SimpleGenerator<F, D>
     for NonNativeSubtractionGenerator<F, D, FF>
 {
+    fn id(&self) -> String {
+        todo!()
+    }
+
     fn dependencies(&self) -> Vec<Target> {
         self.a
             .value
@@ -599,10 +603,6 @@ impl<F: RichField + Extendable<D>, const D: usize, FF: PrimeField> SimpleGenerat
         out_buffer.set_bool_target(self.overflow, overflow);
     }
 
-    fn id(&self) -> String {
-        todo!()
-    }
-
     fn serialize(&self, _dst: &mut Vec<u8>, _common_data: &CommonCircuitData<F, D>) -> IoResult<()> {
         todo!()
     }
@@ -627,6 +627,10 @@ struct NonNativeMultiplicationGenerator<F: RichField + Extendable<D>, const D: u
 impl<F: RichField + Extendable<D>, const D: usize, FF: PrimeField> SimpleGenerator<F, D>
     for NonNativeMultiplicationGenerator<F, D, FF>
 {
+    fn id(&self) -> String {
+        todo!()
+    }
+
     fn dependencies(&self) -> Vec<Target> {
         self.a
             .value
@@ -651,10 +655,6 @@ impl<F: RichField + Extendable<D>, const D: usize, FF: PrimeField> SimpleGenerat
 
         out_buffer.set_biguint_target(&self.prod.value, &prod_reduced);
         out_buffer.set_biguint_target(&self.overflow, &overflow_biguint);
-    }
-
-    fn id(&self) -> String {
-        todo!()
     }
 
     fn serialize(&self, _dst: &mut Vec<u8>, _common_data: &CommonCircuitData<F, D>) -> IoResult<()> {
@@ -734,7 +734,7 @@ mod tests {
     use plonky2::plonk::circuit_data::CircuitConfig;
     use plonky2::plonk::config::{GenericConfig, PoseidonGoldilocksConfig};
 
-    use crate::biguint::gadgets::nonnative::CircuitBuilderNonNative;
+    use crate::plonky2_ecdsa::biguint::gadgets::nonnative::CircuitBuilderNonNative;
 
     #[test]
     fn test_nonnative_add() -> Result<()> {

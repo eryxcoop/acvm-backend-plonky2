@@ -8,12 +8,12 @@ use plonky2::iop::generator::{GeneratedValues, SimpleGenerator};
 use plonky2::iop::target::{BoolTarget, Target};
 use plonky2::iop::witness::{PartitionWitness, Witness};
 use plonky2::plonk::circuit_builder::CircuitBuilder;
-use crate::biguint::gadgets::byte_target::ByteTarget;
-use crate::biguint::gates::add_many_u32::U32AddManyGate;
-use crate::biguint::gates::arithmetic_u32::U32ArithmeticGate;
-use crate::biguint::gates::subtraction_u32::U32SubtractionGate;
-use crate::biguint::serialization::{ReadU32, WriteU32};
-use crate::biguint::witness::GeneratedValuesU32;
+use crate::binary_digits_target::BinaryDigitsTarget;
+use crate::plonky2_ecdsa::biguint::gates::add_many_u32::U32AddManyGate;
+use crate::plonky2_ecdsa::biguint::gates::arithmetic_u32::U32ArithmeticGate;
+use crate::plonky2_ecdsa::biguint::gates::subtraction_u32::U32SubtractionGate;
+use crate::plonky2_ecdsa::biguint::serialization::{ReadU32, WriteU32};
+use crate::plonky2_ecdsa::biguint::witness::GeneratedValuesU32;
 
 #[derive(Clone, Copy, Debug)]
 pub struct U32Target(pub Target);
@@ -61,9 +61,16 @@ pub trait CircuitBuilderU32<F: RichField + Extendable<D>, const D: usize> {
 
     // Returns x - y - borrow, as a pair (result, borrow), where borrow is 0 or 1 depending on whether borrowing from the next digit is required (iff y + borrow > x).
     fn sub_u32(&mut self, x: U32Target, y: U32Target, borrow: U32Target) -> (U32Target, U32Target);
+
     fn split_into_bool_targets(&mut self, a: U32Target) -> [BoolTarget; 32];
 
-    fn split_into_byte_targets(&mut self, a: U32Target) -> [ByteTarget; 4];
+    fn split_into_byte_targets(&mut self, a: U32Target) -> [BinaryDigitsTarget; 4];
+
+    fn constant_byte(&mut self, byte: u8) -> BinaryDigitsTarget;
+
+    fn connect_byte(&mut self, x: BinaryDigitsTarget, y: BinaryDigitsTarget);
+
+    fn connect_bit(&mut self, x: BoolTarget, y: BoolTarget);
 }
 
 impl<F: RichField + Extendable<D>, const D: usize> CircuitBuilderU32<F, D>
@@ -234,7 +241,9 @@ impl<F: RichField + Extendable<D>, const D: usize> CircuitBuilderU32<F, D>
     }
 
     fn split_into_bool_targets(&mut self, a: U32Target) -> [BoolTarget; 32] {
-        let bool_targets: [BoolTarget; 32] = [self.add_virtual_bool_target_safe(); 32];
+        let bool_targets: [BoolTarget; 32] = std::array::from_fn(|_|
+            self.add_virtual_bool_target_safe()
+        );
         let mut acumulator = self.constant(F::ZERO);
         for i in 0..32 {
             acumulator = self.mul_const_add(
@@ -247,22 +256,47 @@ impl<F: RichField + Extendable<D>, const D: usize> CircuitBuilderU32<F, D>
         bool_targets
     }
 
-    fn split_into_byte_targets(&mut self, a: U32Target) -> [ByteTarget; 4] {
+    fn split_into_byte_targets(&mut self, a: U32Target) -> [BinaryDigitsTarget; 4] {
         let bool_targets = self.split_into_bool_targets(a);
         [
-            ByteTarget {
+            BinaryDigitsTarget {
                 bits: bool_targets[0..8].to_vec(),
             },
-            ByteTarget {
+            BinaryDigitsTarget {
                 bits: bool_targets[8..16].to_vec(),
             },
-            ByteTarget {
+            BinaryDigitsTarget {
                 bits: bool_targets[16..24].to_vec(),
             },
-            ByteTarget {
+            BinaryDigitsTarget {
                 bits: bool_targets[24..32].to_vec(),
             },
         ]
+    }
+
+    fn constant_byte(&mut self, byte: u8) -> BinaryDigitsTarget {
+        BinaryDigitsTarget {
+            bits: (0u8..8u8)
+                .rev()
+                .map(|i| {
+                    let value = ((1u8 << i) & byte) >> i;
+                    println!("Index {} value {}", i, value);
+                    BoolTarget::new_unsafe(
+                        self.constant(F::from_canonical_u8(value)),
+                    )
+                })
+                .collect(),
+        }
+    }
+
+    fn connect_byte(&mut self, x: BinaryDigitsTarget, y: BinaryDigitsTarget) {
+        for (a, b) in x.bits.iter().zip(y.bits.iter()) {
+            self.connect_bit(*a, *b);
+        }
+    }
+
+    fn connect_bit(&mut self, x: BoolTarget, y: BoolTarget) {
+        self.connect(x.target, y.target);
     }
 }
 
@@ -281,6 +315,20 @@ impl<F: RichField + Extendable<D>, const D: usize> SimpleGenerator<F, D>
         "SplitToU32Generator".to_string()
     }
 
+    fn dependencies(&self) -> Vec<Target> {
+        vec![self.x]
+    }
+
+    fn run_once(&self, witness: &PartitionWitness<F>, out_buffer: &mut GeneratedValues<F>) {
+        let x = witness.get_target(self.x);
+        let x_u64 = x.to_canonical_u64();
+        let low = x_u64 as u32;
+        let high = (x_u64 >> 32) as u32;
+
+        out_buffer.set_u32_target(self.low, low);
+        out_buffer.set_u32_target(self.high, high);
+    }
+
     fn serialize(&self, dst: &mut Vec<u8>, _common_data: &CommonCircuitData<F, D>) -> IoResult<()> {
         dst.write_target(self.x)?;
         dst.write_target_u32(self.low)?;
@@ -297,20 +345,6 @@ impl<F: RichField + Extendable<D>, const D: usize> SimpleGenerator<F, D>
             high,
             _phantom: PhantomData,
         })
-    }
-
-    fn dependencies(&self) -> Vec<Target> {
-        vec![self.x]
-    }
-
-    fn run_once(&self, witness: &PartitionWitness<F>, out_buffer: &mut GeneratedValues<F>) {
-        let x = witness.get_target(self.x);
-        let x_u64 = x.to_canonical_u64();
-        let low = x_u64 as u32;
-        let high = (x_u64 >> 32) as u32;
-
-        out_buffer.set_u32_target(self.low, low);
-        out_buffer.set_u32_target(self.high, high);
     }
 }
 
@@ -359,9 +393,7 @@ mod tests {
         data.verify(proof)
     }
 
-    /*
     #[test]
-    #[ignore]
     pub fn test_split_u32_into_target_bytes() -> Result<()> {
         const D: usize = 2;
         type C = PoseidonGoldilocksConfig;
@@ -388,5 +420,4 @@ mod tests {
         let proof = data.prove(pw).unwrap();
         data.verify(proof)
     }
-    */
 }

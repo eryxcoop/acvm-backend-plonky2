@@ -1,0 +1,1 @@
+We removed usages of class ByteTarget, because we implemented the same class (BinaryDigitsTarget) but with a variable number of BoolTargets.

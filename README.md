@@ -29,7 +29,7 @@ Run ```make run_noir_example``` from the root directory. The following explanati
 1) From the ```noir_example``` directory run:
 * ```../noir/target/debug/nargo execute witness```. This will execute the noir program through the nargo acvm, generating:
    * The ACIR circuit in ```target/noir_example.json```
-   * The witness in ```target/witness-name.gz```
+   * The witness in ```target/witness.gz```
 2) From the ```plonky2-backend``` directory run: 
 * ```./target/debug/plonky2-backend prove -c ../noir_example/target/noir_example.json -w  ../noir_example/target/witness -o ../noir_example/proof```. This will create a Plonky2 proof in ```../noir_example/proof```.
 * ```./target/debug/plonky2-backend write_vk -b ../noir_example/target/noir_example.json -o ../noir_example/target/vk```. This will create the verification key in ```../noir_example/target/vk```
@@ -48,7 +48,7 @@ https://t.me/+HeUDkQPX_w0yMDQx
 
 
 ## Things already implemented in this version
-The Plonky2 backend for ACIR is still in a development phase, so there are some features that will be implemented in the next months. As for now, this is the roadmap:
+The Plonky2 backend for ACIR is still in a development phase. As for now, these are the implemented functionalities:
 * AssertZero Opcode ✓
 * MemoryInit Opcode ✓
 * MemoryOp Opcode ✓
@@ -59,6 +59,8 @@ The Plonky2 backend for ACIR is still in a development phase, so there are some 
   * AND ✓
   * SHA256 ✓
   * EcdsaSecp256k1 ✓
+
+Things not implemented are mostly BlackBoxFunctions.
 
 ## Credits
 We used some code from repos for the implementation of ECDSA verification and made some modifications to them:

@@ -2,7 +2,7 @@ use acir::circuit::opcodes::BlackBoxFuncCall::Sha256Compression;
 use plonky2::iop::witness::{PartialWitness, WitnessWrite};
 
 use super::*;
-use crate::circuit_translation::binary_digits_target::BinaryDigitsTarget;
+use crate::binary_digits_target::BinaryDigitsTarget;
 use crate::circuit_translation::tests::factories::circuit_factory::circuit_with_single_opcode;
 use crate::circuit_translation::tests::factories::utils;
 
@@ -431,7 +431,7 @@ fn test_choose(
     assert!(circuit_data.verify(proof).is_ok());
 }
 
-fn test_rotate_right(n: usize, size: usize, mut input_values: Vec<F>, mut output_values: Vec<F>) {
+fn test_rotate_right(n: usize, size: usize, input_values: Vec<F>, output_values: Vec<F>) {
     let config = CircuitConfig::standard_recursion_config();
     let mut circuit_builder = CB::new(config);
 
@@ -454,7 +454,7 @@ fn test_rotate_right(n: usize, size: usize, mut input_values: Vec<F>, mut output
     assert!(circuit_data.verify(proof).is_ok());
 }
 
-fn test_shift_right(n: usize, size: usize, mut input_values: Vec<F>, mut output_values: Vec<F>) {
+fn test_shift_right(n: usize, size: usize, input_values: Vec<F>, output_values: Vec<F>) {
     let config = CircuitConfig::standard_recursion_config();
     let mut circuit_builder = CB::new(config);
 
@@ -520,7 +520,7 @@ fn test_compression_function() {
         .collect::<Vec<_>>();
 
 
-    let mut output_values = vec![
+    let output_values = vec![
         F::from_canonical_u32(0xe3b0c442),
         F::from_canonical_u32(0x98fc1c14),
         F::from_canonical_u32(0x9afbf4c8),

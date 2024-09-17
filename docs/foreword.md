@@ -1,0 +1,2 @@
+# Foreword
+These docs aim to give a brief overview of what this repo is for, what it solves, and how it does so. For a deeper understanding, we recommend reading the source code: we hope it is declarative enough and that the comments are helpful.

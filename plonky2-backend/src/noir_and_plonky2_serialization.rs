@@ -6,6 +6,7 @@ use serde_json;
 use std::fs::File;
 use std::io::{Read, Write};
 use std::vec::Vec;
+use crate::actions::write_vk_action::BackendGateSerializer;
 
 /// Since Nargo is decoupled from the backend (they don't even have to be written in the same
 /// languaje) the communication between them is done through files, so there's a lot of serializing
@@ -16,7 +17,7 @@ pub fn deserialize_verifying_key_within_file_path(
     verifying_key_path: &String,
 ) -> VerifierCircuitData<F, C, D> {
     let buffer = read_file_to_bytes(verifying_key_path);
-    let gate_serializer = DefaultGateSerializer;
+    let gate_serializer = BackendGateSerializer;
     VerifierCircuitData::from_bytes(buffer, &gate_serializer).unwrap()
 }
 

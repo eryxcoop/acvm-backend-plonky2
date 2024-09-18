@@ -1,0 +1,4 @@
+### BrilligCall Opcode
+In Noir there are explicit unconstrained functions like the ones we define with the ```unconstrained``` keyword. This means that the return values of this functions will not be constrained, they will be like clues to the circuit provided through the Witness values. There are also implicit brillig calls like when we try to find the inverse of a field element. We can ignore these opcodes because their only purpose is to notify that some calculations were made that will not be constrained on the same way they were performed. The implicit brillig calls usually come with some assertZero opcodes that assert that the RESULT of the calculation is correct, like when we make a division.
+
+It's important to remark that the "clues" provided in the witness as a result of a BrilligCall should be passed over to the prover (just like we do with the input values) since there is no way the Plonky2 execution can figure out these values on its own. 

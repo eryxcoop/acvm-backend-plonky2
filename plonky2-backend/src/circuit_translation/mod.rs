@@ -20,21 +20,22 @@ use plonky2::plonk::circuit_builder::CircuitBuilder;
 use plonky2::plonk::circuit_data::CircuitConfig;
 use plonky2::plonk::circuit_data::CircuitData;
 
-mod binary_digits_target;
 mod memory_translator;
 mod sha256_translator;
 
-use binary_digits_target::BinaryDigitsTarget;
+use crate::binary_digits_target::BinaryDigitsTarget;
 use memory_translator::MemoryOperationsTranslator;
 use plonky2::gates::lookup_table::LookupTable;
 use sha256_translator::Sha256CompressionTranslator;
+use crate::circuit_translation::ecdsa_secp256k1_translator::EcdsaSecp256k1Translator;
 
 #[cfg(test)]
 mod tests;
 
 pub mod assert_zero_translator;
+mod ecdsa_secp256k1_translator;
 
-type CB = CircuitBuilder<F, D>;
+pub(crate) type CB = CircuitBuilder<F, D>;
 
 /// The FieldElement is imported from the Noir library, but for this backend to work the
 /// GoldilocksField should be used (and the witnesses generated accordingly).
@@ -68,7 +69,7 @@ pub struct CircuitBuilderFromAcirToPlonky2 {
 
 impl CircuitBuilderFromAcirToPlonky2 {
     pub fn new() -> Self {
-        let config = CircuitConfig::standard_recursion_config();
+        let config = CircuitConfig::wide_ecc_config();
         let builder = CB::new(config);
         let witness_target_map: HashMap<Witness, Target> = HashMap::new();
         let memory_blocks: HashMap<BlockId, (Vec<Target>, usize)> = HashMap::new();
@@ -214,6 +215,21 @@ impl CircuitBuilderFromAcirToPlonky2 {
                                 outputs,
                             );
                         }
+                        opcodes::BlackBoxFuncCall::EcdsaSecp256k1 {
+                            public_key_x,
+                            public_key_y,
+                            signature,
+                            hashed_message,
+                            output,
+                        } => {
+                            self._extend_circuit_with_ecdsa_secp256k1_operation(
+                                public_key_x,
+                                public_key_y,
+                                signature,
+                                hashed_message,
+                                *output
+                            );
+                        }
                         blackbox_func => {
                             panic!("Blackbox func not supported yet: {:?}", blackbox_func);
                         }
@@ -247,6 +263,19 @@ impl CircuitBuilderFromAcirToPlonky2 {
         a ^ b
     }
 
+    fn _extend_circuit_with_ecdsa_secp256k1_operation(
+        &mut self,
+        public_key_x: &Box<[FunctionInput; 32]>,
+        public_key_y: &Box<[FunctionInput; 32]>,
+        signature: &Box<[FunctionInput; 64]>,
+        hashed_message: &Box<[FunctionInput; 32]>,
+        output: Witness,
+    ) {
+        let mut ecdsa_secp256k1_translator =
+            EcdsaSecp256k1Translator::new_for(self, hashed_message, public_key_x, public_key_y, signature, output);
+        ecdsa_secp256k1_translator.translate();
+    }
+
     fn _extend_circuit_with_bitwise_operation(
         self: &mut Self,
         lhs: &FunctionInput,
@@ -264,6 +293,10 @@ impl CircuitBuilderFromAcirToPlonky2 {
 
         let output_target = self.convert_binary_number_to_number(output_binary_target);
         self.witness_target_map.insert(*output, output_target);
+    }
+
+    pub fn target_for_witness(&mut self, w: Witness) -> Target {
+        self._get_or_create_target_for_witness(w)
     }
 
     pub fn binary_number_target_for_witness(

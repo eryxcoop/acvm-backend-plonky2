@@ -1,7 +1,8 @@
 use plonky2::field::types::Field;
 use plonky2::iop::target::BoolTarget;
 
-use crate::circuit_translation::{CB, F};
+use crate::circuit_translation::CB;
+use crate::F;
 
 /// This module provides a BinaryDigitsTarget object. It's main goal is to represent numbers as
 /// its bit decomposition, so we can perform bitwise operations.

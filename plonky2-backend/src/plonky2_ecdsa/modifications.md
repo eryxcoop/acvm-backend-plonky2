@@ -1,0 +1,5 @@
+- We removed usages of class ByteTarget, because we implemented the same class (BinaryDigitsTarget) but with a variable number of BoolTargets.
+- We added convenience functions to trait CircuitBuilderU32 to operate with BinaryDigitsTarget instances: 
+  - fn constant_byte(&mut self, byte: u8) -> BinaryDigitsTarget;
+  - fn connect_byte(&mut self, x: BinaryDigitsTarget, y: BinaryDigitsTarget);
+  - fn connect_bit(&mut self, x: BoolTarget, y: BoolTarget);

@@ -2,8 +2,8 @@ import os
 import subprocess
 
 origin_path = os.path.abspath(os.getcwd())
-custom_nargo_path = origin_path + "/noir/target/debug/nargo"
-custom_backend_path = origin_path + "/plonky2-backend/target/debug/plonky2-backend"
+custom_nargo_path = origin_path + "/noir/target/release/nargo"
+custom_backend_path = origin_path + "/plonky2-backend/target/release/plonky2-backend"
 base_test_programs_path = origin_path + "/plonky2-backend/src/circuit_translation/tests/factories/precompiled_circuits_0.47.0/"
 print(origin_path)
 

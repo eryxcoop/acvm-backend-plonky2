@@ -1,4 +1,4 @@
-all: clone_custom_noir build_noir clone_custom_plonky2 build_plonky2 build_backend precompile_tests
+all: build_external build_backend precompile_tests
 
 # Cloning and building external resources
 
@@ -35,6 +35,12 @@ precompile_tests:
 
 # Execution
 
+verification_happy_path:
+	$(MAKE) nargo_execute
+	$(MAKE) prove
+	$(MAKE) write_vk
+	$(MAKE) verify
+
 nargo_execute:
 	cd noir_example && ../noir/target/release/nargo execute witness --print-acir
 
@@ -46,11 +52,5 @@ write_vk:
 
 verify:
 	cd plonky2-backend && ./target/release/plonky2-backend verify -k ../noir_example/target/vk -p ../noir_example/proof
-
-verification_happy_path:
-	$(MAKE) nargo_execute
-	$(MAKE) prove
-	$(MAKE) write_vk
-	$(MAKE) verify
 
 .PHONY: all clone_custom_noir build_noir clone_custom_plonky2 build_plonky2 build_backend

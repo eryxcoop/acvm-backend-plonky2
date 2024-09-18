@@ -27,13 +27,13 @@ For some manual testing, the workflow is as follows: in the ```noir_example``` f
 Run ```make run_noir_example``` from the root directory. The following explanation is similar to the official [Noir docs](https://noir-lang.org/docs/dev/getting_started/hello_noir/#execute-our-noir-program), but using the custom plonky2 backend instead of barretenberg, and it's what the command will execute.
 
 1) From the ```noir_example``` directory run:
-* ```../noir/target/debug/nargo execute witness```. This will execute the noir program through the nargo acvm, generating:
+* ```../noir/target/release/nargo execute witness```. This will execute the noir program through the nargo acvm, generating:
    * The ACIR circuit in ```target/noir_example.json```
    * The witness in ```target/witness.gz```
 2) From the ```plonky2-backend``` directory run: 
-* ```./target/debug/plonky2-backend prove -c ../noir_example/target/noir_example.json -w  ../noir_example/target/witness -o ../noir_example/proof```. This will create a Plonky2 proof in ```../noir_example/proof```.
-* ```./target/debug/plonky2-backend write_vk -b ../noir_example/target/noir_example.json -o ../noir_example/target/vk```. This will create the verification key in ```../noir_example/target/vk```
-* ```./target/debug/plonky2-backend verify -k ../noir_example/target/vk -p ../noir_example/proof```. This will verify the Plonky2 proof. An empty output is sign of verification success. 
+* ```./target/release/plonky2-backend prove -c ../noir_example/target/noir_example.json -w  ../noir_example/target/witness -o ../noir_example/proof```. This will create a Plonky2 proof in ```../noir_example/proof```.
+* ```./target/release/plonky2-backend write_vk -b ../noir_example/target/noir_example.json -o ../noir_example/target/vk```. This will create the verification key in ```../noir_example/target/vk```
+* ```./target/release/plonky2-backend verify -k ../noir_example/target/vk -p ../noir_example/proof```. This will verify the Plonky2 proof. An empty output is sign of verification success. 
 
     
 ## Running some predefined examples
@@ -45,7 +45,6 @@ If you want to try out some Noir examples, execute the python script ```run_exam
 ## Contact Us
 Feel free to join our telegram group for suggestions, report bugs or any question you might have!
 https://t.me/+HeUDkQPX_w0yMDQx
-
 
 ## Things already implemented in this version
 The Plonky2 backend for ACIR is still in a development phase. As for now, these are the implemented functionalities:
@@ -60,7 +59,7 @@ The Plonky2 backend for ACIR is still in a development phase. As for now, these 
   * SHA256 ✓
   * EcdsaSecp256k1 ✓
 
-Things not implemented are mostly BlackBoxFunctions.
+Things not implemented yet are mostly BlackBoxFunctions.
 
 ## Credits
 We used some code from repos for the implementation of ECDSA verification and made some modifications to them:

@@ -22,18 +22,20 @@ use plonky2::plonk::circuit_data::CircuitData;
 
 mod memory_translator;
 mod sha256_translator;
+mod ecdsa_secp256k1_translator;
 
 use crate::binary_digits_target::BinaryDigitsTarget;
 use memory_translator::MemoryOperationsTranslator;
 use plonky2::gates::lookup_table::LookupTable;
 use sha256_translator::Sha256CompressionTranslator;
 use crate::circuit_translation::ecdsa_secp256k1_translator::EcdsaSecp256k1Translator;
+use crate::circuit_translation::range_check_strategies::{RangeCheckStrategy, RangeCheckWithLookupTable};
 
 #[cfg(test)]
 mod tests;
 
 pub mod assert_zero_translator;
-mod ecdsa_secp256k1_translator;
+pub mod range_check_strategies;
 
 pub(crate) type CB = CircuitBuilder<F, D>;
 
@@ -63,8 +65,9 @@ pub struct CircuitBuilderFromAcirToPlonky2 {
     pub builder: CB,
     pub witness_target_map: HashMap<Witness, Target>,
     pub memory_blocks: HashMap<BlockId, (Vec<Target>, usize)>,
-    pub u8_range_table_index: Option<usize>,
     pub u8_xor_table_index: Option<usize>,
+    pub range_check_strategy: Box<dyn RangeCheckStrategy>
+
 }
 
 impl CircuitBuilderFromAcirToPlonky2 {
@@ -73,12 +76,15 @@ impl CircuitBuilderFromAcirToPlonky2 {
         let builder = CB::new(config);
         let witness_target_map: HashMap<Witness, Target> = HashMap::new();
         let memory_blocks: HashMap<BlockId, (Vec<Target>, usize)> = HashMap::new();
+
+        let range_check_strategy = Box::new(RangeCheckWithLookupTable::new());
+
         Self {
             builder,
             witness_target_map,
             memory_blocks,
-            u8_range_table_index: None,
             u8_xor_table_index: None,
+            range_check_strategy
         }
     }
 
@@ -89,6 +95,7 @@ impl CircuitBuilderFromAcirToPlonky2 {
     /// Main function of the module. It sequentially parses the ACIR opcodes, applying changes
     /// in the CircuitBuilder accordingly.
     pub fn translate_circuit(self: &mut Self, circuit: &Circuit) {
+
         self._register_witnesses_from_acir_circuit(circuit);
         for opcode in &circuit.opcodes {
             match opcode {
@@ -138,26 +145,8 @@ impl CircuitBuilderFromAcirToPlonky2 {
                             let witness = input.witness;
                             let target = self._get_or_create_target_for_witness(witness);
 
-                            if long_max_bits == 8 {
-                                match self.u8_range_table_index {
-                                    Some(_index) => {}
-                                    None => {
-                                        let table: LookupTable =
-                                            Arc::new((0..256u16).zip((0..256u16)).collect());
-                                        let u8_range_table_index =
-                                            self.builder.add_lookup_table_from_pairs(table);
-                                        self.u8_range_table_index = Some(u8_range_table_index);
-                                    }
-                                }
-                                self.builder.add_lookup_from_index(
-                                    target,
-                                    self.u8_range_table_index.unwrap(),
-                                );
-                            } else {
-                                assert!(long_max_bits <= 33,
-                                        "Range checks with more than 33 bits are not allowed yet while using Plonky2 prover");
-                                self.builder.range_check(target, long_max_bits)
-                            }
+                            let range_check_strategy = &mut self.range_check_strategy;
+                            range_check_strategy.perform_range_operation_for_input(long_max_bits, target, &mut self.builder);
                         }
                         opcodes::BlackBoxFuncCall::AND { lhs, rhs, output } => {
                             self._extend_circuit_with_bitwise_operation(

@@ -12,7 +12,6 @@ const D: usize = 2;
 
 pub type C = KeccakGoldilocksConfig;
 pub(crate) type F = <C as GenericConfig<D>>::F;
-
 pub mod actions;
 pub mod argument_parsing;
 pub mod circuit_translation;

@@ -923,6 +923,7 @@ dependencies = [
  "acir_field",
  "anyhow",
  "base64 0.22.1",
+ "cfg-if",
  "clap 4.5.9",
  "criterion",
  "flate2",

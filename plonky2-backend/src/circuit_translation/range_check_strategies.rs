@@ -47,6 +47,7 @@ impl RangeCheckStrategy for RangeCheckWithLookupTable {
     }
 }
 
+
 pub struct RangeCheckBitSplit {}
 impl RangeCheckStrategy for RangeCheckBitSplit {
     fn perform_range_operation_for_input(&mut self, long_max_bits: usize,
@@ -56,5 +57,11 @@ impl RangeCheckStrategy for RangeCheckBitSplit {
         assert!(long_max_bits <= 33,
                 "Range checks with more than 33 bits are not allowed yet while using Plonky2 prover");
         builder.range_check(target_holding_value, long_max_bits)
+    }
+}
+
+impl RangeCheckBitSplit {
+    pub fn new() -> Self {
+        Self {}
     }
 }

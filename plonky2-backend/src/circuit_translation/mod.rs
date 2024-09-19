@@ -29,7 +29,7 @@ use memory_translator::MemoryOperationsTranslator;
 use plonky2::gates::lookup_table::LookupTable;
 use sha256_translator::Sha256CompressionTranslator;
 use crate::circuit_translation::ecdsa_secp256k1_translator::EcdsaSecp256k1Translator;
-use crate::circuit_translation::range_check_strategies::{RangeCheckStrategy, RangeCheckWithLookupTable};
+use crate::circuit_translation::range_check_strategies::{RangeCheckBitSplit, RangeCheckStrategy, RangeCheckWithLookupTable};
 
 #[cfg(test)]
 mod tests;
@@ -77,8 +77,7 @@ impl CircuitBuilderFromAcirToPlonky2 {
         let witness_target_map: HashMap<Witness, Target> = HashMap::new();
         let memory_blocks: HashMap<BlockId, (Vec<Target>, usize)> = HashMap::new();
 
-        let range_check_strategy = Box::new(RangeCheckWithLookupTable::new());
-
+        let range_check_strategy = Self::_range_check_strategy();
         Self {
             builder,
             witness_target_map,
@@ -86,6 +85,22 @@ impl CircuitBuilderFromAcirToPlonky2 {
             u8_xor_table_index: None,
             range_check_strategy
         }
+    }
+
+    fn _range_check_strategy() -> Box<dyn RangeCheckStrategy>{
+        let mut range_check_strategy: Box<dyn RangeCheckStrategy> = Box::new(RangeCheckBitSplit::new());
+        cfg_if::cfg_if! {
+            if #[cfg(all(feature = "strategy-rangecheck-lookup", feature = "strategy-rangecheck-bitsplit"))] {
+                compile_error!("feature \"strategy-rangecheck-lookup\" and feature \"strategy-rangecheck-bitsplit\" cannot be enabled at the same time");
+            } else if #[cfg(feature = "strategy-rangecheck-lookup")] {
+                range_check_strategy = Box::new(RangeCheckWithLookupTable::new());
+            } else if #[cfg(feature = "strategy-rangecheck-bitsplit")] {
+                range_check_strategy = Box::new(RangeCheckBitSplit::new());
+            } else {
+                compile_error!("No strategy selected for range check operation");
+            }
+        }
+        range_check_strategy
     }
 
     pub fn unpack(self) -> (CircuitData<F, C, 2>, HashMap<Witness, Target>) {

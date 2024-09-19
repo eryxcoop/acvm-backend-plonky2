@@ -25,8 +25,14 @@ num = "0.4.3"
 itertools = "0.10.5"
 anyhow = "1.0.83"
 rand = "0.8.5"
+cfg-if = "1.0.0"
 
 [patch.crates-io]
 acir = { path = "../noir/acvm-repo/acir"}
 acir_field = { path = "../noir/acvm-repo/acir_field"}
 plonky2 = { path = "../plonky2/plonky2"}
+
+[features]
+default = ["strategy-rangecheck-lookup"]
+strategy-rangecheck-lookup = []
+strategy-rangecheck-bitsplit = []

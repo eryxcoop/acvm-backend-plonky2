@@ -1,5 +1,5 @@
 [package]
-name = "multiple_assert_zeroes"
+name = "assert_x_equals_5"
 type = "bin"
 authors = [""]
 compiler_version = ">=0.31.0"

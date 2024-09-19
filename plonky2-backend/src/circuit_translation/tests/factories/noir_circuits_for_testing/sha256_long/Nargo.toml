@@ -1,5 +1,5 @@
 [package]
-name = "multiple_xor_u8"
+name = "sha256_long"
 type = "bin"
 authors = [""]
 compiler_version = ">=0.31.0"

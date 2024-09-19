@@ -1,5 +1,5 @@
 [package]
-name = "multiple_range_checks_u8"
+name = "basic_memory_write"
 type = "bin"
 authors = [""]
 compiler_version = ">=0.31.0"

@@ -83,5 +83,7 @@ Things not implemented yet are mostly BlackBoxFunctions.
 
 ## Credits
 We used some code from repos for the implementation of ECDSA verification and made some modifications to them:
-https://github.com/0xPolygonZero/plonky2-ecdsa
-https://github.com/0xPolygonZero/plonky2-u32
+* https://github.com/0xPolygonZero/plonky2-ecdsa
+* https://github.com/0xPolygonZero/plonky2-u32
+
+If you want to try this backend with a medium size Noir project here's an example of a [context free grammar checker](https://codeberg.org/pdallegri/zk-grammar) by Pablo Dallegri, the first Plonky2 backend user. 

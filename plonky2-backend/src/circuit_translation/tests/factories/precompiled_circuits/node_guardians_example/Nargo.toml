@@ -1,7 +1,0 @@
-[package]
-name = "node_guardians_example"
-type = "bin"
-authors = [""]
-compiler_version = ">=0.31.0"
-
-[dependencies]

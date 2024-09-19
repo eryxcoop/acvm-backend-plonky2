@@ -1,7 +1,0 @@
-[package]
-name = "sha256_long"
-type = "bin"
-authors = [""]
-compiler_version = ">=0.31.0"
-
-[dependencies]

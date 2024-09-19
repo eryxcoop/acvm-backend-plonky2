@@ -4,7 +4,7 @@ import subprocess
 origin_path = os.path.abspath(os.getcwd())
 custom_nargo_path = origin_path + "/noir/target/release/nargo"
 custom_backend_path = origin_path + "/plonky2-backend/target/release/plonky2-backend"
-base_test_programs_path = origin_path + "/plonky2-backend/src/circuit_translation/tests/factories/precompiled_circuits_0.47.0/"
+base_test_programs_path = origin_path + "/plonky2-backend/src/circuit_translation/tests/factories/noir_circuits_for_testing/"
 print(origin_path)
 
 def execute_noir_project(noir_project_name):

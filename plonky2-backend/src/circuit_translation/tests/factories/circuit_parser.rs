@@ -1,4 +1,4 @@
-use super::*;
+use super::{Circuit, WitnessStack, Program};
 use crate::noir_and_plonky2_serialization;
 
 fn parse_circuit_and_witnesses(
@@ -15,13 +15,13 @@ fn parse_circuit_and_witnesses(
 
 fn _path_for_circuit(nargo_project_name: &str) -> String {
     String::from(format!(
-        "src/circuit_translation/tests/factories/precompiled_circuits/{}/target/circuit.json",
+        "src/circuit_translation/tests/factories/noir_circuits_for_testing/{}/target/circuit.json",
         nargo_project_name))
 }
 
 fn _path_for_witnesses(nargo_project_name: &str) -> String {
     String::from(format!(
-        "src/circuit_translation/tests/factories/precompiled_circuits/{}/target/witness",
+        "src/circuit_translation/tests/factories/noir_circuits_for_testing/{}/target/witness",
         nargo_project_name
     ))
 }

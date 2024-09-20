@@ -36,7 +36,7 @@ impl XorWithLookupTable {
 
 impl XorStrategy for XorWithLookupTable {
     fn perform_xor_operation_for_input(&mut self, target_left: Target, target_right: Target, target_output: Target, num_bits: u32, builder: &mut CB) {
-        if num_bits == 8 {
+        if num_bits <= 8 {
             let target_256 = builder.constant(F::from_canonical_u32(256));
             let target_index_lookup =
                 builder.mul_add(target_left, target_256, target_right);

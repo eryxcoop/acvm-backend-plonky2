@@ -161,6 +161,42 @@ fn test_backend_supports_bitwise_and_up_to_32_bits() {
     );
 }
 
+// -------------- XOR -------------- //
+#[test]
+fn test_backend_supports_bitwise_xor_up_to_1_bit() {
+    // fn main(mut x: bool, y: bool) -> pub bool{
+    //     x ^ y
+    // }
+
+    let zero = F::from_canonical_u8(0);
+    let one = F::from_canonical_u8(1);
+    _assert_backend_supports_bitwise_operation(
+        circuit_factory::bitwise_xor_circuit,
+        1,
+        zero,
+        one,
+        one,
+    );
+}
+
+#[test]
+fn test_backend_supports_bitwise_xor_up_to_4_bits() {
+    // fn main(mut x: u4, y: u4) -> pub u4{
+    //     x ^ y
+    // }
+
+    let three = F::from_canonical_u8(3);
+    let five = F::from_canonical_u8(5);
+    let six = F::from_canonical_u8(6);
+    _assert_backend_supports_bitwise_operation(
+        circuit_factory::bitwise_xor_circuit,
+        4,
+        three,
+        five,
+        six,
+    );
+}
+
 #[test]
 fn test_backend_supports_bitwise_xor_up_to_8_bits() {
     // fn main(mut x: u8, y: u8) -> pub u8{

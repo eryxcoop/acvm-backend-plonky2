@@ -10,7 +10,6 @@ pub use acir::native_types::Witness;
 use acir::native_types::WitnessStack as GenericWitnessStack;
 use num_bigint::BigUint;
 use std::collections::HashMap;
-use std::sync::Arc;
 // Generics
 pub use acir_field::AcirField;
 pub use acir_field::FieldElement;

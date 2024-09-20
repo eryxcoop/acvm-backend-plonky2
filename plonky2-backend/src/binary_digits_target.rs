@@ -18,6 +18,23 @@ impl BinaryDigitsTarget {
         self.bits.len()
     }
 
+    pub fn extend_circuit_with_bitwise_operation(
+        target_left: Target,
+        target_right: Target,
+        target_output: Target,
+        num_bits: u32,
+        builder: &mut CB,
+        operation: fn(BinaryDigitsTarget, BinaryDigitsTarget, &mut CB) -> BinaryDigitsTarget,
+    ) {
+        let lhs_binary_target = BinaryDigitsTarget::convert_target_to_binary_target(target_left, num_bits as usize, builder);
+        let rhs_binary_target = BinaryDigitsTarget::convert_target_to_binary_target(target_right, num_bits as usize, builder);
+
+        let output_binary_target = operation(lhs_binary_target, rhs_binary_target, builder);
+
+        let output_target_aux = BinaryDigitsTarget::convert_binary_target_to_target(output_binary_target, builder);
+        builder.connect(target_output, output_target_aux);
+    }
+
     pub fn convert_binary_target_to_target(a: BinaryDigitsTarget, builder: &mut CB) -> Target {
         builder.le_sum(a.bits.into_iter().rev())
     }

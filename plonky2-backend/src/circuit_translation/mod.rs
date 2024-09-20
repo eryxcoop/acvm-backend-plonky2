@@ -30,12 +30,14 @@ use plonky2::gates::lookup_table::LookupTable;
 use sha256_translator::Sha256CompressionTranslator;
 use crate::circuit_translation::ecdsa_secp256k1_translator::EcdsaSecp256k1Translator;
 use crate::circuit_translation::range_check_strategies::{RangeCheckBitSplit, RangeCheckStrategy, RangeCheckWithLookupTable};
+use crate::circuit_translation::xor_strategies::{XorStrategy, XorWithLookupTable};
 
 #[cfg(test)]
 mod tests;
 
 pub mod assert_zero_translator;
 pub mod range_check_strategies;
+pub mod xor_strategies;
 
 pub(crate) type CB = CircuitBuilder<F, D>;
 
@@ -66,8 +68,8 @@ pub struct CircuitBuilderFromAcirToPlonky2 {
     pub witness_target_map: HashMap<Witness, Target>,
     pub memory_blocks: HashMap<BlockId, (Vec<Target>, usize)>,
     pub u8_xor_table_index: Option<usize>,
-    pub range_check_strategy: Box<dyn RangeCheckStrategy>
-
+    pub range_check_strategy: Box<dyn RangeCheckStrategy>,
+    pub xor_strategy: Box<dyn XorStrategy>
 }
 
 impl CircuitBuilderFromAcirToPlonky2 {
@@ -83,6 +85,7 @@ impl CircuitBuilderFromAcirToPlonky2 {
             witness_target_map,
             memory_blocks,
             u8_xor_table_index: None,
+            xor_strategy: Box::new(XorWithLookupTable::new()), // Hardcoded
             range_check_strategy
         }
     }
@@ -172,7 +175,7 @@ impl CircuitBuilderFromAcirToPlonky2 {
                             assert_eq!(num_bits_left, num_bits_right);
                             let num_bits = num_bits_left;
 
-                            Self::extend_circuit_with_bitwise_operation(
+                            BinaryDigitsTarget::extend_circuit_with_bitwise_operation(
                                 target_left, target_right, target_output, num_bits, &mut self.builder,
                                 BinaryDigitsTarget::and,
                             );
@@ -186,36 +189,7 @@ impl CircuitBuilderFromAcirToPlonky2 {
                             assert_eq!(num_bits_left, num_bits_right);
                             let num_bits = num_bits_left;
 
-                            if num_bits == 8 {
-                                let target_256 = self.builder.constant(F::from_canonical_u32(256));
-                                let target_index_lookup =
-                                    self.builder.mul_add(target_left, target_256, target_right);
-                                match self.u8_xor_table_index {
-                                    Some(_index) => {}
-                                    None => {
-                                        let mut supported_indexes: Vec<u16> = (0..65535).collect();
-                                        supported_indexes.push(65535u16);
-                                        let supported_indexes: &[u16] = &supported_indexes;
-                                        let u8_xor_table_index =
-                                            self.builder.add_lookup_table_from_fn(
-                                                Self::_xor_to_compressed_value,
-                                                supported_indexes,
-                                            );
-                                        self.u8_xor_table_index = Some(u8_xor_table_index);
-                                    }
-                                }
-                                let output_lookup = self.builder.add_lookup_from_index(
-                                    target_index_lookup,
-                                    self.u8_xor_table_index.unwrap(),
-                                );
-                                self.builder.connect(output_lookup, target_output);
-                                self.witness_target_map.insert(*output, target_output);
-                            } else {
-                                Self::extend_circuit_with_bitwise_operation(
-                                    target_left, target_right, target_output, num_bits, &mut self.builder,
-                                    BinaryDigitsTarget::xor,
-                                );
-                            }
+                            self.xor_strategy.perform_xor_operation_for_input(target_left, target_right, target_output, num_bits, &mut self.builder);
                         }
                         opcodes::BlackBoxFuncCall::Sha256Compression {
                             inputs,
@@ -267,15 +241,6 @@ impl CircuitBuilderFromAcirToPlonky2 {
         sha256_compression_translator.translate();
     }
 
-    fn _xor_to_compressed_value(compressed_value: u16) -> u16 {
-        /// We represent a xor operation (a xor b) = c in a lookup table as
-        /// a * 256 + b --> c
-        /// since lookup tables limit us to (u16, u16) pairs
-        let a = compressed_value / 256;
-        let b = compressed_value % 256;
-        a ^ b
-    }
-
     fn _extend_circuit_with_ecdsa_secp256k1_operation(
         &mut self,
         public_key_x: &Box<[FunctionInput; 32]>,
@@ -287,23 +252,6 @@ impl CircuitBuilderFromAcirToPlonky2 {
         let mut ecdsa_secp256k1_translator =
             EcdsaSecp256k1Translator::new_for(self, hashed_message, public_key_x, public_key_y, signature, output);
         ecdsa_secp256k1_translator.translate();
-    }
-
-    fn extend_circuit_with_bitwise_operation(
-        target_left: Target,
-        target_right: Target,
-        target_output: Target,
-        num_bits: u32,
-        builder: &mut CB,
-        operation: fn(BinaryDigitsTarget, BinaryDigitsTarget, &mut CB) -> BinaryDigitsTarget,
-    ) {
-        let lhs_binary_target = BinaryDigitsTarget::convert_target_to_binary_target(target_left, num_bits as usize, builder);
-        let rhs_binary_target = BinaryDigitsTarget::convert_target_to_binary_target(target_right, num_bits as usize, builder);
-
-        let output_binary_target = operation(lhs_binary_target, rhs_binary_target, builder);
-
-        let output_target_aux = BinaryDigitsTarget::convert_binary_target_to_target(output_binary_target, builder);
-        builder.connect(target_output, output_target_aux);
     }
 
     pub fn target_for_witness(&mut self, w: Witness) -> Target {

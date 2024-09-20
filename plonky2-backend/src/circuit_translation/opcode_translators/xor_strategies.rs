@@ -1,4 +1,8 @@
-use super::*;
+use plonky2::field::types::Field;
+use plonky2::iop::target::Target;
+use crate::binary_digits_target::BinaryDigitsTarget;
+use crate::circuit_translation::CB;
+use crate::F;
 
 pub trait XorStrategy {
     fn perform_xor_operation_for_input(&mut self,

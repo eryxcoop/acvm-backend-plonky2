@@ -1,4 +1,7 @@
-use super::*;
+use std::sync::Arc;
+use plonky2::gates::lookup_table::LookupTable;
+use plonky2::iop::target::Target;
+use crate::circuit_translation::CB;
 
 pub trait RangeCheckStrategy {
     fn perform_range_operation_for_input(&mut self, long_max_bits: usize,

@@ -33,6 +33,10 @@ acir_field = { path = "../noir/acvm-repo/acir_field"}
 plonky2 = { path = "../plonky2/plonky2"}
 
 [features]
-default = ["strategy-rangecheck-lookup"]
+default = ["strategy-rangecheck-lookup", "strategy-xor-lookup"]
+
 strategy-rangecheck-lookup = []
 strategy-rangecheck-bitsplit = []
+
+strategy-xor-lookup = []
+strategy-xor-bitsplit = []

@@ -65,3 +65,17 @@ impl XorStrategy for XorWithLookupTable {
 }
 
 pub struct XorBitSplit;
+impl XorBitSplit {
+    pub fn new() -> Self{
+        Self {}
+    }
+}
+
+impl XorStrategy for XorBitSplit {
+    fn perform_xor_operation_for_input(&mut self, target_left: Target, target_right: Target, target_output: Target, num_bits: u32, builder: &mut CB) {
+        BinaryDigitsTarget::extend_circuit_with_bitwise_operation(
+            target_left, target_right, target_output, num_bits, builder,
+            BinaryDigitsTarget::xor,
+        );
+    }
+}

@@ -30,7 +30,7 @@ use plonky2::gates::lookup_table::LookupTable;
 use sha256_translator::Sha256CompressionTranslator;
 use crate::circuit_translation::ecdsa_secp256k1_translator::EcdsaSecp256k1Translator;
 use crate::circuit_translation::range_check_strategies::{RangeCheckBitSplit, RangeCheckStrategy, RangeCheckWithLookupTable};
-use crate::circuit_translation::xor_strategies::{XorStrategy, XorWithLookupTable};
+use crate::circuit_translation::xor_strategies::{XorBitSplit, XorStrategy, XorWithLookupTable};
 
 #[cfg(test)]
 mod tests;
@@ -67,7 +67,6 @@ pub struct CircuitBuilderFromAcirToPlonky2 {
     pub builder: CB,
     pub witness_target_map: HashMap<Witness, Target>,
     pub memory_blocks: HashMap<BlockId, (Vec<Target>, usize)>,
-    pub u8_xor_table_index: Option<usize>,
     pub range_check_strategy: Box<dyn RangeCheckStrategy>,
     pub xor_strategy: Box<dyn XorStrategy>
 }
@@ -80,12 +79,12 @@ impl CircuitBuilderFromAcirToPlonky2 {
         let memory_blocks: HashMap<BlockId, (Vec<Target>, usize)> = HashMap::new();
 
         let range_check_strategy = Self::_range_check_strategy();
+        let xor_strategy = Self::_xor_strategy();
         Self {
             builder,
             witness_target_map,
             memory_blocks,
-            u8_xor_table_index: None,
-            xor_strategy: Box::new(XorWithLookupTable::new()), // Hardcoded
+            xor_strategy,
             range_check_strategy
         }
     }
@@ -104,6 +103,22 @@ impl CircuitBuilderFromAcirToPlonky2 {
             }
         }
         range_check_strategy
+    }
+
+    fn _xor_strategy() -> Box<dyn XorStrategy>{
+        let mut xor_strategy: Box<dyn XorStrategy> = Box::new(XorBitSplit::new());
+        cfg_if::cfg_if! {
+            if #[cfg(all(feature = "strategy-xor-lookup", feature = "strategy-xor-bitsplit"))] {
+                compile_error!("feature \"strategy-xor-lookup\" and feature \"strategy-xor-bitsplit\" cannot be enabled at the same time");
+            } else if #[cfg(feature = "strategy-xor-lookup")] {
+                xor_strategy = Box::new(XorWithLookupTable::new());
+            } else if #[cfg(feature = "strategy-xor-bitsplit")] {
+                xor_strategy = Box::new(XorBitSplit::new());
+            } else {
+                compile_error!("No strategy selected for xor operation");
+            }
+        }
+        xor_strategy
     }
 
     pub fn unpack(self) -> (CircuitData<F, C, 2>, HashMap<Witness, Target>) {

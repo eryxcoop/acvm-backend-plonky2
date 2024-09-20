@@ -3,7 +3,6 @@ use super::*;
 pub trait RangeCheckStrategy {
     fn perform_range_operation_for_input(&mut self, long_max_bits: usize,
                                          target_holding_value: Target,
-                                         // circuit_builder: &mut CircuitBuilderFromAcirToPlonky2);
                                          builder: &mut CB);
 }
 
@@ -22,7 +21,6 @@ impl RangeCheckWithLookupTable {
 impl RangeCheckStrategy for RangeCheckWithLookupTable {
     fn perform_range_operation_for_input(&mut self, long_max_bits: usize,
                                          target_holding_value: Target,
-                                         // circuit_builder: &mut CircuitBuilderFromAcirToPlonky2) {
                                          builder: &mut CB) {
         if long_max_bits == 8 {
             match self.u8_range_table_index {
@@ -52,7 +50,6 @@ pub struct RangeCheckBitSplit {}
 impl RangeCheckStrategy for RangeCheckBitSplit {
     fn perform_range_operation_for_input(&mut self, long_max_bits: usize,
                                          target_holding_value: Target,
-                                         // circuit_builder: &mut CircuitBuilderFromAcirToPlonky2) {
                                          builder: &mut CB) {
         assert!(long_max_bits <= 33,
                 "Range checks with more than 33 bits are not allowed yet while using Plonky2 prover");

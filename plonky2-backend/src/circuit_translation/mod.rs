@@ -157,26 +157,36 @@ impl CircuitBuilderFromAcirToPlonky2 {
                     match func_call {
                         opcodes::BlackBoxFuncCall::RANGE { input } => {
                             let long_max_bits = input.num_bits.clone() as usize;
-                            let witness = input.witness;
-                            let target = self._get_or_create_target_for_witness(witness);
+                            let input_witness = input.witness;
+                            let input_target = self._get_or_create_target_for_witness(input_witness);
 
                             let range_check_strategy = &mut self.range_check_strategy;
-                            range_check_strategy.perform_range_operation_for_input(long_max_bits, target, &mut self.builder);
+                            range_check_strategy.perform_range_operation_for_input(long_max_bits, input_target, &mut self.builder);
                         }
                         opcodes::BlackBoxFuncCall::AND { lhs, rhs, output } => {
-                            self._extend_circuit_with_bitwise_operation(
-                                lhs,
-                                rhs,
-                                output,
+                            let target_left = self._get_or_create_target_for_witness(lhs.witness);
+                            let target_right = self._get_or_create_target_for_witness(rhs.witness);
+                            let target_output = self._get_or_create_target_for_witness(*output);
+                            let num_bits_left = lhs.num_bits;
+                            let num_bits_right = rhs.num_bits;
+                            assert_eq!(num_bits_left, num_bits_right);
+                            let num_bits = num_bits_left;
+
+                            Self::extend_circuit_with_bitwise_operation(
+                                target_left, target_right, target_output, num_bits, &mut self.builder,
                                 BinaryDigitsTarget::and,
                             );
                         }
                         opcodes::BlackBoxFuncCall::XOR { lhs, rhs, output } => {
-                            if lhs.num_bits == 8 {
-                                let target_left =
-                                    self._get_or_create_target_for_witness(lhs.witness);
-                                let target_right =
-                                    self._get_or_create_target_for_witness(rhs.witness);
+                            let target_left = self._get_or_create_target_for_witness(lhs.witness);
+                            let target_right = self._get_or_create_target_for_witness(rhs.witness);
+                            let target_output = self._get_or_create_target_for_witness(*output);
+                            let num_bits_left = lhs.num_bits;
+                            let num_bits_right = rhs.num_bits;
+                            assert_eq!(num_bits_left, num_bits_right);
+                            let num_bits = num_bits_left;
+
+                            if num_bits == 8 {
                                 let target_256 = self.builder.constant(F::from_canonical_u32(256));
                                 let target_index_lookup =
                                     self.builder.mul_add(target_left, target_256, target_right);
@@ -194,16 +204,15 @@ impl CircuitBuilderFromAcirToPlonky2 {
                                         self.u8_xor_table_index = Some(u8_xor_table_index);
                                     }
                                 }
-                                let output_target = self.builder.add_lookup_from_index(
+                                let output_lookup = self.builder.add_lookup_from_index(
                                     target_index_lookup,
                                     self.u8_xor_table_index.unwrap(),
                                 );
-                                self.witness_target_map.insert(*output, output_target);
+                                self.builder.connect(output_lookup, target_output);
+                                self.witness_target_map.insert(*output, target_output);
                             } else {
-                                self._extend_circuit_with_bitwise_operation(
-                                    lhs,
-                                    rhs,
-                                    output,
+                                Self::extend_circuit_with_bitwise_operation(
+                                    target_left, target_right, target_output, num_bits, &mut self.builder,
                                     BinaryDigitsTarget::xor,
                                 );
                             }
@@ -280,23 +289,21 @@ impl CircuitBuilderFromAcirToPlonky2 {
         ecdsa_secp256k1_translator.translate();
     }
 
-    fn _extend_circuit_with_bitwise_operation(
-        self: &mut Self,
-        lhs: &FunctionInput,
-        rhs: &FunctionInput,
-        output: &Witness,
+    fn extend_circuit_with_bitwise_operation(
+        target_left: Target,
+        target_right: Target,
+        target_output: Target,
+        num_bits: u32,
+        builder: &mut CB,
         operation: fn(BinaryDigitsTarget, BinaryDigitsTarget, &mut CB) -> BinaryDigitsTarget,
     ) {
-        assert_eq!(lhs.num_bits, rhs.num_bits);
-        let binary_digits = lhs.num_bits as usize;
-        let lhs_binary_target = self.binary_number_target_for_witness(lhs.witness, binary_digits);
-        let rhs_binary_target = self.binary_number_target_for_witness(rhs.witness, binary_digits);
+        let lhs_binary_target = BinaryDigitsTarget::convert_target_to_binary_target(target_left, num_bits as usize, builder);
+        let rhs_binary_target = BinaryDigitsTarget::convert_target_to_binary_target(target_right, num_bits as usize, builder);
 
-        let output_binary_target =
-            operation(lhs_binary_target, rhs_binary_target, &mut self.builder);
+        let output_binary_target = operation(lhs_binary_target, rhs_binary_target, builder);
 
-        let output_target = self.convert_binary_number_to_number(output_binary_target);
-        self.witness_target_map.insert(*output, output_target);
+        let output_target_aux = BinaryDigitsTarget::convert_binary_target_to_target(output_binary_target, builder);
+        builder.connect(target_output, output_target_aux);
     }
 
     pub fn target_for_witness(&mut self, w: Witness) -> Target {
@@ -309,7 +316,7 @@ impl CircuitBuilderFromAcirToPlonky2 {
         digits: usize,
     ) -> BinaryDigitsTarget {
         let target = self._get_or_create_target_for_witness(w);
-        self.convert_number_to_binary_number(target, digits)
+        BinaryDigitsTarget::convert_target_to_binary_target(target, digits, &mut self.builder)
     }
 
     pub fn binary_number_target_for_constant(
@@ -322,21 +329,6 @@ impl CircuitBuilderFromAcirToPlonky2 {
             .rev()
             .collect();
         BinaryDigitsTarget { bits: bit_targets }
-    }
-
-    fn convert_number_to_binary_number(
-        &mut self,
-        number_target: Target,
-        digits: usize,
-    ) -> BinaryDigitsTarget {
-        BinaryDigitsTarget {
-            bits: self
-                .builder
-                .split_le(number_target, digits)
-                .into_iter()
-                .rev()
-                .collect(),
-        }
     }
 
     fn convert_binary_number_to_number(&mut self, a: BinaryDigitsTarget) -> Target {

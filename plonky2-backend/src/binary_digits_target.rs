@@ -1,5 +1,6 @@
+use acir::native_types::Witness;
 use plonky2::field::types::Field;
-use plonky2::iop::target::BoolTarget;
+use plonky2::iop::target::{BoolTarget, Target};
 
 use crate::circuit_translation::CB;
 use crate::F;
@@ -15,6 +16,24 @@ pub struct BinaryDigitsTarget {
 impl BinaryDigitsTarget {
     pub(crate) fn number_of_digits(&self) -> usize {
         self.bits.len()
+    }
+
+    pub fn convert_binary_target_to_target(a: BinaryDigitsTarget, builder: &mut CB) -> Target {
+        builder.le_sum(a.bits.into_iter().rev())
+    }
+
+    pub fn convert_target_to_binary_target(
+        number_target: Target,
+        digits: usize,
+        builder: &mut CB,
+    ) -> BinaryDigitsTarget {
+        BinaryDigitsTarget {
+            bits: builder
+                   .split_le(number_target, digits)
+                   .into_iter()
+                   .rev()
+                   .collect(),
+        }
     }
 
     pub fn rotate_right(

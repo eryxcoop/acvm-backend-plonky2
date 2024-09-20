@@ -1,3 +1,3 @@
-fn main(x: u32, y: pub u32) {
+fn main(x: u8, y: pub u8) {
      assert(x==y);
 }

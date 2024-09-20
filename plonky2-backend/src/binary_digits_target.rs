@@ -1,4 +1,3 @@
-use acir::native_types::Witness;
 use plonky2::field::types::Field;
 use plonky2::iop::target::{BoolTarget, Target};
 

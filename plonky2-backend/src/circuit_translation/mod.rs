@@ -77,14 +77,12 @@ impl CircuitBuilderFromAcirToPlonky2 {
         let witness_target_map: HashMap<Witness, Target> = HashMap::new();
         let memory_blocks: HashMap<BlockId, (Vec<Target>, usize)> = HashMap::new();
 
-        let range_check_strategy = StrategyPicker::range_check_strategy();
-        let xor_strategy = StrategyPicker::xor_strategy();
         Self {
             builder,
             witness_target_map,
             memory_blocks,
-            xor_strategy,
-            range_check_strategy
+            xor_strategy: StrategyPicker::xor_strategy(),
+            range_check_strategy: StrategyPicker::range_check_strategy()
         }
     }
 

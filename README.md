@@ -51,7 +51,7 @@ If you want to try out some Noir examples, execute the python script ```run_exam
 ## Manual testing
 
 For some manual testing (local), the workflow is as follows: in the ```noir_example``` folder there's a Noir project. In the ```noir_example/src/main.nr``` file you can write the main function of any noir program you want to prove.  
-Run ```make run_noir_example``` from the root directory. The following explanation is similar to the official [Noir docs](https://noir-lang.org/docs/dev/getting_started/hello_noir/#execute-our-noir-program), but using the custom plonky2 backend instead of barretenberg, and it's what the command will execute.
+Run ```make run_noir_example``` from the root directory. The following explanation is similar to the official [Noir docs](https://noir-lang.org/docs/getting_started/hello_noir/#4-execute-the-noir-program), but using the custom plonky2 backend instead of barretenberg, and it's what the command will execute.
 
 1) From the ```noir_example``` directory run:
 * ```../noir/target/release/nargo execute witness```. This will execute the noir program through the nargo acvm, generating:

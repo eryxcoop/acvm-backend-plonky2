@@ -58,7 +58,7 @@ Run ```make run_noir_example``` from the root directory. The following explanati
    * The ACIR circuit in ```target/noir_example.json```
    * The witness in ```target/witness.gz```
 2) From the ```plonky2-backend``` directory run: 
-* ```./target/release/plonky2-backend prove -c ../noir_example/target/noir_example.json -w  ../noir_example/target/witness -o ../noir_example/proof```. This will create a Plonky2 proof in ```../noir_example/proof```.
+* ```./target/release/plonky2-backend prove -b ../noir_example/target/noir_example.json -w  ../noir_example/target/witness.gz -o ../noir_example/proof```. This will create a Plonky2 proof in ```../noir_example/proof```.
 * ```./target/release/plonky2-backend write_vk -b ../noir_example/target/noir_example.json -o ../noir_example/target/vk```. This will create the verification key in ```../noir_example/target/vk```
 * ```./target/release/plonky2-backend verify -k ../noir_example/target/vk -p ../noir_example/proof```. This will verify the Plonky2 proof. An empty output is sign of verification success.
 

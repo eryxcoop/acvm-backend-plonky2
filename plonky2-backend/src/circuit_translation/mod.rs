@@ -17,7 +17,7 @@ pub use acir_field::FieldElement;
 use plonky2::field::types::Field;
 use plonky2::iop::target::{BoolTarget, Target};
 use plonky2::plonk::circuit_builder::CircuitBuilder;
-use plonky2::plonk::circuit_data::CircuitConfig;
+use plonky2::plonk::circuit_data::{CircuitConfig, CommonCircuitData};
 use plonky2::plonk::circuit_data::CircuitData;
 
 mod memory_translator;
@@ -25,6 +25,7 @@ mod sha256_translator;
 
 use crate::binary_digits_target::BinaryDigitsTarget;
 use memory_translator::MemoryOperationsTranslator;
+use plonky2::plonk::proof::ProofWithPublicInputs;
 use sha256_translator::Sha256CompressionTranslator;
 use crate::circuit_translation::ecdsa_secp256k1_translator::EcdsaSecp256k1Translator;
 
@@ -178,12 +179,38 @@ impl CircuitBuilderFromAcirToPlonky2 {
                                 *output
                             );
                         }
+                        opcodes::BlackBoxFuncCall::RecursiveAggregation {
+                            verification_key,
+                            proof,
+                            public_inputs,
+                            key_hash,
+                        } => {
+                            // Por un lado para verificar pruebas recursivamente en Plonky2 hay que
+                            // pasarle cosas especiales al PartialWitness que se usa para generar
+                            // la prueba. Para esto se me ocurre que podemos mantener datos durante
+                            // la construcción del circuito que cuando termine salgan para afuera
+                            // (así como el circuito construido o el witness_target_map, pero con
+                            // data para sumarle al PartialWitness sobre verificaciones recursivas)
+
+                            //-------------------------------- //
+                            let verification_key =
+                            // Construir a partir de ccd de la verification key
+                            let inner_cd: CommonCircuitData<F, D> = ...;
+                            let inner_vd: VerifierCircuitData<F, C, D> = ...;
+                            //-------------------------------- //
+                            // Parsear la inner_proof a partir de proof
+                            let inner_proof: ProofWithPublicInputs<F, InnerC, D> = parseProof(proof);
+                            //-------------------------------- //
+                            let pt = self.builder.add_virtual_proof_with_pis(&inner_cd);
+                            let inner_data = self.builder.add_virtual_verifier_data(inner_cd.config.fri_config.cap_height);
+
+                            self.builder.verify_proof::<InnerC>(&pt, &inner_data, &inner_cd);
+                        }
                         blackbox_func => {
                             panic!("Blackbox func not supported yet: {:?}", blackbox_func);
                         }
                     };
                 }
-
                 opcode => {
                     panic!("Opcode not supported yet: {:?}", opcode);
                 }

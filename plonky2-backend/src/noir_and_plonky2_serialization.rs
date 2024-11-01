@@ -58,7 +58,6 @@ pub fn deserialize_program_within_file_path(acir_program_path: &String) -> Progr
 }
 
 pub fn deserialize_witnesses_within_file_path(mut witnesses_path: String) -> WitnessStack {
-    witnesses_path.push_str(".gz");
     let file_content: &[u8] = &read_file_to_bytes(&witnesses_path);
     let witness_stack = WitnessStack::try_from(file_content);
     witness_stack.unwrap()

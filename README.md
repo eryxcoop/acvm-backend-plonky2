@@ -51,14 +51,14 @@ If you want to try out some Noir examples, execute the python script ```run_exam
 ## Manual testing
 
 For some manual testing (local), the workflow is as follows: in the ```noir_example``` folder there's a Noir project. In the ```noir_example/src/main.nr``` file you can write the main function of any noir program you want to prove.  
-Run ```make run_noir_example``` from the root directory. The following explanation is similar to the official [Noir docs](https://noir-lang.org/docs/dev/getting_started/hello_noir/#execute-our-noir-program), but using the custom plonky2 backend instead of barretenberg, and it's what the command will execute.
+Run ```make run_noir_example``` from the root directory. The following explanation is similar to the official [Noir docs](https://noir-lang.org/docs/getting_started/hello_noir/#4-execute-the-noir-program), but using the custom plonky2 backend instead of barretenberg, and it's what the command will execute.
 
 1) From the ```noir_example``` directory run:
 * ```../noir/target/release/nargo execute witness```. This will execute the noir program through the nargo acvm, generating:
    * The ACIR circuit in ```target/noir_example.json```
    * The witness in ```target/witness.gz```
 2) From the ```plonky2-backend``` directory run: 
-* ```./target/release/plonky2-backend prove -c ../noir_example/target/noir_example.json -w  ../noir_example/target/witness -o ../noir_example/proof```. This will create a Plonky2 proof in ```../noir_example/proof```.
+* ```./target/release/plonky2-backend prove -b ../noir_example/target/noir_example.json -w  ../noir_example/target/witness.gz -o ../noir_example/proof```. This will create a Plonky2 proof in ```../noir_example/proof```.
 * ```./target/release/plonky2-backend write_vk -b ../noir_example/target/noir_example.json -o ../noir_example/target/vk```. This will create the verification key in ```../noir_example/target/vk```
 * ```./target/release/plonky2-backend verify -k ../noir_example/target/vk -p ../noir_example/proof```. This will verify the Plonky2 proof. An empty output is sign of verification success.
 

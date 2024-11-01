@@ -3,7 +3,7 @@ use clap::{value_parser, Arg, ArgMatches, Command};
 use std::path::PathBuf;
 
 /// Commands: prove, write_vk, verify.
-///     prove -c circuit/path -w witness/path -o output/proof/path
+///     prove -b circuit/path -w witness/path.gz -o output/proof/path
 ///     write_vk -b circuit/path -o output/verification/key/path
 ///     verify -k verification/key/path -p proof/path
 
@@ -120,7 +120,7 @@ fn _create_verify_command() -> Command {
 
 fn _prove_argument_circuit_path() -> Arg {
     let argument_id = "circuit_path";
-    let short_command_identifier = 'c';
+    let short_command_identifier = 'b';
     let long_command_identifier = "circuit-path";
     let short_help = "Path to the generated ACIR circuit";
     let long_help = "";

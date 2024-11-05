@@ -31,4 +31,4 @@ for noir_project_name in os.listdir(base_test_programs_path):
     subdir_path = os.path.join(base_test_programs_path, noir_project_name)
     if os.path.isdir(subdir_path):
         execute_noir_project(noir_project_name)
-# execute_noir_project("memory_reads")
+# execute_noir_project("memory_writes")

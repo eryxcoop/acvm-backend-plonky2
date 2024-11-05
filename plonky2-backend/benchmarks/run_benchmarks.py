@@ -19,7 +19,7 @@ def generate_proofs(noir_project_name):
     print(cur_dir)
     try:
         backend_noirky2 = "../../../target/release/plonky2-backend"
-        command_noirky2 = f"time {backend_noirky2} prove -b ./target/noirky2_program.json -w ./target/witness_noirky2.gz -o proof_noirky2"
+        command_noirky2 = f"time {backend_noirky2} prove -b ./target/noirky2_program.json -w ./target/witness_noirky2.gz -o ./target/proof_noirky2"
         for i in range(NUMBER_OF_ITERATIONS):
             initial_time = time.time()
             result = subprocess.check_output(command_noirky2, shell=True, text=True)
@@ -32,7 +32,7 @@ def generate_proofs(noir_project_name):
 
 
         backend_bb = f"bb"
-        command_bb = f"time {backend_bb} prove -b ./target/bb_program.json -w ./target/witness_bb.gz -o proof_bb"
+        command_bb = f"time {backend_bb} prove -b ./target/bb_program.json -w ./target/witness_bb.gz -o ./target/proof_bb"
         for i in range(NUMBER_OF_ITERATIONS):
             initial_time = time.time()
             result = subprocess.check_output(command_bb, shell=True, text=True)

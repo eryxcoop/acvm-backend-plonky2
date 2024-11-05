@@ -45,7 +45,7 @@ nargo_execute:
 	cd noir_example && ../noir/target/release/nargo execute witness --print-acir
 
 prove:
-	cd plonky2-backend && ./target/release/plonky2-backend prove -c ../noir_example/target/noir_example.json -w  ../noir_example/target/witness -o ../noir_example/proof
+	cd plonky2-backend && ./target/release/plonky2-backend prove -b ../noir_example/target/noir_example.json -w  ../noir_example/target/witness -o ../noir_example/proof
 
 write_vk:
 	cd plonky2-backend && ./target/release/plonky2-backend write_vk -b ../noir_example/target/noir_example.json -o ../noir_example/target/vk

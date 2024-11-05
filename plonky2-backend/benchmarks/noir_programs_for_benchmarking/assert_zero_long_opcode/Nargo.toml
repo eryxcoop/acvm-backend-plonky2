@@ -1,0 +1,7 @@
+[package]
+name = "assert_zero_long_opcode"
+type = "bin"
+authors = [""]
+compiler_version = ">=0.31.0"
+
+[dependencies]

@@ -12,7 +12,7 @@ impl StrategyPicker {
             } else if #[cfg(feature = "strategy-rangecheck-bitsplit")] {
                 range_check_strategy = Box::new(RangeCheckBitSplit::new());
             } else if #[cfg(feature = "strategy-rangecheck-limb-decomposition")] {
-                range_check_strategy = Box::new(RangeCheckLimbDecomposition);
+                range_check_strategy = Box::new(RangeCheckLimbDecomposition::new());
             } else {
                 compile_error!("No strategy selected for range check operation");
             }

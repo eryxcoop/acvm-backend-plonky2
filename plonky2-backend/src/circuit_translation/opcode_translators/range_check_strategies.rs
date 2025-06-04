@@ -14,7 +14,9 @@ pub trait RangeCheckStrategy {
 
 
 #[derive(Default)]
-pub struct RangeCheckLimbDecomposition;
+pub struct RangeCheckLimbDecomposition {
+    u8_range_table_index: Option<usize>
+}
 
 impl RangeCheckStrategy for RangeCheckLimbDecomposition {
     fn perform_range_operation_for_input(&mut self, long_max_bits: usize,
@@ -31,9 +33,21 @@ impl RangeCheckStrategy for RangeCheckLimbDecomposition {
 }
 
 impl RangeCheckLimbDecomposition {
-    fn split_target_into_8_bit_limbs(&self, builder: &mut CB, full_number: Target) -> [Target; 4] {
+    pub fn new() -> Self {
+        Self {
+            u8_range_table_index: None,
+        }
+    }
+
+    fn split_target_into_8_bit_limbs(&mut self, builder: &mut CB, full_number: Target) -> [Target; 4] {
+        self.create_lookup_table_lazy(builder);
+
         let limbs: [Target; 4] = builder.add_virtual_targets(4).try_into().unwrap();
         builder.add_simple_generator(LimbDecomposition8BitsGenerator { full_number: full_number.clone(), limbs: limbs.clone() });
+
+        for i in 0..4 {
+            builder.add_lookup_from_index(limbs[i], self.u8_range_table_index.unwrap());
+        }
 
         let mut acc = limbs[0].clone();
         acc = builder.mul_const_add(F::from_canonical_u32(256), limbs[1].clone(), acc);
@@ -43,6 +57,19 @@ impl RangeCheckLimbDecomposition {
         builder.connect(acc, full_number);
 
         limbs
+    }
+
+    fn create_lookup_table_lazy(&mut self, builder: &mut CB){
+        match self.u8_range_table_index {
+            Some(_index) => {}
+            None => {
+                let table: LookupTable =
+                    Arc::new((0..256u16).zip(0..256u16).collect());
+                let u8_range_table_index =
+                    builder.add_lookup_table_from_pairs(table);
+                self.u8_range_table_index = Some(u8_range_table_index);
+            }
+        }
     }
 }
 

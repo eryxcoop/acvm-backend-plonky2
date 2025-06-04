@@ -34,6 +34,8 @@ plonky2 = { path = "../plonky2/plonky2"}
 
 [features]
 default = ["strategy-rangecheck-limb-decomposition", "strategy-xor-limb-decomposition"]
+#default = ["strategy-rangecheck-bitsplit", "strategy-xor-bitsplit"]
+
 
 strategy-rangecheck-lookup = []
 strategy-rangecheck-bitsplit = []

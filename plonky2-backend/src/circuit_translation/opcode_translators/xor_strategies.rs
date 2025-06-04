@@ -173,10 +173,8 @@ impl XorStrategy for XorWith8bitLimbDecomposition {
         builder: &mut CB)
     {
         if num_bits == 8 {
-            let limbs_left = self.split_target_into_8_bit_limbs::<1>(builder, target_left);
-            let limbs_right = self.split_target_into_8_bit_limbs::<1>(builder, target_right);
-            let limbs_output = self.split_target_into_8_bit_limbs::<1>(builder, target_output);
-            self.lookup_xor::<1>(builder, limbs_left, limbs_right, limbs_output)
+            self.create_lookup_tables_lazy(builder);
+            self.lookup_xor::<1>(builder, [target_left], [target_right], [target_output])
         } else if num_bits == 16 {
             let limbs_left = self.split_target_into_8_bit_limbs::<2>(builder, target_left);
             let limbs_right = self.split_target_into_8_bit_limbs::<2>(builder, target_right);

@@ -22,8 +22,12 @@ impl RangeCheckStrategy for RangeCheckLimbDecomposition {
     fn perform_range_operation_for_input(&mut self, long_max_bits: usize,
                                          target_holding_value: Target,
                                          builder: &mut CB) {
-        if long_max_bits == 32 {
-            let _limbs = self.split_target_into_8_bit_limbs(builder, target_holding_value);
+        if long_max_bits == 8 {
+            let _limbs = self.split_target_into_8_bit_limbs::<1>(builder, target_holding_value);
+        } else if long_max_bits == 16 {
+            let _limbs = self.split_target_into_8_bit_limbs::<2>(builder, target_holding_value);
+        } else if long_max_bits == 32 {
+            let _limbs = self.split_target_into_8_bit_limbs::<4>(builder, target_holding_value);
         } else {
             assert!(long_max_bits <= 33,
                     "Range checks with more than 33 bits are not allowed yet while using Plonky2 prover");
@@ -39,20 +43,20 @@ impl RangeCheckLimbDecomposition {
         }
     }
 
-    fn split_target_into_8_bit_limbs(&mut self, builder: &mut CB, full_number: Target) -> [Target; 4] {
+    fn split_target_into_8_bit_limbs<const LIMBS: usize>(&mut self, builder: &mut CB, full_number: Target) -> [Target; LIMBS] {
         self.create_lookup_table_lazy(builder);
 
-        let limbs: [Target; 4] = builder.add_virtual_targets(4).try_into().unwrap();
-        builder.add_simple_generator(LimbDecomposition8BitsGenerator { full_number: full_number.clone(), limbs: limbs.clone() });
+        let limbs: [Target; LIMBS] = builder.add_virtual_targets(LIMBS).try_into().unwrap();
+        builder.add_simple_generator(LimbDecomposition8BitsGenerator::<LIMBS> { full_number: full_number.clone(), limbs: limbs.clone() });
 
-        for i in 0..4 {
+        for i in 0..LIMBS {
             builder.add_lookup_from_index(limbs[i], self.u8_range_table_index.unwrap());
         }
 
         let mut acc = limbs[0].clone();
-        acc = builder.mul_const_add(F::from_canonical_u32(256), limbs[1].clone(), acc);
-        acc = builder.mul_const_add(F::from_canonical_u32(256 * 256), limbs[2].clone(), acc);
-        acc = builder.mul_const_add(F::from_canonical_u32(256 * 256 * 256), limbs[3].clone(), acc);
+        for i in 1..LIMBS {
+            acc = builder.mul_const_add(F::from_canonical_u32(256u32.pow(i as u32)), limbs[i].clone(), acc);
+        }
 
         builder.connect(acc, full_number);
 

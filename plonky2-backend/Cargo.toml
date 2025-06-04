@@ -33,7 +33,7 @@ acir_field = { path = "../noir/acvm-repo/acir_field"}
 plonky2 = { path = "../plonky2/plonky2"}
 
 [features]
-default = ["strategy-rangecheck-limb-decomposition", "strategy-xor-lookup"]
+default = ["strategy-rangecheck-limb-decomposition", "strategy-xor-limb-decomposition"]
 
 strategy-rangecheck-lookup = []
 strategy-rangecheck-bitsplit = []
@@ -41,3 +41,4 @@ strategy-rangecheck-limb-decomposition = []
 
 strategy-xor-lookup = []
 strategy-xor-bitsplit = []
+strategy-xor-limb-decomposition = []

@@ -1,5 +1,5 @@
 use crate::circuit_translation::opcode_translators::range_check_strategies::{RangeCheckWithLookupTable, RangeCheckBitSplit, RangeCheckLimbDecomposition, RangeCheckStrategy};
-use crate::circuit_translation::opcode_translators::xor_strategies::{XorStrategy, XorWithLookupTable, XorBitSplit};
+use crate::circuit_translation::opcode_translators::xor_strategies::{XorStrategy, XorWithLookupTable, XorBitSplit, XorWith8bitLimbDecomposition};
 pub struct StrategyPicker;
 impl StrategyPicker {
     pub fn range_check_strategy() -> Box<dyn RangeCheckStrategy>{
@@ -29,6 +29,8 @@ impl StrategyPicker {
                 xor_strategy = Box::new(XorWithLookupTable::new());
             } else if #[cfg(feature = "strategy-xor-bitsplit")] {
                 xor_strategy = Box::new(XorBitSplit::new());
+            } else if #[cfg(feature = "strategy-xor-limb-decomposition")] {
+                xor_strategy = Box::new(XorWith8bitLimbDecomposition::new());
             } else {
                 compile_error!("No strategy selected for xor operation");
             }

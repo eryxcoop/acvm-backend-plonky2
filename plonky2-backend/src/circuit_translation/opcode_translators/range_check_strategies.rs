@@ -1,12 +1,49 @@
-use std::sync::Arc;
+use crate::circuit_translation::opcode_translators::limb_decomposition_8_bits_generator::LimbDecomposition8BitsGenerator;
+use crate::circuit_translation::CB;
+use crate::F;
+use plonky2::field::types::Field;
 use plonky2::gates::lookup_table::LookupTable;
 use plonky2::iop::target::Target;
-use crate::circuit_translation::CB;
+use std::sync::Arc;
 
 pub trait RangeCheckStrategy {
     fn perform_range_operation_for_input(&mut self, long_max_bits: usize,
                                          target_holding_value: Target,
                                          builder: &mut CB);
+}
+
+
+#[derive(Default)]
+pub struct RangeCheckLimbDecomposition;
+
+impl RangeCheckStrategy for RangeCheckLimbDecomposition {
+    fn perform_range_operation_for_input(&mut self, long_max_bits: usize,
+                                         target_holding_value: Target,
+                                         builder: &mut CB) {
+        if long_max_bits == 32 {
+            let _limbs = self.split_target_into_8_bit_limbs(builder, target_holding_value);
+        } else {
+            assert!(long_max_bits <= 33,
+                    "Range checks with more than 33 bits are not allowed yet while using Plonky2 prover");
+            builder.range_check(target_holding_value, long_max_bits)
+        }
+    }
+}
+
+impl RangeCheckLimbDecomposition {
+    fn split_target_into_8_bit_limbs(&self, builder: &mut CB, full_number: Target) -> [Target; 4] {
+        let limbs: [Target; 4] = builder.add_virtual_targets(4).try_into().unwrap();
+        builder.add_simple_generator(LimbDecomposition8BitsGenerator { full_number: full_number.clone(), limbs: limbs.clone() });
+
+        let mut acc = limbs[0].clone();
+        acc = builder.mul_const_add(F::from_canonical_u32(256), limbs[1].clone(), acc);
+        acc = builder.mul_const_add(F::from_canonical_u32(256 * 256), limbs[2].clone(), acc);
+        acc = builder.mul_const_add(F::from_canonical_u32(256 * 256 * 256), limbs[3].clone(), acc);
+
+        builder.connect(acc, full_number);
+
+        limbs
+    }
 }
 
 pub struct RangeCheckWithLookupTable {

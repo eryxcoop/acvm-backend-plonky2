@@ -1,5 +1,5 @@
 # acvm-backend-plonky2
-This is an open source backend for the ACIR standard as implemented in the Noir programming languaje, written in Rust. Check out [the docs](https://eryxcoop.github.io/acvm-backend-plonky2/foreword.html) for more detail on what this repo does.
+This is an open source backend for the ACIR standard as implemented in the Noir programming language, written in Rust. Check out [the docs](https://eryxcoop.github.io/acvm-backend-plonky2/foreword.html) for more detail on what this repo does.
 
 ## How to generate Plonky2 proofs for your Noir circuit with docker
 1. You need to install docker, if you haven't already
